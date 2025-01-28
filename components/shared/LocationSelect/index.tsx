@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
+import axiosClient from '@/lib/axiosClient';
 
 interface ILocation {
   id: string;
@@ -35,16 +36,18 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
   const [locationText, setLocationText] = useState<string>(
     defaultLocation || ''
   );
-  const [selectedLocation, setSelectedLocation] = useState<string | undefined>(
-    defaultLocation
-  );
+  // const [selectedLocation, setSelectedLocation] = useState<string | undefined>(
+  //   defaultLocation
+  // );
   const [locations, setLocations] = useState<ILocation[]>([]);
   const [openList, setOpenList] = useState<boolean>(false);
 
   const fetchLocations = useCallback(async (loc?: string) => {
     try {
-      const response = await fetch(`/api/keywords/location?q=${loc || ''}`);
-      return await response.json();
+      const response = await axiosClient.get(
+        `/api/keywords/location?q=${loc || ''}`
+      );
+      return response?.data || [];
     } catch (err) {
       toast({
         title: 'Error',
@@ -93,7 +96,7 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
     onOpenList();
   };
 
-  const handleClickOutside = (event: MouseEvent) => {
+  const handleClickOutside = useCallback((event: MouseEvent) => {
     // @ts-ignore
     if (
       locationSelectRef.current &&
@@ -101,7 +104,7 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
     ) {
       onCLoseList();
     }
-  };
+  }, []);
 
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
@@ -110,7 +113,7 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [handleClickOutside]);
 
   return (
     <div className={'relative'} ref={locationSelectRef}>

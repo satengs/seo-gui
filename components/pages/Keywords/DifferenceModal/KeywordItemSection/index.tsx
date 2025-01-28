@@ -1,0 +1,27 @@
+import React from 'react';
+import JsonViewer from '../JsonViewer';
+
+interface IKeywordItemSection {
+  // keyword: IKeyword;
+  keyword: any;
+}
+
+const KeywordItemSection: React.FC<IKeywordItemSection> = ({ keyword }) => {
+  return (
+    <div className="col-span-1 overflow-auto bg-white rounded-lg shadow">
+      <h3 className="p-4 text-xl font-semibold ">
+        {keyword?.term || 'Keyword term'}
+      </h3>
+
+      <div className="p-4">
+        <JsonViewer data={keyword} isExpanded={true} />
+      </div>
+
+      <div className="p-4 bg-gray-50 text-xs text-gray-500">
+        Last updated: {new Date(keyword?.updatedAt).toLocaleString()}
+      </div>
+    </div>
+  );
+};
+
+export default KeywordItemSection;

@@ -12,6 +12,8 @@ export async function POST(request: Request) {
 
     const existKeyword = await Keyword.findOne({
       term: data?.term,
+      location: data?.location,
+      device: data?.device,
     });
 
     if (!existKeyword) {

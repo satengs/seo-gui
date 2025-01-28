@@ -32,11 +32,17 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const data = await request.json();
-    const existingKeyword = await Keyword.findOne({ term: data.term });
-    if (existingKeyword) {
+    // const existingKeyword = await Keyword.findOne({
+    //   term: data.term,
+    //   location:data?.['_'] data?.search_parameters?.location_used,
+    //   device: data?.search_parameters?.device,
+    // });
+    if (data?.['_id']) {
       await Keyword.findOneAndUpdate(
         {
           term: data.term,
+          device: data?.device,
+          location: data?.location,
         },
         {
           $set: {
@@ -73,6 +79,8 @@ export async function PATCH(request: Request) {
     await Keyword.findOneAndUpdate(
       {
         term: data.term,
+        location: data?.keywordData?.location,
+        device: data?.keywordData?.device,
       },
       {
         $set: data.updatedData,
@@ -98,7 +106,7 @@ export async function DELETE(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const keyword = searchParams.get('keyword') || '';
-    await Keyword.deleteOne({ term: keyword });
+    await Keyword.deleteOne({ _id: keyword });
     const keywords = await Keyword.find().sort({ createdAt: -1 });
     return NextResponse.json(keywords);
   } catch (error) {

@@ -100,7 +100,7 @@ export default function DailyRunsPage() {
               <div className="ml-4">
                 <p className="font-medium">Ranking Change Alert</p>
                 <p className="text-sm text-muted-foreground">
-                  "SEO Analytics" dropped 3 positions
+                  SEO Analytics dropped 3 positions
                 </p>
               </div>
             </div>

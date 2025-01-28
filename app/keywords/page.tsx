@@ -5,40 +5,24 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import LocationSelect from '@/components/shared/LocationSelect';
-import {
-  KeyRound,
-  Plus,
-  Search,
-  Trash,
-  SquareArrowOutUpRight,
-  Minus,
-} from 'lucide-react';
+import { KeyRound, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DeviceSelect from '@/components/shared/DeviceSelect';
 import axiosClient from '@/lib/axiosClient';
-
-interface Keyword {
-  _id: string;
-  term: string;
-  category: string;
-  geography?: string;
-  isDefaultKeywords: boolean;
-  lastResults?: any[];
-  lastChecked?: string;
-}
+import { IKeyword } from '@/types';
+import KeywordsTable from '@/components/pages/Keywords/KeywordsTable';
 
 export default function KeywordsPage() {
-  const [keywords, setKeywords] = useState<Keyword[] | null>(null);
-  const [searchText, setSearchText] = useState('');
-  const [device, setDevice] = useState('desktop');
-  const [loading, setLoading] = useState(true);
-  const [checking, setChecking] = useState(false);
+  const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
+  // const [selectedKeywords, setSelectedKeywords] = useState<IKeyword[] | []>([]);
+  const [searchText, setSearchText] = useState<string>('');
+  const [device, setDevice] = useState<string>('mobile');
+  const [loading, setLoading] = useState<boolean>(true);
   const [location, setLocation] = useState<string>('');
   const { toast } = useToast();
 
   const fetchKeywords = useCallback(async () => {
     try {
-      // const response = await fetch('/api/keywords');
       const response = await axiosClient.get('/api/keywords');
       setKeywords(response?.data || []);
     } catch (error) {
@@ -61,15 +45,10 @@ export default function KeywordsPage() {
       setLoading(true);
       const reqBody = {
         term: searchText.trim(),
-        location,
+        location: location?.length ? location : 'United States',
         device,
       };
-      // const response = await fetch('/api/keywords/search', {
-      //   method: 'POST',
-      //   body: JSON.stringify(reqBody),
-      // });
       const response = await axiosClient.post('/api/keywords/search', reqBody);
-      // const data = await response.json();
       setKeywords(response.data);
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
@@ -83,45 +62,6 @@ export default function KeywordsPage() {
     }
   }
 
-  // async function checkKeywords() {
-  //   setChecking(true);
-  //   try {
-  //     // const response = await fetch('/api/keywords/check', {
-  //     //   method: 'POST',
-  //     // });
-  //     const response = await axiosClient.post('/api/keywords/check');
-  //     const data = await response.json();
-  //
-  //     toast({
-  //       title: 'Success',
-  //       description: `Checked ${data.length} keywords`,
-  //     });
-  //
-  //     // Refresh keywords to get latest data
-  //     await fetchKeywords();
-  //   } catch (error) {
-  //     console.error('Failed to check keywords:', error);
-  //     toast({
-  //       title: 'Error',
-  //       description: 'Failed to check keywords',
-  //       variant: 'destructive',
-  //     });
-  //   } finally {
-  //     setChecking(false);
-  //   }
-  // }
-
-  function getRanking(keyword: Keyword) {
-    if (!keyword.lastResults) return 'N/A';
-
-    const position =
-      keyword.lastResults.findIndex((result: any) =>
-        result.link.includes('freedomdebtrelief.com')
-      ) + 1;
-
-    return position || 'Not found';
-  }
-
   function onInputChange(e: ChangeEvent<HTMLInputElement>) {
     setSearchText(e.target.value);
   }
@@ -132,85 +72,26 @@ export default function KeywordsPage() {
     setLocation(value.name);
   }, []);
 
-  const changeKeyword = async (keyword: Keyword) => {
-    try {
-      const patchData = {
-        term: keyword.term,
-        updatedData: {
-          isDefaultKeywords: false,
-        },
-      };
-      // const response = await fetch('http://localhost:3000/api/keywords', {
-      //   method: 'PATCH',
-      //   body: JSON.stringify(patchData),
-      // });
-      const response = await axiosClient.patch('/api/keywords', patchData);
-      setKeywords(response?.data || []);
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove keyword from defaults',
-        variant: 'destructive',
-      });
-    }
-  };
+  // const onKeywordSelect = (keyword: IKeyword) => {
+  //   let currentSelected: IKeyword[] = [...selectedKeywords];
+  //
+  //   const existKeyword = currentSelected.findIndex(
+  //     (item: IKeyword) => item.term === keyword.term
+  //   );
+  //   if (existKeyword !== -1) {
+  //     currentSelected = currentSelected.filter(
+  //       (item: IKeyword) => item.term !== keyword.term
+  //     );
+  //   } else if (currentSelected?.length < 3) {
+  //     currentSelected.push(keyword);
+  //   }
+  //
+  //   setSelectedKeywords(currentSelected);
+  // };
 
-  const deleteKeyword = async (keyword: Keyword) => {
-    try {
-      // const response = await fetch(
-      //   `http://localhost:3000/api/keywords?keyword=${keyword.term}`,
-      //   {
-      //     method: 'DELETE',
-      //   }
-      // );
-      const response = await axiosClient.delete(
-        `/api/keywords?keyword=${keyword.term}`
-      );
-      setKeywords(response?.data || []);
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove keyword',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const addKeyword = async (keyword: Keyword) => {
-    try {
-      // const response = await fetch('http://localhost:3000/api/keywords', {
-      //   method: 'POST',
-      //   body: JSON.stringify(keyword),
-      // });
-      const response = await axiosClient.post('/api/keywords', keyword);
-      setKeywords(response?.data || []);
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to add keyword',
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleActionBtn = async (keyword: Keyword, action: string) => {
-    if (action === 'new-tab') {
-      const keywordPid = keyword?.term.toLowerCase().replace(/\s+/g, '-');
-      window.open(
-        `/keywords/${keywordPid}?location=${keyword?.geography || 'United States'}&device=${device || 'desktop'}`,
-        '_blank'
-      );
-    }
-    if (action === 'remove-keyword') {
-      deleteKeyword(keyword);
-    }
-    if (action === 'remove-from-default') {
-      await changeKeyword(keyword);
-    }
-    if (action === 'add-keyword') {
-      await addKeyword(keyword);
-    }
-  };
+  const onKeywordsChange = useCallback((data: any) => {
+    setKeywords(data);
+  }, []);
 
   useEffect(() => {
     fetchKeywords();
@@ -260,7 +141,7 @@ export default function KeywordsPage() {
             <LocationSelect onValueChange={onValueChange} />
           </div>
           <div className="flex-0.5">
-            <DeviceSelect onValue={onDeviceSelect} defaultValue={'desktop'} />
+            <DeviceSelect onValue={onDeviceSelect} defaultValue={'mobile'} />
           </div>
 
           <Button variant="outline" onClick={searchKeywords} disabled={loading}>
@@ -270,135 +151,199 @@ export default function KeywordsPage() {
             Search:
           </Button>
         </div>
+        {keywords?.length ? (
+          <KeywordsTable
+            keywords={keywords}
+            onActionKeywordsChange={onKeywordsChange}
+          />
+        ) : (
+          <p>Loading keywords</p>
+        )}
 
-        <div className="relative overflow-x-auto">
-          <table className="w-full text-sm text-left overflow-auto">
-            <thead className="text-xs uppercase bg-muted">
-              <tr>
-                <th className="px-6 py-3">Keyword</th>
-                <th className="px-6 py-3">Category</th>
-                <th className="px-6 py-3">Default Keyword</th>
-                <th className="px-6 py-3">Search Count</th>
-                <th className="px-6 py-3">Last Checked</th>
-                <th className="px-6 py-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {keywords ? (
-                keywords?.length ? (
-                  keywords.map((keyword, index) => {
-                    return (
-                      <tr key={keyword?.term || index} className="border-b">
-                        <td className="px-6 py-4">{keyword.term || ''}</td>
-                        <td className="px-6 py-4">
-                          {keyword.category || 'No category'}
-                        </td>
-                        <td className="px-6 py-4">
-                          {keyword.isDefaultKeywords ? 'Yes' : 'No'}
-                        </td>
-                        <td className="px-6 py-4">{getRanking(keyword)}</td>
-                        <td className="px-6 py-4">
-                          {keyword.lastChecked
-                            ? new Date(keyword.lastChecked).toLocaleString()
-                            : 'Never'}
-                        </td>
-                        <td className="px-6 py-4 flex flex-row items-center justify-between gap-3 ">
-                          {!keyword?.isDefaultKeywords ? (
-                            <div className={'relative group'}>
-                              <Button
-                                variant="secondary"
-                                className={
-                                  'text-green-800 p-1 h-auto border bg-white border-green-800'
-                                }
-                                disabled={loading}
-                                onClick={() =>
-                                  handleActionBtn(keyword, 'add-keyword')
-                                }
-                              >
-                                <>
-                                  <Plus className={`h-4 w-4 text-green-800`} />
-                                  <span className="absolute top-full mt-2 bg-green-50 text-center  w-48 right-0 text-green-800 text-sm px-3 py-1 rounded-md shadow-lg z-50 hidden group-hover:block">
-                                    Add to default keywords
-                                  </span>
-                                </>
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="relative group">
-                              <Button
-                                variant="secondary"
-                                className="text-red-800 p-1 h-auto bg-white border-[0.5px] border-red-800"
-                                disabled={loading}
-                                onClick={() =>
-                                  handleActionBtn(
-                                    keyword,
-                                    'remove-from-default'
-                                  )
-                                }
-                              >
-                                <Minus className="h-4 w-4 text-red-800" />
-                              </Button>
+        {/*<div className="relative overflow-x-auto">*/}
+        {/*  <table className="w-full text-sm text-left overflow-auto">*/}
+        {/*    <thead className="text-xs uppercase bg-muted">*/}
+        {/*      <tr>*/}
+        {/*        <th className="px-6 py-3">Keyword</th>*/}
+        {/*        <th className="px-6 py-3">KGMID</th>*/}
+        {/*        <th className="px-6 py-3">Location</th>*/}
+        {/*        <th className="px-6 py-3">Device Type</th>*/}
+        {/*        <th className="px-6 py-3">Organic Results Count</th>*/}
+        {/*        <th className="px-6 py-3">Last Checked</th>*/}
+        {/*        <th className="px-6 py-3">Actions</th>*/}
+        {/*      </tr>*/}
+        {/*    </thead>*/}
+        {/*    <tbody>*/}
+        {/*      {keywords ? (*/}
+        {/*        keywords?.length ? (*/}
+        {/*          keywords.map((keyword, index) => {*/}
+        {/*            const selectedTerms = selectedKeywords.map(*/}
+        {/*              (keyword) => keyword.term*/}
+        {/*            );*/}
+        {/*            return (*/}
+        {/*              <tr key={keyword?.term || index} className="border-b">*/}
+        {/*                <td*/}
+        {/*                  className="px-1 py-4 flex items-center gap-3 cursor-pointer "*/}
+        {/*                  onClick={() => onKeywordSelect(keyword)}*/}
+        {/*                >*/}
+        {/*                  {selectedTerms.includes(keyword.term) ? (*/}
+        {/*                    <CheckSquare className={`h-5 w-5 text-blue-800`} />*/}
+        {/*                  ) : (*/}
+        {/*                    <Square className={`h-5 w-5 text-gray-800`} />*/}
+        {/*                  )}*/}
 
-                              <span className="absolute top-full mt-2 bg-red-50 text-center  w-36 right-0 text-red-800 text-sm px-3 py-1 rounded-md shadow-lg z-50 hidden group-hover:block">
-                                Remove from default keywords
-                              </span>
-                            </div>
-                          )}
-                          <div className={'relative group'}>
-                            <Button
-                              variant={'secondary'}
-                              className={
-                                'text-blue-800 border-[0.5px] bg-white border-blue-800 h-auto p-1'
-                              }
-                              onClick={() =>
-                                handleActionBtn(keyword, 'new-tab')
-                              }
-                            >
-                              <SquareArrowOutUpRight
-                                className={`h-4 w-4 text-blue-800`}
-                              />
-                            </Button>
-                            <span className="absolute top-full mt-2 bg-blue-50 text-blue-800  text-center  w-36  right-0 text-sm px-3 py-2 rounded-md shadow-lg z-50 hidden group-hover:block">
-                              Open Html results
-                            </span>
-                          </div>
-                          {keyword?.['_id'] ? (
-                            <div className={'relative group'}>
-                              <Button
-                                variant={'secondary'}
-                                className={
-                                  'text-blue-800 bg-white border-[0.5px] border-red-800 h-auto p-1'
-                                }
-                                onClick={() =>
-                                  handleActionBtn(keyword, 'remove-keyword')
-                                }
-                              >
-                                <Trash className={`h-4 w-4 text-red-800`} />
-                              </Button>
-                              <span className="absolute top-full mt-2 bg-red-50 text-red-800  text-center  w-36  right-0 text-sm px-3 py-2 rounded-md shadow-lg z-50 hidden group-hover:block">
-                                Remove from keywords
-                              </span>
-                            </div>
-                          ) : null}
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={6} className="text-center py-6">
-                      No keywords found.
-                    </td>
-                  </tr>
-                )
-              ) : (
-                <tr>
-                  <td className={'p-4'}>...Loading keywords</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/*                  {keyword.term || ''}*/}
+        {/*                </td>*/}
+        {/*                <td className="px-6 py-4">*/}
+        {/*                  {keyword.kgmid || 'No kgmid'}*/}
+        {/*                </td>*/}
+        {/*                <td className="px-6 py-4">{keyword.location}</td>*/}
+        {/*                <td className="px-6 py-4">*/}
+        {/*                  {keyword.device.charAt(0).toUpperCase() +*/}
+        {/*                    keyword.device.slice(1)}*/}
+        {/*                </td>*/}
+        {/*                <td className="px-6 py-4">*/}
+        {/*                  {keyword.organicResultsCount.toString()}*/}
+        {/*                </td>*/}
+        {/*                <td className="px-6 py-4">*/}
+        {/*                  {keyword.updatedAt*/}
+        {/*                    ? new Date(keyword.updatedAt).toLocaleString()*/}
+        {/*                    : 'Never'}*/}
+        {/*                </td>*/}
+        {/*                <td className="px-6 py-4 flex flex-row items-center justify-between gap-3 ">*/}
+        {/*                  {!keyword?.isDefaultKeywords ? (*/}
+        {/*                    <div className={'relative group'}>*/}
+        {/*                      <Button*/}
+        {/*                        variant="secondary"*/}
+        {/*                        className={*/}
+        {/*                          'text-green-800 p-1 h-auto border bg-white border-green-800'*/}
+        {/*                        }*/}
+        {/*                        disabled={loading}*/}
+        {/*                        onClick={() =>*/}
+        {/*                          handleActionBtn(keyword, 'add-keyword')*/}
+        {/*                        }*/}
+        {/*                      >*/}
+        {/*                        <>*/}
+        {/*                          <Plus className={`h-4 w-4 text-green-800`} />*/}
+        {/*                          <span className="absolute top-full mt-2 bg-green-50 text-center  w-48 right-0 text-green-800 text-sm px-3 py-1 rounded-md shadow-lg z-50 hidden group-hover:block">*/}
+        {/*                            Add to default keywords*/}
+        {/*                          </span>*/}
+        {/*                        </>*/}
+        {/*                      </Button>*/}
+        {/*                    </div>*/}
+        {/*                  ) : (*/}
+        {/*                    <div className="relative group">*/}
+        {/*                      <Button*/}
+        {/*                        variant="secondary"*/}
+        {/*                        className="text-red-800 p-1 h-auto bg-white border-[0.5px] border-red-800"*/}
+        {/*                        disabled={loading}*/}
+        {/*                        onClick={() =>*/}
+        {/*                          handleActionBtn(*/}
+        {/*                            keyword,*/}
+        {/*                            'remove-from-default'*/}
+        {/*                          )*/}
+        {/*                        }*/}
+        {/*                      >*/}
+        {/*                        <Minus className="h-4 w-4 text-red-800" />*/}
+        {/*                      </Button>*/}
+
+        {/*                      <span className="absolute top-full mt-2 bg-red-50 text-center  w-36 right-0 text-red-800 text-sm px-3 py-1 rounded-md shadow-lg z-50 hidden group-hover:block">*/}
+        {/*                        Remove from default keywords*/}
+        {/*                      </span>*/}
+        {/*                    </div>*/}
+        {/*                  )}*/}
+        {/*                  <div className={'relative group'}>*/}
+        {/*                    <Button*/}
+        {/*                      variant={'secondary'}*/}
+        {/*                      className={*/}
+        {/*                        'text-blue-800 border-[0.5px] bg-white border-blue-800 h-auto p-1'*/}
+        {/*                      }*/}
+        {/*                      onClick={() =>*/}
+        {/*                        handleActionBtn(keyword, 'new-tab')*/}
+        {/*                      }*/}
+        {/*                    >*/}
+        {/*                      <SquareArrowOutUpRight*/}
+        {/*                        className={`h-4 w-4 text-blue-800`}*/}
+        {/*                      />*/}
+        {/*                    </Button>*/}
+        {/*                    <span className="absolute top-full mt-2 bg-blue-50 text-blue-800  text-center  w-36  right-0 text-sm px-3 py-2 rounded-md shadow-lg z-50 hidden group-hover:block">*/}
+        {/*                      Open Html results*/}
+        {/*                    </span>*/}
+        {/*                  </div>*/}
+        {/*                  <div className={'relative group'}>*/}
+        {/*                    <Button*/}
+        {/*                      variant={'secondary'}*/}
+        {/*                      className={*/}
+        {/*                        'text-orange-800-800 border-[0.5px] bg-white border-yellow-500 h-auto p-1'*/}
+        {/*                      }*/}
+        {/*                    >*/}
+        {/*                      <DownloadIcon*/}
+        {/*                        className={`h-4 w-4 text-yellow-500`}*/}
+        {/*                      />*/}
+        {/*                    </Button>*/}
+        {/*                    <span className="absolute top-full mt-2 bg-blue-50 text-blue-800  text-center  w-36  right-0 text-sm px-3 py-2 rounded-md shadow-lg z-50 hidden group-hover:block">*/}
+        {/*                      Download csv*/}
+        {/*                    </span>*/}
+        {/*                  </div>*/}
+        {/*                  {keyword?.['_id'] ? (*/}
+        {/*                    <div className={'relative group'}>*/}
+        {/*                      <Button*/}
+        {/*                        variant={'secondary'}*/}
+        {/*                        className={*/}
+        {/*                          'text-blue-800 bg-white border-[0.5px] border-red-800 h-auto p-1'*/}
+        {/*                        }*/}
+        {/*                        onClick={() =>*/}
+        {/*                          handleActionBtn(keyword, 'remove-keyword')*/}
+        {/*                        }*/}
+        {/*                      >*/}
+        {/*                        <Trash className={`h-4 w-4 text-red-800`} />*/}
+        {/*                      </Button>*/}
+        {/*                      <span className="absolute top-full mt-2 bg-red-50 text-red-800  text-center  w-36  right-0 text-sm px-3 py-2 rounded-md shadow-lg z-50 hidden group-hover:block">*/}
+        {/*                        Remove from keywords*/}
+        {/*                      </span>*/}
+        {/*                    </div>*/}
+        {/*                  ) : null}*/}
+        {/*                </td>*/}
+        {/*              </tr>*/}
+        {/*            );*/}
+        {/*          })*/}
+        {/*        ) : (*/}
+        {/*          <tr>*/}
+        {/*            <td colSpan={6} className="text-center py-6">*/}
+        {/*              No keywords found.*/}
+        {/*            </td>*/}
+        {/*          </tr>*/}
+        {/*        )*/}
+        {/*      ) : (*/}
+        {/*        <tr>*/}
+        {/*          <td className={'p-4'}>...Loading keywords</td>*/}
+        {/*        </tr>*/}
+        {/*      )}*/}
+        {/*    </tbody>*/}
+        {/*  </table>*/}
+        {/*  {selectedKeywords?.length === 2 ? (*/}
+        {/*    <div className={'my-3'}>*/}
+        {/*      <Button*/}
+        {/*        variant={'secondary'}*/}
+        {/*        className={*/}
+        {/*          'text-white bg-gray-800 border-[0.5px] hover:bg-gray-500 border-red-800 h-auto py-3 px-4'*/}
+        {/*        }*/}
+        {/*        onClick={onModalOpen}*/}
+        {/*      >*/}
+        {/*        See difference*/}
+        {/*      </Button>*/}
+        {/*    </div>*/}
+        {/*  ) : null}*/}
+        {/*  {showModal ? (*/}
+        {/*    <Modal*/}
+        {/*      isOpen={showModal}*/}
+        {/*      onClose={onModalClose}*/}
+        {/*      customContainerClassName={'bg-white rounded-md'}*/}
+        {/*    >*/}
+        {/*      <DifferenceModal keywords={selectedKeywords} />*/}
+        {/*    </Modal>*/}
+        {/*  ) : null}*/}
+        {/*</div>*/}
       </Card>
     </div>
   );
