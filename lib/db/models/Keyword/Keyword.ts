@@ -25,6 +25,12 @@ const KeywordSchema = new mongoose.Schema(
     device: {
       type: String,
     },
+    kgmTitle: {
+      type: String,
+    },
+    kgmWebsite: {
+      type: String,
+    },
     organicResultsCount: {
       type: Number,
     },
@@ -44,7 +50,7 @@ const KeywordSchema = new mongoose.Schema(
     dynamicData: DynamicData,
   },
   {
-    timestamps: true, // This option will add both createdAt and updatedAt fields automatically
+    timestamps: true,
   }
 );
 

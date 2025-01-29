@@ -1,6 +1,8 @@
 export interface IKeyword {
   term: string;
   kgmid: string | null;
+  kgmTitle: string | null;
+  kgmWebsite: string | null;
   location: string;
   device: string;
   organicResultsCount: Number;

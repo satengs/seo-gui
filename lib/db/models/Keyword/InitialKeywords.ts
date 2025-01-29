@@ -7,6 +7,12 @@ const initialKeywords = [
     term: 'freedom debt relief',
   },
   {
+    term: 'freedom debt relief san mateo',
+  },
+  {
+    term: 'freedom debt relief arizona',
+  },
+  {
     term: 'freedom debt relief reviews',
   },
   {
@@ -30,7 +36,9 @@ export const getKeywordData = (srcObj: any, existingData: any) => {
   const keywordData: IKeyword = {
     term: srcObj?.search_parameters?.q || srcObj?.term,
     kgmid: srcObj?.knowledge_graph?.kgmid,
-    location: srcObj?.search_parameters?.location || 'United States',
+    kgmTitle: srcObj?.knowledge_graph?.title,
+    kgmWebsite: srcObj?.knowledge_graph?.website,
+    location: srcObj?.search_parameters?.location_used || 'United States',
     device: srcObj?.search_parameters?.device,
     organicResultsCount: srcObj?.organic_results?.length || 0,
     isDefaultKeywords: existingData?.isDefaultKeywords,

@@ -8,7 +8,7 @@ const nextConfig = {
   env: {
     NEXT_CONFIG_BASE_API_URL: 'http://localhost:3000',
     SERP_API_KEY:
-      'c7e70b5e48ae3f660e05469594303f53af1daece547122a6682a33a9f6ce9da7',
+      '3e06e7de164422f03a7e8ae9a759e0259d7821ad554a7c8b07c73f14e0aaa38e',
   },
 };
 

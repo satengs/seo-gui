@@ -8,15 +8,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function checkDateDifference(dateOne: any, dateTwo: any) {
-  const msInOneDay = 24 * 60 * 60 * 1000; // Number of milliseconds in one day
+  const msInOneDay = 24 * 60 * 60 * 1000;
 
-  // Get the absolute difference in milliseconds
   const differenceInMs = Math.abs(dateOne - dateTwo);
 
-  // Convert milliseconds to full days
-  const differenceInDays = Math.floor(differenceInMs / msInOneDay);
-
-  return differenceInDays;
+  return Math.floor(differenceInMs / msInOneDay);
 }
 
 function prepareDataForCSV(keyword: IKeyword): Record<string, any> {
@@ -35,6 +31,12 @@ export function generateCSV(keyword: IKeyword): string {
   const dataForCSV = prepareDataForCSV(keyword);
 
   const parser = new Parser();
-  const csv = parser.parse([dataForCSV]);
-  return csv;
+  return parser.parse([dataForCSV]);
+}
+
+export function generateMultiCSV(keywords: IKeyword[]): string {
+  const dataForCSV = keywords.map((keyword) => prepareDataForCSV(keyword));
+
+  const parser = new Parser();
+  return parser.parse(dataForCSV);
 }
