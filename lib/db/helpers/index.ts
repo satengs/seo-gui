@@ -6,7 +6,11 @@ export const paginateEntities = async (
   const skip = (page - 1) * pageSize;
 
   try {
-    const entitiesData = await schema.find().skip().limit(pageSize);
+    const entitiesData = await schema
+      .find()
+      .skip(skip)
+      .limit(pageSize)
+      .sort({ createdAt: -1 });
     const totalCount = await schema.countDocuments();
     const totalPages = Math.ceil(totalCount / pageSize);
     return {

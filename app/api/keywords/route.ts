@@ -5,10 +5,14 @@ import {
   getKeywordData,
   seedInitialKeywords,
 } from '@/lib/db/models/Keyword/InitialKeywords';
+import { paginateEntities } from '@/lib/db/helpers';
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await dbConnect();
+    const { searchParams } = new URL(req.url);
+    const page = searchParams.get('page') || 1;
+    const size = searchParams.get('size') || 10;
 
     // Seed initial keywords if none exist
     const count = await Keyword.countDocuments();
@@ -16,8 +20,12 @@ export async function GET() {
       await seedInitialKeywords();
     }
 
-    const keywords = await Keyword.find().sort({ createdAt: -1 });
-    return NextResponse.json(keywords);
+    const _keywords = await paginateEntities(
+      page as number,
+      size as number,
+      Keyword
+    );
+    return NextResponse.json(_keywords);
   } catch (error) {
     console.error('Failed to fetch keywords:', error);
     return NextResponse.json(
@@ -32,11 +40,9 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const data = await request.json();
-    // const existingKeyword = await Keyword.findOne({
-    //   term: data.term,
-    //   location:data?.['_'] data?.search_parameters?.location_used,
-    //   device: data?.search_parameters?.device,
-    // });
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || 1;
+    const size = searchParams.get('size') || 10;
     if (data?.['_id']) {
       await Keyword.findOneAndUpdate(
         {
@@ -51,7 +57,11 @@ export async function POST(request: Request) {
         },
         { new: true, runValidators: true }
       );
-      const keywords = await Keyword.find().sort({ createdAt: -1 });
+      const keywords = await paginateEntities(
+        page as number,
+        size as number,
+        Keyword
+      );
       return NextResponse.json(keywords);
     } else {
       const keywordData = getKeywordData(
@@ -59,7 +69,12 @@ export async function POST(request: Request) {
         { isDefaultKeywords: true, term: data?.term }
       );
       await Keyword.create(keywordData);
-      const keywords = await Keyword.find().sort({ createdAt: -1 });
+      const keywords = await paginateEntities(
+        page as number,
+        size as number,
+        Keyword
+      );
+
       return NextResponse.json(keywords);
     }
   } catch (error) {
@@ -76,6 +91,9 @@ export async function PATCH(request: Request) {
   try {
     await dbConnect();
     const data = await request.json();
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || 1;
+    const size = searchParams.get('size') || 10;
     await Keyword.findOneAndUpdate(
       {
         term: data.term,
@@ -87,8 +105,12 @@ export async function PATCH(request: Request) {
       },
       { new: true, runValidators: true }
     );
+    const keywords = await paginateEntities(
+      page as number,
+      size as number,
+      Keyword
+    );
 
-    const keywords = await Keyword.find().sort({ createdAt: -1 });
     return NextResponse.json(keywords);
   } catch (error) {
     console.error('Failed to update keyword:', error);
@@ -103,11 +125,16 @@ export async function PATCH(request: Request) {
 export async function DELETE(request: Request) {
   try {
     await dbConnect();
-
     const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || 1;
+    const size = searchParams.get('size') || 10;
     const keyword = searchParams.get('keyword') || '';
     await Keyword.deleteOne({ _id: keyword });
-    const keywords = await Keyword.find().sort({ createdAt: -1 });
+    const keywords = await paginateEntities(
+      page as number,
+      size as number,
+      Keyword
+    );
     return NextResponse.json(keywords);
   } catch (error) {
     console.error('Failed to fetch keywords:', error);

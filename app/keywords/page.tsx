@@ -8,22 +8,27 @@ import LocationSelect from '@/components/shared/LocationSelect';
 import { KeyRound, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DeviceSelect from '@/components/shared/DeviceSelect';
+import KeywordsTable from '@/components/pages/Keywords/KeywordsTable';
+import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 import axiosClient from '@/lib/axiosClient';
 import { IKeyword } from '@/types';
-import KeywordsTable from '@/components/pages/Keywords/KeywordsTable';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(true);
   const [location, setLocation] = useState<string>('');
   const { toast } = useToast();
 
-  const fetchKeywords = useCallback(async () => {
+  const fetchKeywords = useCallback(async (page: number = 1, size?: number) => {
     try {
-      const response = await axiosClient.get('/api/keywords');
-      setKeywords(response?.data || []);
+      const response = await axiosClient.get(
+        `/api/keywords?page=${page || 1}&size=${size || 10}`
+      );
+      setKeywords(response?.data?.entitiesData || []);
+      setTotalCount(response?.data?.totalCount);
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
       toast({
@@ -48,7 +53,8 @@ export default function KeywordsPage() {
         device,
       };
       const response = await axiosClient.post('/api/keywords/search', reqBody);
-      setKeywords(response.data);
+      setKeywords(response?.data?.keywords || []);
+      setTotalCount(response?.data?.paginatedData?.totalCount);
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
       toast({
@@ -71,8 +77,16 @@ export default function KeywordsPage() {
     setLocation(value.name);
   }, []);
   const onKeywordsChange = useCallback((data: any) => {
-    setKeywords(data);
+    setKeywords(data?.entitiesData);
+    setTotalCount(data?.totalCount);
   }, []);
+
+  const onKeywordsPaginate = useCallback(
+    async (page: number) => {
+      await fetchKeywords(page);
+    },
+    [fetchKeywords]
+  );
 
   useEffect(() => {
     fetchKeywords();
@@ -91,7 +105,7 @@ export default function KeywordsPage() {
               <p className="text-sm font-medium text-muted-foreground">
                 Total Keywords
               </p>
-              <h2 className="text-2xl font-bold">{keywords?.length || ''}</h2>
+              <h2 className="text-2xl font-bold">{totalCount || ''}</h2>
             </div>
             <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
               <KeyRound className="h-6 w-6 text-primary" />
@@ -132,6 +146,7 @@ export default function KeywordsPage() {
         ) : (
           <p>...Loading keywords</p>
         )}
+        <Pagination totalCount={totalCount} onPageChange={onKeywordsPaginate} />
       </Card>
     </div>
   );

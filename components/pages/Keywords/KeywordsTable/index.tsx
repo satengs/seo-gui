@@ -11,32 +11,9 @@ import {
 } from '@/components/ui/table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import {
-  Download,
-  Search,
-  ArrowUpDown,
-  // ChevronDown,
-  // Filter,
-  RefreshCw,
-  // MoreVertical,
-} from 'lucide-react';
+import { Download, Search, ArrowUpDown, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-// import {
-//   DropdownMenu,
-//   DropdownMenuContent,
-//   DropdownMenuItem,
-//   DropdownMenuTrigger,
-//   DropdownMenuCheckboxItem,
-//   DropdownMenuSeparator,
-// } from '@/components/ui/dropdown-menu';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import Modal from '@/components/shared/Modal';
 import DifferenceModal from '@/components/pages/Keywords/DifferenceModal';
@@ -52,19 +29,12 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
   keywords,
   onActionKeywordsChange,
 }) => {
-  // State management
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
   const [sortConfig, setSortConfig] = useState({
     key: '',
     direction: 'asc',
   });
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(10);
-  // const [filters, setFilters] = useState({
-  //   device: '',
-  //   location: '',
-  // });
   const [showModal, setShowModal] = useState<boolean>(false);
 
   // Sorting function
@@ -92,26 +62,13 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
     return [..._data, ...nonSortedData];
   };
 
-  // Filter and sort data
   const filteredAndSortedData = useMemo(() => {
     let filtered = keywords.filter((keyword) => {
       return keyword.term.toLowerCase().includes(searchTerm.toLowerCase());
-      // const matchesDevice =
-      //   keyword.searchParameters.device === filters.device;
-      // console.log('matches device: ', matchesDevice);
-      //
-      // const matchesGeography =
-      //   || keyword.location === filters.location;
     });
 
     return sortData(filtered, sortConfig.key, sortConfig.direction);
   }, [searchTerm, sortConfig, keywords]);
-
-  const totalPages = Math.ceil(filteredAndSortedData.length / itemsPerPage);
-  const paginatedData = filteredAndSortedData.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
 
   const downloadAsCSV = (data: any[]) => {
     const csvMulti = generateMultiCSV(data);
@@ -138,10 +95,10 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
   };
 
   const toggleAllRows = () => {
-    if (selectedRows.size === paginatedData.length) {
+    if (selectedRows.size === filteredAndSortedData.length) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(paginatedData.map((_, index) => index)));
+      setSelectedRows(new Set(filteredAndSortedData.map((_, index) => index)));
     }
   };
 
@@ -159,13 +116,13 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
     if (selectedRows?.size) {
       const _keywords = Array.from(selectedRows);
       return _keywords.map((item) => {
-        if (paginatedData[item]) {
-          return paginatedData[item];
+        if (filteredAndSortedData[item]) {
+          return filteredAndSortedData[item];
         }
       });
     }
     return [];
-  }, [selectedRows, paginatedData]);
+  }, [selectedRows, filteredAndSortedData]);
 
   const onModalOpen = useCallback(() => setShowModal(true), []);
 
@@ -192,7 +149,7 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                   size="sm"
                   onClick={() =>
                     downloadAsCSV(
-                      paginatedData.filter((_, index) =>
+                      filteredAndSortedData.filter((_, index) =>
                         selectedRows.has(index)
                       )
                     )
@@ -207,7 +164,6 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                 size="sm"
                 onClick={() => {
                   setSearchTerm('');
-                  // setFilters({ device: '', location: '' });
                   setSortConfig({ key: 'term', direction: 'asc' });
                 }}
               >
@@ -227,77 +183,17 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="max-w-sm"
               />
-              {/*<DropdownMenu>*/}
-              {/*  <DropdownMenuTrigger asChild>*/}
-              {/*    <Button*/}
-              {/*      variant="outline"*/}
-              {/*      size="sm"*/}
-              {/*      className={'focus:outline-none'}*/}
-              {/*    >*/}
-              {/*      <Filter className="h-4 w-4 mr-2" />*/}
-              {/*      Filters*/}
-              {/*    </Button>*/}
-              {/*  </DropdownMenuTrigger>*/}
-              {/*  <DropdownMenuContent align="end" className="w-[200px]">*/}
-              {/*    <div className="p-2">*/}
-              {/*      <div className="space-y-4">*/}
-              {/*        <div>*/}
-              {/*          <label className="text-sm font-medium">Device</label>*/}
-              {/*          <Select*/}
-              {/*            value={filters.device}*/}
-              {/*            onValueChange={(value) =>*/}
-              {/*              setFilters({ ...filters, device: value })*/}
-              {/*            }*/}
-              {/*          >*/}
-              {/*            <SelectTrigger>*/}
-              {/*              <SelectValue placeholder="All devices" />*/}
-              {/*            </SelectTrigger>*/}
-              {/*            <SelectContent>*/}
-              {/*              <SelectItem value="all">All devices</SelectItem>*/}
-              {/*              <SelectItem value="desktop">Desktop</SelectItem>*/}
-              {/*              <SelectItem value="mobile">Mobile</SelectItem>*/}
-              {/*              <SelectItem value="tablet">Tablet</SelectItem>*/}
-              {/*            </SelectContent>*/}
-              {/*          </Select>*/}
-              {/*        </div>*/}
-              {/*        <div>*/}
-              {/*          <label className="text-sm font-medium">Location</label>*/}
-              {/*          <Select*/}
-              {/*            value={filters.location}*/}
-              {/*            onValueChange={(value) =>*/}
-              {/*              setFilters({ ...filters, location: value })*/}
-              {/*            }*/}
-              {/*          >*/}
-              {/*            <SelectTrigger>*/}
-              {/*              <SelectValue placeholder="All locations" />*/}
-              {/*            </SelectTrigger>*/}
-              {/*            <SelectContent>*/}
-              {/*              <SelectItem value="all">All locations</SelectItem>*/}
-              {/*              <SelectItem value="United States">*/}
-              {/*                United States*/}
-              {/*              </SelectItem>*/}
-              {/*              <SelectItem value="United Kingdom">*/}
-              {/*                United Kingdom*/}
-              {/*              </SelectItem>*/}
-              {/*              <SelectItem value="Canada">Canada</SelectItem>*/}
-              {/*              <SelectItem value="Australia">Australia</SelectItem>*/}
-              {/*            </SelectContent>*/}
-              {/*          </Select>*/}
-              {/*        </div>*/}
-              {/*      </div>*/}
-              {/*    </div>*/}
-              {/*  </DropdownMenuContent>*/}
-              {/*</DropdownMenu>*/}
             </div>
           </div>
-
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[30px]">
                     <Checkbox
-                      checked={selectedRows.size === paginatedData.length}
+                      checked={
+                        selectedRows.size === filteredAndSortedData.length
+                      }
                       onCheckedChange={toggleAllRows}
                     />
                   </TableHead>
@@ -371,7 +267,7 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                 </TableRow>
               </TableHeader>
               <TableBody className={'text-center'}>
-                {paginatedData.map((keyword, index) => (
+                {filteredAndSortedData.map((keyword, index) => (
                   <TableRow key={index}>
                     <TableCell>
                       <Checkbox
@@ -460,52 +356,6 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
               <DifferenceModal keywords={selectedKeywords} />
             </Modal>
           ) : null}
-          <div className="mt-4 flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Select
-                value={itemsPerPage.toString()}
-                onValueChange={(value) => {
-                  setItemsPerPage(Number(value));
-                  setCurrentPage(1);
-                }}
-              >
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="5">5 / page</SelectItem>
-                  <SelectItem value="10">10 / page</SelectItem>
-                  <SelectItem value="20">20 / page</SelectItem>
-                </SelectContent>
-              </Select>
-              <span className="text-sm text-muted-foreground">
-                Showing {(currentPage - 1) * itemsPerPage + 1} to{' '}
-                {Math.min(
-                  currentPage * itemsPerPage,
-                  filteredAndSortedData.length
-                )}{' '}
-                of {filteredAndSortedData.length} results
-              </span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setCurrentPage(currentPage + 1)}
-                disabled={currentPage === totalPages}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

@@ -4,12 +4,15 @@ import Keyword from '@/lib/db/models/Keyword/Keyword';
 import { searchKeyword } from '@/lib/serpApi';
 import { getKeywordData } from '@/lib/db/models/Keyword/InitialKeywords';
 import { checkDateDifference } from '@/lib/utils';
+import { paginateEntities } from '@/lib/db/helpers';
 
 export async function POST(request: Request) {
   try {
     await dbConnect();
     const data = await request.json();
-
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || 1;
+    const size = searchParams.get('size') || 10;
     const existKeyword = await Keyword.findOne({
       term: data?.term,
       location: data?.location,
@@ -22,14 +25,18 @@ export async function POST(request: Request) {
         data?.location,
         data?.device
       );
-      const keywords = await Keyword.find().sort({ createdAt: -1 });
-      return NextResponse.json([
-        {
-          ...newKeyword,
-          term: data?.term,
-        },
-        ...keywords,
-      ]);
+      const keywords = await paginateEntities(
+        page as number,
+        size as number,
+        Keyword
+      );
+      return NextResponse.json({
+        keywords: [
+          { ...newKeyword, term: data?.term },
+          ...keywords?.entitiesData,
+        ],
+        paginatedData: keywords,
+      });
     } else {
       const dateDiff = checkDateDifference(new Date(), existKeyword.updatedAt);
 
