@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/table';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Download, Search, ArrowUpDown, RefreshCw } from 'lucide-react';
+import { Download, Search, ArrowUpDown } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -159,17 +159,17 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                   Export Selected ({selectedRows.size})
                 </Button>
               )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchTerm('');
-                  setSortConfig({ key: 'term', direction: 'asc' });
-                }}
-              >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Reset
-              </Button>
+              {/*<Button*/}
+              {/*  variant="outline"*/}
+              {/*  size="sm"*/}
+              {/*  onClick={() => {*/}
+              {/*    setSearchTerm('');*/}
+              {/*    setSortConfig({ key: 'term', direction: 'asc' });*/}
+              {/*  }}*/}
+              {/*>*/}
+              {/*  <RefreshCw className="h-4 w-4 mr-2" />*/}
+              {/*  Reset*/}
+              {/*</Button>*/}
             </div>
           </div>
         </CardHeader>
