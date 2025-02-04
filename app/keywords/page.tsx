@@ -20,6 +20,7 @@ export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
   const [asDefault, setAsDefault] = useState<boolean>(false);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [currentPage, setCurrentPage] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(true);
@@ -90,6 +91,7 @@ export default function KeywordsPage() {
   const onKeywordsPaginate = useCallback(
     async (page: number) => {
       await fetchKeywords(page);
+      setCurrentPage(page);
     },
     [fetchKeywords]
   );
@@ -122,13 +124,21 @@ export default function KeywordsPage() {
             'flex items-center bg-fuchsia-50 rounded-md shadow-lg px-3 py-2 mb-6'
           }
         >
-          <Info className=" text-primary bg-blue-95 opacity-60" />
-          <span className={'ml-2 text-blue-95 text-center px-3  opacity-60'}>
+          <Info className=" text-primary bg-blue-95 dark:text-blue-17 opacity-60" />
+          <span
+            className={
+              'ml-2 text-blue-95 text-center px-3 dark:text-blue-17  opacity-60'
+            }
+          >
             Note: Daily data is collected only for default keywords.
           </span>
         </div>
         <div>
-          <p className={'text-sm text-gray-800 opacity-70 my-2 px-2'}>
+          <p
+            className={
+              'text-sm text-gray-800 dark:text-blue-50 opacity-70 my-2 px-2'
+            }
+          >
             Enter keywords (one per line)
           </p>
         </div>
@@ -176,6 +186,7 @@ export default function KeywordsPage() {
           <KeywordsTable
             keywords={keywords}
             onActionKeywordsChange={onKeywordsChange}
+            currentPage={currentPage}
           />
         ) : (
           <p>...Loading keywords</p>

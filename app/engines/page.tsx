@@ -1,8 +1,9 @@
 'use client';
 
 import { Card } from '@/components/ui/card';
-import { Search, BarChart3, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { PerformanceChart } from '@/components/ui/performance-chart';
+import PageInfoItem from '@/components/shared/PageInfoItem';
 
 const performanceData = [
   {
@@ -45,57 +46,24 @@ export default function EnginesPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Google
-              </p>
-              <h2 className="text-2xl font-bold">82%</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Search className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>5% from last month</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Bing</p>
-              <h2 className="text-2xl font-bold">12%</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Search className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-red-600">
-            <ArrowDownRight className="mr-1 h-4 w-4" />
-            <span>2% from last month</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Other Engines
-              </p>
-              <h2 className="text-2xl font-bold">6%</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Search className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>1% from last month</span>
-          </div>
-        </Card>
+        <PageInfoItem
+          title={'Google'}
+          icon={<Search className="text-primary" />}
+          statistic={'82%'}
+          successStatus={'5% from last month'}
+        />
+        <PageInfoItem
+          title={'Bing'}
+          icon={<Search className="text-primary" />}
+          statistic={'12%'}
+          failedStatus={'2% from last month'}
+        />
+        <PageInfoItem
+          title={'Other Engines'}
+          icon={<Search className="text-primary" />}
+          statistic={'6%'}
+          successStatus={'1% from last month'}
+        />
       </div>
 
       <div className="mt-8">

@@ -21,10 +21,12 @@ const config: Config = {
       },
       colors: {
         blue: {
+          default: '#21218B17',
           17: '#222534',
         },
         black: {
           base: '#13172D',
+          4: '#0A0A0A',
           11: '#151c23',
         },
         background: 'hsl(var(--background))',
@@ -57,7 +59,9 @@ const config: Config = {
           DEFAULT: 'hsl(var(--destructive))',
           foreground: 'hsl(var(--destructive-foreground))',
         },
-
+        boxShadow: {
+          text: '2px 2px 5px rgba(0, 0, 0, 0.3)',
+        },
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

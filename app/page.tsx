@@ -1,12 +1,5 @@
-import { Card } from '@/components/ui/card';
-import {
-  BarChart3,
-  TrendingUp,
-  ArrowUpRight,
-  ArrowDownRight,
-  KeyRound,
-  Users,
-} from 'lucide-react';
+import { BarChart3, TrendingUp, KeyRound, Users } from 'lucide-react';
+import PageInfoItem from '@/components/shared/PageInfoItem';
 
 export default function Home() {
   return (
@@ -16,80 +9,32 @@ export default function Home() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Keywords
-              </p>
-              <h2 className="text-2xl font-bold">1,234</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <KeyRound className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-sm text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>12% from last month</span>
-          </div>
-        </Card>
+        <PageInfoItem
+          title={'Total Keywords'}
+          icon={<KeyRound className="text-primary" />}
+          statistic={'1,234'}
+          successStatus={'12% from last month'}
+        />
+        <PageInfoItem
+          title={'Average Ranking'}
+          icon={<TrendingUp className=" text-primary" />}
+          statistic={'4.2'}
+          failedStatus={'3% from last month'}
+        />
+        <PageInfoItem
+          title={'Total Competitors'}
+          icon={<Users className="text-primary" />}
+          statistic={'15'}
+          successStatus={'2 new this month'}
+        />
 
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Average Ranking
-              </p>
-              <h2 className="text-2xl font-bold">4.2</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <TrendingUp className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-red-600">
-            <ArrowDownRight className="mr-1 h-4 w-4" />
-            <span>3% from last month</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Competitors
-              </p>
-              <h2 className="text-2xl font-bold">15</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>2 new this month</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Daily Runs
-              </p>
-              <h2 className="text-2xl font-bold">98%</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <BarChart3 className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>Healthy</span>
-          </div>
-        </Card>
+        <PageInfoItem
+          title={'Daily Runs'}
+          icon={<BarChart3 className="text-primary" />}
+          statistic={'98%'}
+          successStatus={'Healthy'}
+        />
       </div>
-
-      {/* Add more dashboard sections here */}
     </div>
   );
 }

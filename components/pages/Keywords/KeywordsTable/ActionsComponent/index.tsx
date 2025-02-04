@@ -14,11 +14,13 @@ import { generateCSV } from '@/lib/utils';
 
 interface IActionsComponent {
   keyword: any;
+  currentPage: number;
   onActionKeywordsChange: (data: any) => void;
 }
 
 const ActionsComponent: React.FC<IActionsComponent> = ({
   keyword,
+  currentPage,
   onActionKeywordsChange,
 }) => {
   const { toast } = useToast();
@@ -32,7 +34,10 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
           isDefaultKeywords: false,
         },
       };
-      const response = await axiosClient.patch('/api/keywords', patchData);
+      const response = await axiosClient.patch(
+        `/api/keywords?page=${currentPage || 1}`,
+        patchData
+      );
       onActionKeywordsChange(response?.data || []);
     } catch (err) {
       toast({
@@ -46,7 +51,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
   const deleteKeyword = async (keyword: IKeyword) => {
     try {
       const response = await axiosClient.delete(
-        `/api/keywords?keyword=${keyword._id}`
+        `/api/keywords?keyword=${keyword._id}&page=${currentPage || 1}`
       );
       onActionKeywordsChange(response?.data || []);
     } catch (err) {
@@ -60,7 +65,10 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
 
   const addKeyword = async (keyword: IKeyword) => {
     try {
-      const response = await axiosClient.post('/api/keywords', keyword);
+      const response = await axiosClient.post(
+        `/api/keywords?page=${currentPage || 1}`,
+        keyword
+      );
       onActionKeywordsChange(response?.data || []);
     } catch (err) {
       toast({

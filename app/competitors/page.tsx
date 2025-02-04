@@ -1,13 +1,8 @@
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Users,
-  Plus,
-  Search,
-  ArrowUpRight,
-  ArrowDownRight,
-} from 'lucide-react';
+import { Users, Plus, Search } from 'lucide-react';
+import PageInfoItem from '@/components/shared/PageInfoItem';
 
 export default function CompetitorsPage() {
   return (
@@ -21,23 +16,12 @@ export default function CompetitorsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Competitors
-              </p>
-              <h2 className="text-2xl font-bold">15</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Users className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>2 new this month</span>
-          </div>
-        </Card>
+        <PageInfoItem
+          title={' Total Competitors'}
+          icon={<Users className="text-primary" />}
+          statistic={'15'}
+          successStatus={'2 new this month'}
+        />
       </div>
 
       <Card className="p-6">

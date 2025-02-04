@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
-import {
-  getKeywordData,
-  seedInitialKeywords,
-} from '@/lib/db/models/Keyword/InitialKeywords';
+import { seedInitialKeywords } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities } from '@/lib/db/helpers';
 
 export async function GET(req: Request) {
@@ -63,19 +60,6 @@ export async function POST(request: Request) {
         Keyword
       );
       return NextResponse.json(keywords);
-    } else {
-      const keywordData = getKeywordData(
-        { ...data },
-        { isDefaultKeywords: true, term: data?.term }
-      );
-      await Keyword.create(keywordData);
-      const keywords = await paginateEntities(
-        page as number,
-        size as number,
-        Keyword
-      );
-
-      return NextResponse.json(keywords);
     }
   } catch (error) {
     console.error('Failed to create keyword:', error);
@@ -105,6 +89,8 @@ export async function PATCH(request: Request) {
       },
       { new: true, runValidators: true }
     );
+    console.log('p patch: ', page);
+
     const keywords = await paginateEntities(
       page as number,
       size as number,

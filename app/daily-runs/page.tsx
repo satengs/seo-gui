@@ -2,8 +2,9 @@
 
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Calendar, BarChart3, ArrowUpRight } from 'lucide-react';
+import { Calendar, BarChart3 } from 'lucide-react';
 import { PerformanceChart } from '@/components/ui/performance-chart';
+import PageInfoItem from '@/components/shared/PageInfoItem';
 
 const performanceData = [
   {
@@ -26,11 +27,11 @@ const performanceData = [
     success: 98,
     keywords: 1238,
   },
-  // {
-  //   date: "Fri",
-  //   success: 96,
-  //   keywords: 1242,
-  // },
+  {
+    date: 'Fri',
+    success: 96,
+    keywords: 1242,
+  },
 ];
 
 const chartLines = [
@@ -50,37 +51,17 @@ export default function DailyRunsPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Success Rate
-              </p>
-              <h2 className="text-2xl font-bold">98%</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <BarChart3 className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center text-green-600">
-            <ArrowUpRight className="mr-1 h-4 w-4" />
-            <span>2% from last week</span>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Keywords Tracked
-              </p>
-              <h2 className="text-2xl font-bold">1,234</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <BarChart3 className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </Card>
+        <PageInfoItem
+          title={'Success Rate'}
+          icon={<BarChart3 className="text-primary" />}
+          statistic={'98%'}
+          successStatus={'2% from last week'}
+        />
+        <PageInfoItem
+          title={'Keywords Tracked'}
+          icon={<BarChart3 className="text-primary" />}
+          statistic={'1,234'}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

@@ -35,7 +35,7 @@ const PageInfoItem: React.FC<IPageInfoItem> = ({
         </div>
       ) : null}
       {failedStatus ? (
-        <div className="mt-4 flex items-center text-sm text-green-600">
+        <div className={`mt-4 flex items-center text-sm text-red-600`}>
           <ArrowDownRight className="mr-1 h-4 w-4" />
           <span>{failedStatus}</span>
         </div>

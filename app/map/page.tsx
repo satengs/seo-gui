@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/card';
 import { Map, Globe } from 'lucide-react';
+import PageInfoItem from '@/components/shared/PageInfoItem';
 
 export default function MapPage() {
   return (
@@ -9,33 +10,16 @@ export default function MapPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Total Locations
-              </p>
-              <h2 className="text-2xl font-bold">324</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Map className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">
-                Active Regions
-              </p>
-              <h2 className="text-2xl font-bold">12</h2>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-              <Globe className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </Card>
+        <PageInfoItem
+          title={'Total Locations'}
+          icon={<Map className="text-primary" />}
+          statistic={'324'}
+        />
+        <PageInfoItem
+          title={'Active Regions'}
+          icon={<Globe className="text-primary" />}
+          statistic={'12'}
+        />
       </div>
 
       <div className="mt-8">

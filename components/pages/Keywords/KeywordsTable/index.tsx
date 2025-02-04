@@ -22,11 +22,13 @@ import { generateMultiCSV } from '@/lib/utils';
 
 interface IKeywordsTable {
   keywords: any[];
+  currentPage: number;
   onActionKeywordsChange: (data: any) => void;
 }
 
 const KeywordsTable: React.FC<IKeywordsTable> = ({
   keywords,
+  currentPage,
   onActionKeywordsChange,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,17 +161,6 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                   Export Selected ({selectedRows.size})
                 </Button>
               )}
-              {/*<Button*/}
-              {/*  variant="outline"*/}
-              {/*  size="sm"*/}
-              {/*  onClick={() => {*/}
-              {/*    setSearchTerm('');*/}
-              {/*    setSortConfig({ key: 'term', direction: 'asc' });*/}
-              {/*  }}*/}
-              {/*>*/}
-              {/*  <RefreshCw className="h-4 w-4 mr-2" />*/}
-              {/*  Reset*/}
-              {/*</Button>*/}
             </div>
           </div>
         </CardHeader>
@@ -275,8 +266,12 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                         onCheckedChange={() => toggleRowSelection(index)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {keyword?.term || ''}
+                    <TableCell className={`font-medium`}>
+                      <span
+                        className={`${keyword.isDefaultKeywords ? 'bg-blue-default dark:bg-blue-950' : 'bg-white'} p-1 leading-8`}
+                      >
+                        {keyword?.term || ''}
+                      </span>
                     </TableCell>
                     <TableCell>
                       {keyword?.kgmid || keyword?.knowledge_graph?.kgmid}
@@ -287,19 +282,9 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                         ''}
                     </TableCell>
                     <TableCell>
-                      {keyword?.kgmWebsite ||
-                      keyword?.dynamicData?.data?.knowledge_graph?.website ? (
-                        <Link
-                          href={
-                            keyword?.keyword?.kgmWebsite ||
-                            keyword?.dynamicData?.data?.knowledge_graph?.website
-                          }
-                          target={'_blank'}
-                        >
-                          {keyword?.knowledge_graph?.website ||
-                            keyword?.dynamicData?.data?.knowledge_graph
-                              ?.website ||
-                            ''}
+                      {keyword?.kgmWebsite ? (
+                        <Link href={keyword?.kgmWebsite} target={'_blank'}>
+                          {keyword?.kgmWebsite || ''}
                         </Link>
                       ) : null}
                     </TableCell>
@@ -327,6 +312,7 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                       <ActionsComponent
                         keyword={keyword}
                         onActionKeywordsChange={onActionKeywordsChange}
+                        currentPage={currentPage}
                       />
                     </TableCell>
                   </TableRow>
