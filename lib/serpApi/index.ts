@@ -1,4 +1,4 @@
-import { getHtml, getJson, getLocations } from 'serpapi';
+import { getHtml, getJson, getLocations, getAccount } from 'serpapi';
 
 export async function searchKeyword(
   keyword: string,
@@ -24,4 +24,12 @@ export async function searchLocations(loc: string = '', limit: number) {
     q: loc,
     limit: limit || 10,
   });
+}
+
+export async function getAccountInfo() {
+  const data = await getAccount({
+    api_key: process.env.SERP_API_KEY,
+  });
+  delete data['api_key'];
+  return data;
 }

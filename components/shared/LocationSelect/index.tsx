@@ -23,7 +23,7 @@ interface ILocation {
 }
 
 interface LocationSelectProps {
-  onValueChange: (item: ILocation) => void;
+  onValueChange: (item: ILocation | string) => void;
   defaultLocation?: string;
 }
 
@@ -78,7 +78,7 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
   const onLocationItemClick = useCallback(
     (e: any, item: ILocation) => {
       e.stopPropagation();
-      onValueChange(item);
+      onValueChange(item.name);
       setLocationText(item.name);
       onCLoseList();
     },
@@ -93,6 +93,8 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
     setLocationText(e.target.value);
     const locData = await fetchLocations(e.target.value);
     setLocations(locData || []);
+    onValueChange(e.target.value);
+
     onOpenList();
   };
 
@@ -131,19 +133,19 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
             'absolute z-10 bg-white w-full border border-gray-200 rounded-sm'
           }
         >
-          {locations.map((location) => (
+          {locations.map((location, index) => (
             <div
-              key={location.name}
+              key={`${location?.name}-${index}`}
               className={
                 'leading-8 px-2 py-1 border-b border-gray-200 cursor-pointer'
               }
               onClick={(e) => onLocationItemClick(e, location)}
             >
               <p className={'text-sm text-gray-800 font-medium leading-7'}>
-                {location.name}
+                {location?.name || ''}
               </p>
               <p className={'text-xs text-gray-700'}>
-                {location.reach.toLocaleString('en-US')}
+                {location?.reach?.toLocaleString('en-US') || ''}
               </p>
             </div>
           ))}

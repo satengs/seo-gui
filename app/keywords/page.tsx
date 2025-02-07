@@ -11,10 +11,12 @@ import KeywordsTable from '@/components/pages/Keywords/KeywordsTable';
 import { Info } from 'lucide-react';
 import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 import axiosClient from '@/lib/axiosClient';
-import { IKeyword } from '@/types';
+import { IAccount, IKeyword } from '@/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import PageInfoItem from '@/components/shared/PageInfoItem';
+import AccountInfoItem from '@/components/shared/AccountInfoItem';
+import JobAction from '@/components/pages/Keywords/JobAction';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -22,6 +24,7 @@ export default function KeywordsPage() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [searchText, setSearchText] = useState<string>('');
+  const [account, setAccount] = useState<IAccount>();
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(true);
   const [location, setLocation] = useState<string>('');
@@ -46,12 +49,24 @@ export default function KeywordsPage() {
     }
   }, []);
 
+  const fetchAccountData = useCallback(async () => {
+    try {
+      const response = await axiosClient.get(`/api/account`);
+      setAccount(response?.data || {});
+    } catch (err) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch account data',
+        variant: 'destructive',
+      });
+    }
+  }, []);
+
   async function searchKeywords() {
     try {
       if (!searchText?.length) {
         return;
       }
-      console.log('search text: ', searchText);
       setLoading(true);
       const reqBody = {
         term: searchText.trim(),
@@ -81,7 +96,7 @@ export default function KeywordsPage() {
   const onDeviceSelect = useCallback((value: string) => setDevice(value), []);
 
   const onValueChange = useCallback((value: any) => {
-    setLocation(value.name);
+    setLocation(value);
   }, []);
   const onKeywordsChange = useCallback((data: any) => {
     setKeywords(data?.entitiesData);
@@ -102,12 +117,14 @@ export default function KeywordsPage() {
 
   useEffect(() => {
     fetchKeywords();
-  }, [fetchKeywords]);
+    fetchAccountData();
+  }, [fetchKeywords, fetchAccountData]);
 
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold">Keywords</h1>
+        {account?.account_id ? <AccountInfoItem account={account} /> : null}
       </div>
 
       <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4">
@@ -119,6 +136,7 @@ export default function KeywordsPage() {
       </div>
 
       <Card className="p-6">
+        <JobAction />
         <div
           className={
             'flex items-center bg-fuchsia-50 rounded-md shadow-lg px-3 py-2 mb-6'

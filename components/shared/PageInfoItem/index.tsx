@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/card';
 interface IPageInfoItem {
   title: string;
   icon: ReactNode;
+  children?: ReactNode;
   statistic: string | number;
   successStatus?: string;
   failedStatus?: string;
@@ -16,6 +17,7 @@ const PageInfoItem: React.FC<IPageInfoItem> = ({
   icon,
   successStatus,
   failedStatus,
+  children,
 }) => {
   return (
     <Card className="p-3">
@@ -40,6 +42,7 @@ const PageInfoItem: React.FC<IPageInfoItem> = ({
           <span>{failedStatus}</span>
         </div>
       ) : null}
+      {children ? children : null}
     </Card>
   );
 };

@@ -11,7 +11,7 @@ const DifferenceModal: React.FC<IDifferenceModal> = ({ keywords }) => {
     <div className={`grid grid-cols-2`}>
       {keywords?.length
         ? keywords.map((keyword) => (
-            <KeywordItemSection key={keyword.term} keyword={keyword} />
+            <KeywordItemSection key={`${keyword._id}`} keyword={keyword} />
           ))
         : null}
     </div>

@@ -75,3 +75,21 @@ export async function POST(request: Request) {
     );
   }
 }
+export async function GET(request: Request) {
+  try {
+    await dbConnect();
+    const { searchParams } = new URL(request.url);
+    const term = searchParams.get('term');
+    const keywords = Keyword.find({
+      term: term,
+    });
+
+    return NextResponse.json(keywords);
+  } catch (error) {
+    console.error('Failed to create keyword:', error);
+    return NextResponse.json(
+      { error: 'Failed to create keyword' },
+      { status: 500 }
+    );
+  }
+}

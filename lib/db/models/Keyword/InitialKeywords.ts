@@ -1,36 +1,7 @@
 import mongoose from 'mongoose';
 import { searchKeyword } from '@/lib/serpApi';
 import { IKeyword } from '@/types';
-
-const initialKeywords = [
-  {
-    term: 'freedom debt relief',
-  },
-  {
-    term: 'freedom debt relief san mateo',
-  },
-  {
-    term: 'freedom debt relief arizona',
-  },
-  {
-    term: 'freedom debt relief reviews',
-  },
-  {
-    term: 'is freedom debt relief a scam',
-  },
-  {
-    term: 'is freedom debt relief legit',
-  },
-  {
-    term: 'freedom debt relief company',
-  },
-  {
-    term: 'does freedom debt relief hurt your credit',
-  },
-  {
-    term: 'is freedom debt relief a good idea',
-  },
-];
+import searchData from '@/search_data.json';
 
 export const getKeywordData = (srcObj: any, existingData: any) => {
   const keywordData: IKeyword = {
@@ -51,17 +22,24 @@ export const getKeywordData = (srcObj: any, existingData: any) => {
 
 export async function seedInitialKeywords() {
   const Keyword = mongoose.models.Keyword;
-
-  for (const keyword of initialKeywords) {
+  for (const keyword of searchData) {
     const serpResponse: any = await searchKeyword(
       keyword.term,
-      'United States',
-      'mobile'
+      keyword.location,
+      keyword.device
     );
-    const keywordData: IKeyword = getKeywordData(serpResponse, keyword);
+    const keywordData: IKeyword = getKeywordData(serpResponse, {
+      ...keyword,
+      isDefaultKeywords: true,
+    });
 
     await Keyword.findOneAndUpdate(
-      { term: keyword.term, isDefaultKeywords: true },
+      {
+        term: keyword.term,
+        location: keyword.location,
+        device: keyword.device,
+        isDefaultKeywords: true,
+      },
       keywordData,
       {
         upsert: true,
