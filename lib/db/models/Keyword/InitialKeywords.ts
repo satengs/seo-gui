@@ -1,51 +1,57 @@
-import mongoose from 'mongoose';
-import { searchKeyword } from '@/lib/serpApi';
 import { IKeyword } from '@/types';
-import searchData from '@/search_data.json';
+import Keyword from './Keyword';
 
-export const getKeywordData = (srcObj: any, existingData: any) => {
-  const keywordData: IKeyword = {
-    term: srcObj?.search_parameters?.q || srcObj?.term,
-    kgmid: srcObj?.knowledge_graph?.kgmid,
-    kgmTitle: srcObj?.knowledge_graph?.title,
-    kgmWebsite: srcObj?.knowledge_graph?.website,
-    location: srcObj?.search_parameters?.location_used || 'United States',
-    device: srcObj?.search_parameters?.device,
-    organicResultsCount: srcObj?.organic_results?.length || 0,
-    isDefaultKeywords: existingData?.isDefaultKeywords,
-    dynamicData: {
-      data: { ...srcObj },
-    },
-  };
-  return keywordData;
-};
+export const initialKeywords = [
+  {
+    "term": "freedom debt relief",
+    "location": "Los Angeles, California, United States",
+    "device": "mobile"
+  },
+  // ... rest of the keywords array
+] as const;
+
+export async function getKeywordData(term: string, location: string, device: string) {
+  try {
+    const keyword = await Keyword.findOne({
+      term,
+      location,
+      device
+    });
+    return keyword;
+  } catch (error) {
+    console.error('Error fetching keyword data:', error);
+    return null;
+  }
+}
 
 export async function seedInitialKeywords() {
-  const Keyword = mongoose.models.Keyword;
-  for (const keyword of searchData) {
-    const serpResponse: any = await searchKeyword(
-      keyword.term,
-      keyword.location,
-      keyword.device
-    );
-    const keywordData: IKeyword = getKeywordData(serpResponse, {
-      ...keyword,
-      isDefaultKeywords: true,
-    });
+  try {
+    console.log('Starting to seed initial keywords...');
 
-    await Keyword.findOneAndUpdate(
-      {
-        term: keyword.term,
-        location: keyword.location,
-        device: keyword.device,
-        isDefaultKeywords: true,
-      },
-      keywordData,
-      {
-        upsert: true,
-        new: true,
-        setDefaultsOnInsert: true,
+    const operations = initialKeywords.map(keyword => ({
+      updateOne: {
+        filter: {
+          term: keyword.term,
+          location: keyword.location,
+          device: keyword.device
+        },
+        update: {
+          $setOnInsert: {
+            ...keyword,
+            isDefaultKeywords: true,
+            historicalData: new Map()
+          }
+        },
+        upsert: true
       }
-    );
+    }));
+
+    const result = await Keyword.bulkWrite(operations);
+    console.log('Initial keywords seeded successfully:', result);
+
+    return result;
+  } catch (error) {
+    console.error('Error seeding initial keywords:', error);
+    throw error;
   }
 }

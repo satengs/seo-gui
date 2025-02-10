@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import React, {useMemo, useState} from 'react';
+import {Button} from '@/components/ui/button';
 
 interface IPaginationProps {
   totalCount: number;

@@ -1,18 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import {useState} from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import {
-  BarChart3,
-  Search,
-  Map,
-  KeyRound,
-  Users,
-  Calendar,
-  Menu,
-} from 'lucide-react';
+import {usePathname} from 'next/navigation';
+import {cn} from '@/lib/utils';
+import {BarChart3, Calendar, KeyRound, Map, Menu, Search, Users,} from 'lucide-react';
 
 const menuItems = [
   {

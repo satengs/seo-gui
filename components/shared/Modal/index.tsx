@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+import React, {useEffect} from 'react';
 import ReactDOM from 'react-dom';
 
-import { SidebarCloseIcon } from 'lucide-react';
+import {SidebarCloseIcon} from 'lucide-react';
 
 interface IModalProps {
   isOpen: boolean;

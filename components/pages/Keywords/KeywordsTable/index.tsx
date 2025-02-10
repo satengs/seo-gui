@@ -1,24 +1,17 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+import {useCallback, useMemo, useState} from 'react';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Download, Search, ArrowUpDown } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Checkbox } from '@/components/ui/checkbox';
+import {Button} from '@/components/ui/button';
+import {ArrowUpDown, Download, Search} from 'lucide-react';
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
+import {Input} from '@/components/ui/input';
+import {Checkbox} from '@/components/ui/checkbox';
 import Modal from '@/components/shared/Modal';
 import DifferenceModal from '@/components/pages/Keywords/DifferenceModal';
 import ActionsComponent from '@/components/pages/Keywords/KeywordsTable/ActionsComponent';
-import { generateMultiCSV } from '@/lib/utils';
+import {generateMultiCSV} from '@/lib/utils';
 
 interface IKeywordsTable {
   keywords: any[];
