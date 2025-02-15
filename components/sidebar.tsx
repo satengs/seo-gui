@@ -5,6 +5,7 @@ import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {cn} from '@/lib/utils';
 import {BarChart3, Calendar, KeyRound, Map, Menu, Search, Users,} from 'lucide-react';
+import Image from "next/image";
 
 const menuItems = [
   {
@@ -52,7 +53,7 @@ export default function Sidebar() {
     >
       <div className="flex h-16 items-center justify-between px-4">
         {!collapsed && (
-          <h2 className="text-lg font-semibold">Search Analytics</h2>
+          <Image src={'/gifik.gif'} alt={'searching'} width={100} height={50}/>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

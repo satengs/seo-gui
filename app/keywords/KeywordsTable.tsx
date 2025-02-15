@@ -23,17 +23,21 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { IKeyword } from '@/types';
+import { IKeyword, DailyData } from '@/types';
 
 interface KeywordsTableProps {
     keywords: IKeyword[];
     currentPage: number;
+    totalCount: number;
+    totalPages: number;
     onActionKeywordsChange: (data: any) => void;
 }
 
 export default function KeywordsTable({
                                           keywords = [],
                                           currentPage,
+                                          totalCount,
+                                          totalPages,
                                           onActionKeywordsChange
                                       }: KeywordsTableProps) {
     const [searchTerm, setSearchTerm] = useState('');
@@ -61,7 +65,7 @@ export default function KeywordsTable({
 
             // Handle historical data fields
             if (key.startsWith('historical.')) {
-                const historyKey = key.split('.')[1];
+                const historyKey = key.split('.')[1] as keyof DailyData;
                 const aHistory = Array.from(a.historicalData.values())[0];
                 const bHistory = Array.from(b.historicalData.values())[0];
                 aValue = aHistory?.[historyKey];
@@ -107,12 +111,17 @@ export default function KeywordsTable({
     const getLatestHistoricalData = (keyword: IKeyword) => {
         if (!keyword.historicalData) return null;
 
-        const histData = keyword.historicalData instanceof Map
-            ? keyword.historicalData
-            : new Map(Object.entries(keyword.historicalData));
+        try {
+            const histData = keyword.historicalData instanceof Map
+                ? keyword.historicalData
+                : new Map(Object.entries(keyword.historicalData || {}));
 
-        const values = Array.from(histData.values());
-        return values[0] || null;
+            const values = Array.from(histData.values());
+            return values[0] || null;
+        } catch (error) {
+            console.error('Error processing historical data:', error);
+            return null;
+        }
     };
 
     const getHistoricalDates = (keyword: IKeyword) => {
@@ -197,11 +206,14 @@ export default function KeywordsTable({
     };
 
     return (
-        <div className="container mx-auto py-8">
-            <Card>
+        <div className="mx-1 py-3">
+            <Card className={"bg-opacity-5 bg-gray-200"}>
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Keywords</CardTitle>
+                        <div className="text-sm text-muted-foreground">
+                            Total: {totalCount} keywords
+                        </div>
                         <div className="flex items-center space-x-2">
                             <Button
                                 variant="outline"

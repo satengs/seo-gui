@@ -4,12 +4,10 @@ import { useEffect, useState, ChangeEvent, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LocationSelect from '@/components/shared/LocationSelect';
-import { KeyRound, Search } from 'lucide-react';
+import { KeyRound, Search, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DeviceSelect from '@/components/shared/DeviceSelect';
 import KeywordsTable from './KeywordsTable';
-import { Info } from 'lucide-react';
-import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 import axiosClient from '@/lib/axiosClient';
 import { IAccount, IKeyword } from '@/types';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,11 +16,13 @@ import PageInfoItem from '@/components/shared/PageInfoItem';
 import AccountInfoItem from '@/components/shared/AccountInfoItem';
 import JobAction from '@/components/pages/Keywords/JobAction';
 import { mockKeywords } from '@/lib/mockData';
+import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
   const [asDefault, setAsDefault] = useState<boolean>(false);
   const [totalCount, setTotalCount] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchText, setSearchText] = useState<string>('');
   const [account, setAccount] = useState<IAccount>();
@@ -39,10 +39,12 @@ export default function KeywordsPage() {
       if (response?.data?.entitiesData) {
         setKeywords(response.data.entitiesData);
         setTotalCount(response.data.totalCount);
+        setTotalPages(response.data.totalPages);
       } else {
         // Fallback to mock data if no real data is available
         setKeywords(mockKeywords);
         setTotalCount(mockKeywords.length);
+        setTotalPages(1);
         toast({
           title: 'Using Demo Data',
           description: 'Connected to demo environment',
@@ -53,6 +55,7 @@ export default function KeywordsPage() {
       // Fallback to mock data on error
       setKeywords(mockKeywords);
       setTotalCount(mockKeywords.length);
+      setTotalPages(1);
       toast({
         title: 'Using Demo Data',
         description: 'Connected to demo environment',
@@ -91,6 +94,7 @@ export default function KeywordsPage() {
       const response = await axiosClient.post('/api/keywords/search', reqBody);
       setKeywords(response?.data?.entitiesData || []);
       setTotalCount(response?.data?.totalCount);
+      setTotalPages(response?.data?.totalPages);
       toast({
         title: 'Success',
         description: 'Keywords searched successfully',
@@ -103,6 +107,7 @@ export default function KeywordsPage() {
       );
       setKeywords(filteredMockData);
       setTotalCount(filteredMockData.length);
+      setTotalPages(1);
       toast({
         title: 'Using Demo Data',
         description: 'Connected to demo environment',
@@ -125,6 +130,7 @@ export default function KeywordsPage() {
   const onKeywordsChange = useCallback((data: any) => {
     setKeywords(data?.entitiesData);
     setTotalCount(data?.totalCount);
+    setTotalPages(data?.totalPages);
   }, []);
 
   const onKeywordsPaginate = useCallback(
@@ -146,20 +152,20 @@ export default function KeywordsPage() {
 
   return (
       <div className="p-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Keywords</h1>
-          {account && <AccountInfoItem account={account} />}
-        </div>
+        {/*<div className="flex justify-between items-center">*/}
+        {/*  <h1 className="text-2xl font-bold">Keywords</h1>*/}
+        {/*  /!*{account && <AccountInfoItem account={account} />}*!/*/}
+        {/*</div>*/}
 
-        <div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4">
-          <PageInfoItem
-              title={'Total Keywords'}
-              icon={<KeyRound className="h-5 w-5 text-primary" />}
-              statistic={totalCount}
-          />
-        </div>
+        {/*<div className="grid gap-6 md:grid-cols-3 lg:grid-cols-4">*/}
+        {/*  <PageInfoItem*/}
+        {/*      title={'Total Keywords'}*/}
+        {/*      icon={<KeyRound className="h-5 w-5 text-primary" />}*/}
+        {/*      statistic={totalCount}*/}
+        {/*  />*/}
+        {/*</div>*/}
 
-        <Card className="p-6">
+        <Card className="px-6">
           <JobAction />
           <div className="flex items-center bg-fuchsia-50 rounded-md shadow-lg px-3 py-2 mb-6">
             <Info className="text-primary bg-blue-95 dark:text-blue-17 opacity-60" />
@@ -213,11 +219,18 @@ export default function KeywordsPage() {
                   keywords={keywords}
                   onActionKeywordsChange={onKeywordsChange}
                   currentPage={currentPage}
+                  totalCount={totalCount}
+                  totalPages={totalPages}
               />
           ) : (
               <p>...Loading keywords</p>
           )}
-          <Pagination totalCount={totalCount} onPageChange={onKeywordsPaginate} />
+          <Pagination
+              totalCount={totalCount}
+              totalPages={totalPages}
+              currentPage={currentPage}
+              onPageChange={onKeywordsPaginate}
+          />
         </Card>
       </div>
   );
