@@ -1,5 +1,6 @@
 import { IKeyword } from '@/types';
 import Keyword from './Keyword';
+import {searchKeyword} from "@/lib/serpApi";
 
 export const initialKeywords = [
   {
@@ -564,16 +565,56 @@ export const initialKeywords = [
   }
 ] as const;
 
+export const getKeywordData1 = (srcObj: any, existingData: any) => {
+  const keywordData: IKeyword = {
+    _id: existingData?._id,
+    term: srcObj?.search_parameters?.q || srcObj?.term,
+    kgmid: srcObj?.knowledge_graph?.kgmid,
+    kgmTitle: srcObj?.knowledge_graph?.kgmTitle,
+    kgmWebsite: srcObj?.knowledge_graph?.website,
+    location: srcObj?.search_parameters?.location_used || 'United States',
+    device: srcObj?.search_parameters?.device,
+    organicResultsCount: srcObj?.organic_results?.length || 0,
+    keywordTerm: existingData?.keywordTerm,
+    isDefaultKeywords: existingData?.isDefaultKeywords,
+    historicalData: existingData?.historicalData,
+    createdAt: existingData?.createdAt,
+    updatedAt: existingData?.update,
+    keywordData: {
+      data: { ...srcObj },
+    },
+  };
+  return keywordData;
+};
+
 export async function getKeywordData(term: string, location: string, device: string) {
   try {
-    const keyword = await Keyword.findOne({
+    const searchResults:any = await searchKeyword(term, location, device);
+    const todayKey = new Date().toISOString().split('T')[0];
+
+    const dailyData = {
+      organicResultsCount: searchResults?.search_information?.totalResults || 0,
+      kgmid: searchResults?.knowledge_graph?.kgmid || '',
+      kgmTitle: searchResults?.knowledge_graph?.title || '',
+      kgmWebsite: searchResults?.knowledge_graph?.website || '',
       term,
+      device,
       location,
-      device
-    });
-    return keyword;
+      difficulty: null,
+      volume: null,
+      backlinksNeeded: null,
+      keywordData: {data: {...searchResults}},
+      timestamp: new Date().toISOString()
+    };
+
+    console.log("________________________", dailyData)
+    return {
+      ...dailyData,
+      historicalData: new Map([[todayKey, dailyData]]),
+      isDefaultKeywords: true,
+    };
   } catch (error) {
-    console.error('Error fetching keyword data:', error);
+    console.error(`Error fetching keyword data for ${term}:`, error);
     return null;
   }
 }
@@ -581,29 +622,40 @@ export async function getKeywordData(term: string, location: string, device: str
 export async function seedInitialKeywords() {
   try {
     console.log('Starting to seed initial keywords...');
+    const results = [];
 
-    const operations = initialKeywords.map(keyword => ({
-      updateOne: {
-        filter: {
-          term: keyword.term,
-          location: keyword.location,
-          device: keyword.device
-        },
-        update: {
-          $setOnInsert: {
-            ...keyword,
-            isDefaultKeywords: true,
-            historicalData: new Map()
-          }
-        },
-        upsert: true
+    for (const keyword of initialKeywords) {
+      try {
+        const keywordData = await getKeywordData(
+            keyword.term,
+            keyword.location,
+            keyword.device
+        );
+
+        if (keywordData) {
+          const result = await Keyword.findOneAndUpdate(
+              {
+                term: keyword.term,
+                location: keyword.location,
+                device: keyword.device
+              },
+              {
+                $set: keywordData
+              },
+              {
+                upsert: true,
+                new: true
+              }
+          );
+          results.push(result);
+        }
+      } catch (error) {
+        console.error(`Error processing keyword ${keyword.term}:`, error);
       }
-    }));
+    }
 
-    const result = await Keyword.bulkWrite(operations);
-    console.log('Initial keywords seeded successfully:', result);
-
-    return result;
+    console.log(`Successfully seeded ${results.length} keywords`);
+    return results;
   } catch (error) {
     console.error('Error seeding initial keywords:', error);
     throw error;

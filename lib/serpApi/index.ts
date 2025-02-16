@@ -1,23 +1,7 @@
 import { getHtml, getJson, getLocations, getAccount } from 'serpapi';
 
-export async function searchKeyword(
-  keyword: string,
-  location?: string,
-  device?: string,
-  type = 'json'
-) {
-  const searchData = {
-    q: keyword,
-    api_key: process.env.SERP_API_KEY,
-    location: location || '',
-    engine: 'google',
-    device: device || 'desktop',
-  };
-  if (type === 'html') {
-    return await getHtml(searchData);
-  }
-  return await getJson(searchData);
-}
+
+const API_KEY = process.env.NEXT_PUBLIC_SERP_API_KEY;
 
 export async function searchLocations(loc: string = '', limit: number) {
   return await getLocations({
@@ -32,4 +16,23 @@ export async function getAccountInfo() {
   });
   delete data['api_key'];
   return data;
+}
+
+export async function searchKeyword(
+    keyword: string,
+    location?: string,
+    device?: string,
+    type = 'json'
+) {
+  const searchData = {
+    q: keyword,
+    api_key: process.env.SERP_API_KEY,
+    location: location || '',
+    engine: 'google',
+    device: device || 'desktop',
+  };
+  if (type === 'html') {
+    return await getHtml(searchData);
+  }
+  return await getJson(searchData);
 }

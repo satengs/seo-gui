@@ -1,9 +1,22 @@
 import mongoose from 'mongoose';
 
 // Schema for daily metrics and data
+const DynamicData = new mongoose.Schema({
+    id: {
+        type: Number,
+        autoIncrement: true,
+    },
+    data: {
+        type: Object,
+    },
+});
+
 const DailyDataSchema = new mongoose.Schema({
     organicResultsCount: {
         type: Number,
+    },
+    kgmid: {
+        type: String,
     },
     kgmTitle: {
         type: String,
@@ -23,7 +36,9 @@ const DailyDataSchema = new mongoose.Schema({
     timestamp: {
         type: Date,
         default: Date.now,
-    }
+    },
+    keywordData: DynamicData,
+
 }, { _id: false }); // Disable _id for subdocuments
 
 const KeywordSchema = new mongoose.Schema(
@@ -46,9 +61,18 @@ const KeywordSchema = new mongoose.Schema(
             enum: ['desktop', 'mobile', 'tablet'],
         },
         // Unique identifier combining term, device, and location
-        keyword_term: {
+        keywordTerm: {
             type: String,
             unique: true,
+        },
+        kgmTitle: {
+            type: String,
+        },
+        kgmWebsite: {
+            type: String,
+        },
+        organicResultsCount: {
+            type: Number,
         },
         isDefaultKeywords: {
             type: Boolean,
@@ -59,7 +83,16 @@ const KeywordSchema = new mongoose.Schema(
             type: Map,
             of: DailyDataSchema,
             default: new Map(),
-        }
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now,
+        },
+        updatedAt: {
+            type: Date,
+            default: Date.now,
+        },
+        keywordData: DynamicData,
     },
     {
         timestamps: true,
@@ -68,7 +101,7 @@ const KeywordSchema = new mongoose.Schema(
 
 // Pre-save middleware to generate keyword_term
 KeywordSchema.pre('save', function(next) {
-    this.keyword_term = `${this.term}_${this.device}_${this.location}`.toLowerCase();
+    this.keywordTerm = `${this.term}_${this.device}_${this.location}`.toLowerCase();
     next();
 });
 

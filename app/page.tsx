@@ -91,8 +91,8 @@ export default function Home() {
             </header>
 
             <main className="container mx-auto px-4 py-8">
-                <div className="grid gap-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <Card>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                                 <CardTitle className="text-sm font-medium">

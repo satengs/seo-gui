@@ -25,7 +25,7 @@ export default function KeywordsPage() {
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [searchText, setSearchText] = useState<string>('');
-  const [account, setAccount] = useState<IAccount>();
+  const [account, setAccount] = useState< IAccount>();
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(true);
   const [location, setLocation] = useState<string>('');
@@ -34,7 +34,7 @@ export default function KeywordsPage() {
   const fetchKeywords = useCallback(async (page: number = 1, size?: number) => {
     try {
       const response = await axiosClient.get(
-          `/api/keywords?page=${page || 1}&size=${size || 10}`
+          `/api/keywords?page=${page || 1}&size=${size || 30}`
       );
       if (response?.data?.entitiesData) {
         setKeywords(response.data.entitiesData);
@@ -151,7 +151,7 @@ export default function KeywordsPage() {
   }, [fetchKeywords, fetchAccountData]);
 
   return (
-      <div className="p-6 space-y-6">
+      <div className="p-1.5 space-y-6">
         {/*<div className="flex justify-between items-center">*/}
         {/*  <h1 className="text-2xl font-bold">Keywords</h1>*/}
         {/*  /!*{account && <AccountInfoItem account={account} />}*!/*/}

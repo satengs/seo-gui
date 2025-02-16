@@ -125,13 +125,19 @@ export default function KeywordsTable({
     };
 
     const getHistoricalDates = (keyword: IKeyword) => {
-        if (!keyword.historicalData) return [];
-
-        const histData = keyword.historicalData instanceof Map
-            ? keyword.historicalData
-            : new Map(Object.entries(keyword.historicalData));
-
-        return Array.from(histData.keys()).sort().reverse();
+        const data = []
+        for (let [key, value] of keyword.historicalData) {
+            data.push({
+                    date:key,
+                    id: value._id,
+                    kgmid: value.kgmid,
+                    kgmTitle: value.kgmTitle,
+                    kgmWebsite: value.kgmWebsite,
+                    organicResultsCount: value.organicResultsCount,
+                    timestamp: value.timestamp
+            })
+        }
+        return data
     };
 
     const handleSort = (key: string) => {
@@ -182,6 +188,7 @@ export default function KeywordsTable({
                     keyword.term,
                     keyword.location,
                     keyword.device,
+                    keyword.kgmid,
                     `"${entry.kgmTitle || ''}"`,
                     `"${entry.kgmWebsite || ''}"`,
                     entry.organicResultsCount,
@@ -263,7 +270,7 @@ export default function KeywordsTable({
                                         />
                                     </TableHead>
                                     <TableHead className="w-[30px]"></TableHead>
-                                    <TableHead>
+                                    <TableHead className="w-[300px]">
                                         <Button variant="ghost" onClick={() => handleSort('term')}>
                                             Keyword
                                             <ArrowUpDown className="ml-2 h-4 w-4" />
@@ -282,48 +289,42 @@ export default function KeywordsTable({
                                         </Button>
                                     </TableHead>
                                     <TableHead>
-                                        <Button variant="ghost" onClick={() => handleSort('historical.kgmTitle')}>
+                                        <Button variant="ghost" onClick={() => handleSort('kgmTitle')}>
+                                            KGM ID
+                                            <ArrowUpDown className="ml-2 h-4 w-4" />
+                                        </Button>
+                                    </TableHead>
+                                    <TableHead>
+                                        <Button variant="ghost" onClick={() => handleSort('kgmTitle')}>
                                             KGM Title
                                             <ArrowUpDown className="ml-2 h-4 w-4" />
                                         </Button>
                                     </TableHead>
                                     <TableHead>KGM Website</TableHead>
                                     <TableHead className="text-right">
-                                        <Button variant="ghost" onClick={() => handleSort('historical.organicResultsCount')}>
+                                        <Button variant="ghost" onClick={() => handleSort('organicResultsCount')}>
                                             Organic Results
                                             <ArrowUpDown className="ml-2 h-4 w-4" />
                                         </Button>
                                     </TableHead>
-                                    <TableHead className="text-right">
-                                        <Button variant="ghost" onClick={() => handleSort('historical.difficulty')}>
-                                            Difficulty
-                                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        <Button variant="ghost" onClick={() => handleSort('historical.volume')}>
-                                            Volume
-                                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </TableHead>
-                                    <TableHead className="text-right">
-                                        <Button variant="ghost" onClick={() => handleSort('historical.backlinksNeeded')}>
-                                            Backlinks
-                                            <ArrowUpDown className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </TableHead>
+                                    {/*<TableHead className="text-right">*/}
+                                    {/*    <Button variant="ghost" onClick={() => handleSort('backlinksNeeded')}>*/}
+                                    {/*        Backlinks*/}
+                                    {/*        <ArrowUpDown className="ml-2 h-4 w-4" />*/}
+                                    {/*    </Button>*/}
+                                    {/*</TableHead>*/}
                                     <TableHead>Last Updated</TableHead>
                                     <TableHead className="w-[100px]">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody>
+                            <TableBody className={"text-md"}>
                                 {filteredAndSortedData.map((keyword) => {
-                                    const latestData = getLatestHistoricalData(keyword);
+                                    // const latestData = getLatestHistoricalData(keyword);
                                     const dates = getHistoricalDates(keyword);
-
+                                    console.log("by dates", dates)
                                     return (
                                         <React.Fragment key={keyword._id}>
-                                            <TableRow className="hover:bg-muted/50">
+                                            <TableRow className="hover:bg-muted/50 pointer">
                                                 <TableCell>
                                                     <Checkbox
                                                         checked={selectedRows.has(keyword._id)}
@@ -345,39 +346,34 @@ export default function KeywordsTable({
                                                     </Button>
                                                 </TableCell>
                                                 <TableCell className="font-medium">
-                          <span className={`${keyword.isDefaultKeywords ? "bg-blue-100 dark:bg-blue-950" : ""} px-2 py-1 rounded-md`}>
-                            {keyword.term}
-                          </span>
+                          <div className={`${keyword.isDefaultKeywords ? "bg-blue-100 dark:bg-blue-950" : ""} px-2 py-1 rounded-md`} title={`${keyword.isDefaultKeywords ? 'this is a default keyword' : ''}`}>
+                              <span>{keyword.term}</span>
+                          </div>
                                                 </TableCell>
                                                 <TableCell>{keyword.location}</TableCell>
                                                 <TableCell className="capitalize">{keyword.device}</TableCell>
-                                                <TableCell>{latestData?.kgmTitle || ''}</TableCell>
+                                                <TableCell>{keyword.kgmid || '-'}</TableCell>
+                                                <TableCell>{keyword.kgmTitle || '-'}</TableCell>
                                                 <TableCell>
-                                                    {latestData?.kgmWebsite && (
+                                                    {keyword.kgmWebsite && (
                                                         <Link
-                                                            href={latestData.kgmWebsite}
+                                                            href={keyword.kgmWebsite}
                                                             target="_blank"
                                                             className="flex items-center hover:underline"
                                                         >
-                                                            {new URL(latestData.kgmWebsite).hostname}
+                                                            {new URL(keyword.kgmWebsite).hostname}
                                                             <ExternalLink className="ml-1 h-3 w-3" />
                                                         </Link>
                                                     )}
                                                 </TableCell>
                                                 <TableCell className="text-right font-mono">
-                                                    {latestData?.organicResultsCount?.toLocaleString() || ''}
+                                                    {keyword.organicResultsCount?.toLocaleString() || '-'}
                                                 </TableCell>
-                                                <TableCell className="text-right font-mono">
-                                                    {latestData?.difficulty || '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right font-mono">
-                                                    {latestData?.volume?.toLocaleString() || '-'}
-                                                </TableCell>
-                                                <TableCell className="text-right font-mono">
-                                                    {latestData?.backlinksNeeded || '-'}
-                                                </TableCell>
+                                                {/*<TableCell className="text-right font-mono">*/}
+                                                {/*    {keyword.backlinksNeeded || '-'}*/}
+                                                {/*</TableCell>*/}
                                                 <TableCell>
-                                                    {dates[0] || ''}
+                                                    {keyword.updatedAt || ''}
                                                 </TableCell>
                                                 <TableCell>
                                                     <Button
@@ -405,48 +401,47 @@ export default function KeywordsTable({
                                                                 <Table>
                                                                     <TableHeader>
                                                                         <TableRow className="hover:bg-transparent">
-                                                                            <TableHead className="w-[100px]">Date</TableHead>
+                                                                            <TableHead className="w-[540px]">Date</TableHead>
+                                                                            <TableHead>KGM ID</TableHead>
                                                                             <TableHead>KGM Title</TableHead>
                                                                             <TableHead>KGM Website</TableHead>
                                                                             <TableHead className="text-right">Organic Results</TableHead>
-                                                                            <TableHead className="text-right">Difficulty</TableHead>
-                                                                            <TableHead className="text-right">Volume</TableHead>
-                                                                            <TableHead className="text-right">Backlinks</TableHead>
+                                                                            {/*<TableHead className="text-right">Backlinks</TableHead>*/}
                                                                         </TableRow>
                                                                     </TableHeader>
-                                                                    <TableBody>
-                                                                        {dates.slice(1).map((date) => {
-                                                                            const entry = keyword.historicalData.get(date);
-                                                                            if (!entry) return null;
+                                                                    <TableBody className={"text-xs"}>
+                                                                        {dates.map((entry) => {
+
 
                                                                             return (
-                                                                                <TableRow key={date} className="hover:bg-muted/30">
-                                                                                    <TableCell className="py-2 font-medium">{date}</TableCell>
-                                                                                    <TableCell>{entry.kgmTitle || ''}</TableCell>
+                                                                                <TableRow key={entry.date} className="hover:bg-muted/30">
+                                                                                    <TableCell className="py-2 font-medium">{entry.date}</TableCell>
+                                                                                    <TableCell>{entry.kgmid || '-'}</TableCell>
+                                                                                    <TableCell>{entry.kgmTitle || '-'}</TableCell>
                                                                                     <TableCell>
-                                                                                        {entry.kgmWebsite && (
+                                                                                        {entry.kgmWebsite ? (
                                                                                             <Link
                                                                                                 href={entry.kgmWebsite}
                                                                                                 target="_blank"
                                                                                                 className="flex items-center hover:underline"
                                                                                             >
-                                                                                                {new URL(entry.kgmWebsite).hostname}
+                                                                                                {new URL(entry.kgmWebsite)?.hostname}
                                                                                                 <ExternalLink className="ml-1 h-3 w-3" />
                                                                                             </Link>
-                                                                                        )}
+                                                                                        ): null}
                                                                                     </TableCell>
                                                                                     <TableCell className="text-right font-mono">
-                                                                                        {entry.organicResultsCount?.toLocaleString() || ''}
+                                                                                        {entry.organicResultsCount || '-'}
                                                                                     </TableCell>
-                                                                                    <TableCell className="text-right font-mono">
-                                                                                        {entry.difficulty || '-'}
-                                                                                    </TableCell>
-                                                                                    <TableCell className="text-right font-mono">
-                                                                                        {entry.volume?.toLocaleString() || '-'}
-                                                                                    </TableCell>
-                                                                                    <TableCell className="text-right font-mono">
-                                                                                        {entry.backlinksNeeded || '-'}
-                                                                                    </TableCell>
+                                                                                    {/*<TableCell className="text-right font-mono">*/}
+                                                                                    {/*    {entry.difficulty || '-'}*/}
+                                                                                    {/*</TableCell>*/}
+                                                                                    {/*<TableCell className="text-right font-mono">*/}
+                                                                                    {/*    {entry.volume?.toLocaleString() || '-'}*/}
+                                                                                    {/*</TableCell>*/}
+                                                                                    {/*<TableCell className="text-right font-mono">*/}
+                                                                                    {/*    {entry.backlinksNeeded || '-'}*/}
+                                                                                    {/*</TableCell>*/}
                                                                                 </TableRow>
                                                                             );
                                                                         })}

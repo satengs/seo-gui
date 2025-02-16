@@ -1,53 +1,118 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
-import DailyRun from '@/lib/db/models/DailyRun';
 import { searchKeyword } from '@/lib/serpApi';
+import { SearchKeywordResponse } from '@/types';
+import DailyRun from "@/lib/db/models/DailyRun";
 
+
+const extractTotalResults = (searchResults: SearchKeywordResponse): number => {
+  if (searchResults.organic_results?.length) {
+    return searchResults.organic_results.length;
+  }
+  return 0;
+};
 export async function POST() {
   try {
     await dbConnect();
-    const keywords = await Keyword.find();
+    console.log('Fetching default keywords...');
+    const keywords = await Keyword.find({ isDefaultKeywords: true });
+
+    if (!keywords.length) {
+      return NextResponse.json({
+        message: 'No default keywords found',
+        results: []
+      });
+    }
+
     const results = [];
+    const todayKey = new Date().toISOString().split('T')[0];
 
     for (const keyword of keywords) {
       try {
-        // const searchResults = await searchKeyword(keyword.term)
-        const searchResults: any[] = [];
+        console.log(`Searching keyword: ${keyword.term}`);
+        const searchResults = await searchKeyword(
+            keyword.term,
+            keyword.location,
+            keyword.device,
+        ) as SearchKeywordResponse;
 
-        // Find our position in the results
-        const ranking =
-          searchResults.findIndex((result) =>
-            result.link.includes('freedomdebtrelief.com')
-          ) + 1 || null;
+        console.log({searchResults})
+        if (searchResults.error) {
+          results.push({
+            keyword: keyword.term,
+            error: `SERP API error: ${searchResults.error}`
+          });
+          continue;
+        }
+
+        // Create daily metrics data
+        const dailyData = {
+          organicResultsCount: searchResults.search_information?.total_results || 0,
+          kgmid: searchResults?.knowledge_graph?.kgmid || '',
+          kgmTitle: searchResults.knowledge_graph?.title || '',
+          kgmWebsite: searchResults.knowledge_graph?.website || '',
+          difficulty: null,
+          volume: null,
+          term: keyword.term,
+          device: keyword.device,
+          location: keyword.location,
+          backlinksNeeded: null,
+          timestamp: new Date().toISOString(),
+          'keywordData.data': {...searchResults},
+        };
+
 
         // Create a daily run record
         const dailyRun = await DailyRun.create({
           keyword: keyword._id,
-          ranking,
-          impressions: searchResults.length,
-          ctr: ranking ? (1 / ranking) * 100 : 0,
+          ranking: extractTotalResults(searchResults),
+          impressions: extractTotalResults(searchResults),
+          ctr: 0,
+          date: new Date()
         });
-
         // Update keyword with latest results
-        await Keyword.findByIdAndUpdate(keyword._id, {
-          lastResults: searchResults,
-          lastChecked: new Date(),
-        });
+        await Keyword.findByIdAndUpdate(
+            keyword._id,
+            {
+              $set: {
+                [`historicalData.${todayKey}`]: dailyData,
+                kgmid: searchResults.knowledge_graph?.kgmid || '',
+                kgmTitle: searchResults.knowledge_graph?.title || '',
+                kgmWebsite: searchResults.knowledge_graph?.website || '',
+                organicResultsCount: extractTotalResults(searchResults),
+                'keywordData.data': {...searchResults},
+                updatedAt: new Date(),
+              }
+            },
+            { new: true }
+        );
 
-        results.push({ keyword: keyword.term, ranking, dailyRun });
+        results.push({
+          keyword: keyword.term,
+          success: true,
+          dailyData,
+          dailyRun
+        });
       } catch (error) {
         console.error(`Failed to check keyword ${keyword.term}:`, error);
-        results.push({ keyword: keyword.term, error: 'Failed to check' });
+        results.push({
+          keyword: keyword.term,
+          error: 'Failed to check keyword'
+        });
       }
     }
 
-    return NextResponse.json(results);
+    return NextResponse.json({
+      message: `Successfully checked ${results.filter(r => !r.error).length} keywords. ` +
+          `Failed: ${results.filter(r => r.error).length}`,
+      results
+    });
   } catch (error) {
     console.error('Failed to check keywords:', error);
     return NextResponse.json(
-      { error: 'Failed to check keywords' },
-      { status: 500 }
+        { error: 'Failed to check keywords' },
+        { status: 500 }
     );
   }
 }

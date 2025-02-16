@@ -47,13 +47,13 @@ export default function Sidebar() {
   return (
     <div
       className={cn(
-        'border-r bg-card text-card-foreground transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64'
+        'sticky top-0 z-50 border-r bg-card text-card-foreground transition-all duration-300',
+        collapsed ? 'w-16' : 'w-48 min-w-48'
       )}
     >
-      <div className="flex h-16 items-center justify-between px-4">
+      <div className="sticky top-0 z-50 flex h-16 items-center justify-between p-4">
         {!collapsed && (
-          <Image src={'/gifik.gif'} alt={'searching'} width={100} height={50}/>
+          <Image src={'/gifik.gif'} alt={'searching'} width={130} height={50}/>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -62,7 +62,7 @@ export default function Sidebar() {
           <Menu className="h-5 w-5" />
         </button>
       </div>
-      <nav className="space-y-1 px-2">
+      <nav className="sticky top-16 z-50 space-y-1 px-2">
         {menuItems.map((item) => (
           <Link
             key={item.href}
