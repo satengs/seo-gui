@@ -30,6 +30,9 @@ export async function searchKeyword(
     location: location || '',
     engine: 'google',
     device: device || 'desktop',
+    output: type,
+    include_ai_overview: 'true',
+    gl: 'us',
   };
   if (type === 'html') {
     return await getHtml(searchData);

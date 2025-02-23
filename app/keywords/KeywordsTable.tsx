@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
     Table,
     TableBody,
@@ -23,6 +23,10 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
+import Modal from '@/components/shared/Modal';
+import DifferenceModal from '@/components/pages/Keywords/DifferenceModal';
+import ActionsComponent from '@/components/pages/Keywords/KeywordsTable/ActionsComponent';
+import { generateMultiCSV } from '@/lib/utils';
 import { IKeyword, DailyData } from '@/types';
 
 interface KeywordsTableProps {
@@ -47,23 +51,25 @@ export default function KeywordsTable({
         key: '',
         direction: 'asc'
     });
+    const [showModal, setShowModal] = useState<boolean>(false);
 
-    const toggleRowExpansion = (id: string) => {
-        const newExpanded = new Set(expandedRows);
-        if (newExpanded.has(id)) {
-            newExpanded.delete(id);
-        } else {
-            newExpanded.add(id);
-        }
-        setExpandedRows(newExpanded);
-    };
+    const toggleRowExpansion = useCallback((id: string) => {
+        setExpandedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
+        });
+    }, []);
 
-    const sortData = (data: IKeyword[], key: string, direction: string) => {
+    const sortData = useCallback((data: IKeyword[], key: string, direction: string) => {
         return [...data].sort((a: any, b: any) => {
             let aValue = a[key];
             let bValue = b[key];
 
-            // Handle historical data fields
             if (key.startsWith('historical.')) {
                 const historyKey = key.split('.')[1] as keyof DailyData;
                 const aHistory = Array.from(a.historicalData.values())[0];
@@ -80,16 +86,15 @@ export default function KeywordsTable({
                 bValue = bValue.toLowerCase();
             }
 
-            if (aValue < bValue) return direction === 'asc' ? -1 : 1;
-            if (aValue > bValue) return direction === 'asc' ? 1 : -1;
-            return 0;
+            return direction === 'asc'
+                ? aValue < bValue ? -1 : aValue > bValue ? 1 : 0
+                : aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
         });
-    };
+    }, []);
 
     const filteredAndSortedData = useMemo(() => {
-        if (!keywords) return [];
+        if (!keywords?.length) return [];
 
-        // Ensure historicalData is a Map
         const processedKeywords = keywords.map(keyword => ({
             ...keyword,
             historicalData: keyword.historicalData instanceof Map
@@ -106,115 +111,73 @@ export default function KeywordsTable({
         }
 
         return filtered;
-    }, [keywords, searchTerm, sortConfig]);
+    }, [keywords, searchTerm, sortConfig, sortData]);
 
-    const getLatestHistoricalData = (keyword: IKeyword) => {
-        if (!keyword.historicalData) return null;
-
-        try {
-            const histData = keyword.historicalData instanceof Map
-                ? keyword.historicalData
-                : new Map(Object.entries(keyword.historicalData || {}));
-
-            const values = Array.from(histData.values());
-            return values[0] || null;
-        } catch (error) {
-            console.error('Error processing historical data:', error);
-            return null;
-        }
-    };
-
-    const getHistoricalDates = (keyword: IKeyword) => {
-        const data = []
-        for (let [key, value] of keyword.historicalData) {
+    const getHistoricalDates = useCallback((keyword: IKeyword) => {
+        const data = [];
+        for (const [key, value] of keyword.historicalData) {
             data.push({
-                    date:key,
-                    id: value._id,
-                    kgmid: value.kgmid,
-                    kgmTitle: value.kgmTitle,
-                    kgmWebsite: value.kgmWebsite,
-                    organicResultsCount: value.organicResultsCount,
-                    timestamp: value.timestamp
-            })
+                date: key,
+                kgmid: value.kgmid,
+                kgmTitle: value.kgmTitle,
+                kgmWebsite: value.kgmWebsite,
+                organicResultsCount: value.organicResultsCount,
+                timestamp: value.timestamp
+            });
         }
-        return data
-    };
+        return data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }, []);
 
-    const handleSort = (key: string) => {
-        setSortConfig({
+    const handleSort = useCallback((key: string) => {
+        setSortConfig(prev => ({
             key,
-            direction: sortConfig.key === key && sortConfig.direction === 'asc' ? 'desc' : 'asc'
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    }, []);
+
+    const toggleAllRows = useCallback(() => {
+        setSelectedRows(prev =>
+            prev.size === filteredAndSortedData.length
+                ? new Set()
+                : new Set(filteredAndSortedData.map(k => k._id))
+        );
+    }, [filteredAndSortedData]);
+
+    const toggleRowSelection = useCallback((id: string) => {
+        setSelectedRows(prev => {
+            const newSet = new Set(prev);
+            if (newSet.has(id)) {
+                newSet.delete(id);
+            } else {
+                newSet.add(id);
+            }
+            return newSet;
         });
-    };
+    }, []);
 
-    const toggleAllRows = () => {
-        if (selectedRows.size === filteredAndSortedData.length) {
-            setSelectedRows(new Set());
-        } else {
-            setSelectedRows(new Set(filteredAndSortedData.map(k => k._id)));
-        }
-    };
+    const selectedKeywords = useMemo(() => {
+        return filteredAndSortedData.filter(keyword => selectedRows.has(keyword._id));
+    }, [selectedRows, filteredAndSortedData]);
 
-    const toggleRowSelection = (id: string) => {
-        const newSelected = new Set(selectedRows);
-        if (newSelected.has(id)) {
-            newSelected.delete(id);
-        } else {
-            newSelected.add(id);
-        }
-        setSelectedRows(newSelected);
-    };
-
-    const downloadAsCSV = (data: IKeyword[]) => {
-        const headers = [
-            "Date",
-            "Keyword",
-            "Location",
-            "Device Type",
-            "KGM Title",
-            "KGM Website",
-            "Organic Results",
-            "Difficulty",
-            "Volume",
-            "Backlinks Needed",
-            "Is Default"
-        ];
-
-        const csvRows = [
-            headers.join(","),
-            ...data.flatMap(keyword =>
-                Array.from(keyword.historicalData.entries()).map(([date, entry]) => [
-                    date,
-                    keyword.term,
-                    keyword.location,
-                    keyword.device,
-                    keyword.kgmid,
-                    `"${entry.kgmTitle || ''}"`,
-                    `"${entry.kgmWebsite || ''}"`,
-                    entry.organicResultsCount,
-                    entry.difficulty || '',
-                    entry.volume || '',
-                    entry.backlinksNeeded || '',
-                    keyword.isDefaultKeywords
-                ].join(","))
-            )
-        ];
-
-        const csvContent = csvRows.join("\n");
-        const blob = new Blob([csvContent], { type: "text/csv" });
+    const downloadAsCSV = useCallback((data: IKeyword[]) => {
+        const csvContent = generateMultiCSV(data);
+        const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
-        const a = document.createElement("a");
+        const a = document.createElement('a');
         a.href = url;
-        a.download = "keyword-data.csv";
+        a.download = 'keyword-data.csv';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
-    };
+    }, []);
+
+    const onModalOpen = useCallback(() => setShowModal(true), []);
+    const onModalClose = useCallback(() => setShowModal(false), []);
 
     return (
         <div className="mx-1 py-3">
-            <Card className={"bg-opacity-5 bg-gray-200"}>
+            <Card className="bg-opacity-5 bg-gray-200">
                 <CardHeader>
                     <div className="flex items-center justify-between">
                         <CardTitle>Keywords</CardTitle>
@@ -234,11 +197,7 @@ export default function KeywordsTable({
                                 <Button
                                     variant="outline"
                                     size="sm"
-                                    onClick={() =>
-                                        downloadAsCSV(
-                                            filteredAndSortedData.filter(k => selectedRows.has(k._id))
-                                        )
-                                    }
+                                    onClick={() => downloadAsCSV(selectedKeywords)}
                                 >
                                     <Download className="h-4 w-4 mr-2" />
                                     Export Selected ({selectedRows.size})
@@ -289,7 +248,7 @@ export default function KeywordsTable({
                                         </Button>
                                     </TableHead>
                                     <TableHead>
-                                        <Button variant="ghost" onClick={() => handleSort('kgmTitle')}>
+                                        <Button variant="ghost" onClick={() => handleSort('kgmid')}>
                                             KGM ID
                                             <ArrowUpDown className="ml-2 h-4 w-4" />
                                         </Button>
@@ -307,24 +266,16 @@ export default function KeywordsTable({
                                             <ArrowUpDown className="ml-2 h-4 w-4" />
                                         </Button>
                                     </TableHead>
-                                    {/*<TableHead className="text-right">*/}
-                                    {/*    <Button variant="ghost" onClick={() => handleSort('backlinksNeeded')}>*/}
-                                    {/*        Backlinks*/}
-                                    {/*        <ArrowUpDown className="ml-2 h-4 w-4" />*/}
-                                    {/*    </Button>*/}
-                                    {/*</TableHead>*/}
                                     <TableHead>Last Updated</TableHead>
                                     <TableHead className="w-[100px]">Actions</TableHead>
                                 </TableRow>
                             </TableHeader>
-                            <TableBody className={"text-md"}>
+                            <TableBody className="text-md">
                                 {filteredAndSortedData.map((keyword) => {
-                                    // const latestData = getLatestHistoricalData(keyword);
                                     const dates = getHistoricalDates(keyword);
-                                    console.log("by dates", dates)
                                     return (
                                         <React.Fragment key={keyword._id}>
-                                            <TableRow className="hover:bg-muted/50 pointer">
+                                            <TableRow className="hover:bg-muted/50 cursor-pointer">
                                                 <TableCell>
                                                     <Checkbox
                                                         checked={selectedRows.has(keyword._id)}
@@ -346,9 +297,12 @@ export default function KeywordsTable({
                                                     </Button>
                                                 </TableCell>
                                                 <TableCell className="font-medium">
-                          <div className={`${keyword.isDefaultKeywords ? "bg-blue-100 dark:bg-blue-950" : ""} px-2 py-1 rounded-md`} title={`${keyword.isDefaultKeywords ? 'this is a default keyword' : ''}`}>
-                              <span>{keyword.term}</span>
-                          </div>
+                                                    <div
+                                                        className={`${keyword.isDefaultKeywords ? "bg-blue-100 dark:bg-blue-950" : ""} px-2 py-1 rounded-md`}
+                                                        title={keyword.isDefaultKeywords ? 'Default keyword' : ''}
+                                                    >
+                                                        {keyword.term}
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>{keyword.location}</TableCell>
                                                 <TableCell className="capitalize">{keyword.device}</TableCell>
@@ -369,22 +323,26 @@ export default function KeywordsTable({
                                                 <TableCell className="text-right font-mono">
                                                     {keyword.organicResultsCount?.toLocaleString() || '-'}
                                                 </TableCell>
-                                                {/*<TableCell className="text-right font-mono">*/}
-                                                {/*    {keyword.backlinksNeeded || '-'}*/}
-                                                {/*</TableCell>*/}
                                                 <TableCell>
-                                                    {keyword.updatedAt || ''}
+                                                    {keyword.updatedAt ? new Date(keyword.updatedAt).toLocaleDateString() : '-'}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => downloadAsCSV([keyword])}
-                                                        className="h-8 w-8 p-0"
-                                                        title="Export keyword history"
-                                                    >
-                                                        <Download className="h-4 w-4" />
-                                                    </Button>
+                                                    <div className="flex items-center space-x-2">
+                                                        <ActionsComponent
+                                                            keyword={keyword}
+                                                            onActionKeywordsChange={onActionKeywordsChange}
+                                                            currentPage={currentPage}
+                                                        />
+                                                        {/*<Button*/}
+                                                        {/*    variant="ghost"*/}
+                                                        {/*    size="sm"*/}
+                                                        {/*    onClick={() => downloadAsCSV([keyword])}*/}
+                                                        {/*    className="h-8 w-8 p-0"*/}
+                                                        {/*    title="Export keyword history"*/}
+                                                        {/*>*/}
+                                                        {/*    <Download className="h-4 w-4" />*/}
+                                                        {/*</Button>*/}
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                             {expandedRows.has(keyword._id) && (
@@ -406,45 +364,33 @@ export default function KeywordsTable({
                                                                             <TableHead>KGM Title</TableHead>
                                                                             <TableHead>KGM Website</TableHead>
                                                                             <TableHead className="text-right">Organic Results</TableHead>
-                                                                            {/*<TableHead className="text-right">Backlinks</TableHead>*/}
                                                                         </TableRow>
                                                                     </TableHeader>
-                                                                    <TableBody className={"text-xs"}>
-                                                                        {dates.map((entry) => {
-
-
-                                                                            return (
-                                                                                <TableRow key={entry.date} className="hover:bg-muted/30">
-                                                                                    <TableCell className="py-2 font-medium">{entry.date}</TableCell>
-                                                                                    <TableCell>{entry.kgmid || '-'}</TableCell>
-                                                                                    <TableCell>{entry.kgmTitle || '-'}</TableCell>
-                                                                                    <TableCell>
-                                                                                        {entry.kgmWebsite ? (
-                                                                                            <Link
-                                                                                                href={entry.kgmWebsite}
-                                                                                                target="_blank"
-                                                                                                className="flex items-center hover:underline"
-                                                                                            >
-                                                                                                {new URL(entry.kgmWebsite)?.hostname}
-                                                                                                <ExternalLink className="ml-1 h-3 w-3" />
-                                                                                            </Link>
-                                                                                        ): null}
-                                                                                    </TableCell>
-                                                                                    <TableCell className="text-right font-mono">
-                                                                                        {entry.organicResultsCount || '-'}
-                                                                                    </TableCell>
-                                                                                    {/*<TableCell className="text-right font-mono">*/}
-                                                                                    {/*    {entry.difficulty || '-'}*/}
-                                                                                    {/*</TableCell>*/}
-                                                                                    {/*<TableCell className="text-right font-mono">*/}
-                                                                                    {/*    {entry.volume?.toLocaleString() || '-'}*/}
-                                                                                    {/*</TableCell>*/}
-                                                                                    {/*<TableCell className="text-right font-mono">*/}
-                                                                                    {/*    {entry.backlinksNeeded || '-'}*/}
-                                                                                    {/*</TableCell>*/}
-                                                                                </TableRow>
-                                                                            );
-                                                                        })}
+                                                                    <TableBody className="text-xs">
+                                                                        {dates.map((entry) => (
+                                                                            <TableRow key={entry.date} className="hover:bg-muted/30">
+                                                                                <TableCell className="py-2 font-medium">
+                                                                                    {new Date(entry.date).toLocaleDateString()}
+                                                                                </TableCell>
+                                                                                <TableCell>{entry.kgmid || '-'}</TableCell>
+                                                                                <TableCell>{entry.kgmTitle || '-'}</TableCell>
+                                                                                <TableCell>
+                                                                                    {entry.kgmWebsite && (
+                                                                                        <Link
+                                                                                            href={entry.kgmWebsite}
+                                                                                            target="_blank"
+                                                                                            className="flex items-center hover:underline"
+                                                                                        >
+                                                                                            {new URL(entry.kgmWebsite).hostname}
+                                                                                            <ExternalLink className="ml-1 h-3 w-3" />
+                                                                                        </Link>
+                                                                                    )}
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right font-mono">
+                                                                                    {entry.organicResultsCount?.toLocaleString() || '-'}
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        ))}
                                                                     </TableBody>
                                                                 </Table>
                                                             </div>
@@ -458,6 +404,26 @@ export default function KeywordsTable({
                             </TableBody>
                         </Table>
                     </div>
+                    {selectedRows.size >= 1 && (
+                        <div className="fixed top-1/2 right-0">
+                            <Button
+                                variant="secondary"
+                                className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-red-800 h-auto py-3 px-4"
+                                onClick={onModalOpen}
+                            >
+                                {selectedRows.size ===1 ? "View Data" : "See difference"}
+                            </Button>
+                        </div>
+                    )}
+                    {showModal && (
+                        <Modal
+                            isOpen={showModal}
+                            onClose={onModalClose}
+                            customContainerClassName="bg-white rounded-md"
+                        >
+                            <DifferenceModal keywords={selectedKeywords} />
+                        </Modal>
+                    )}
                 </CardContent>
             </Card>
         </div>
