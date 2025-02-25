@@ -411,7 +411,7 @@ export default function KeywordsTable({
                                 className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-red-800 h-auto py-3 px-4"
                                 onClick={onModalOpen}
                             >
-                                {selectedRows.size ===1 ? "View Data" : "See difference"}
+                                 View Data
                             </Button>
                         </div>
                     )}

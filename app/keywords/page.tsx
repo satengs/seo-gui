@@ -39,7 +39,7 @@ export default function KeywordsPage() {
       if (response?.data?.entitiesData) {
         setKeywords(response.data.entitiesData);
         setTotalCount(response.data.totalCount);
-        setTotalPages(response.data.totalPages);
+        setTotalPages(5);
       } else {
         // Fallback to mock data if no real data is available
         setKeywords(mockKeywords);
