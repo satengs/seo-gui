@@ -1,13 +1,7 @@
 'use client';
 
 import React from 'react';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '../../ui/select';
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '../../ui/select';
 
 interface ICustomSelectInputItem {
   label: string;

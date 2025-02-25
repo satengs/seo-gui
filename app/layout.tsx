@@ -4,6 +4,7 @@ import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
 import Sidebar from '@/components/sidebar';
 import { Toaster } from '@/components/ui/toaster';
+import Header from '@/components/header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -13,28 +14,31 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({
-  children,
-}: {
+                                     children,
+                                   }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
-        <ThemeProvider
+      <html lang="en" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+      <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-        >
-          <div className="flex h-screen">
-            <Sidebar />
+      >
+        <div className="flex min-h-screen">
+          <Sidebar />
+          <div className="flex-1 flex flex-col">
+            <Header />
             <main className="flex-1 overflow-y-auto bg-background">
               {children}
             </main>
           </div>
-          <Toaster />
-        </ThemeProvider>
+        </div>
+        <Toaster />
+      </ThemeProvider>
       </body>
-    </html>
+      </html>
   );
 }

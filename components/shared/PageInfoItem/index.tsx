@@ -1,6 +1,6 @@
-import React, { ReactNode } from 'react';
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import React, {ReactNode} from 'react';
+import {ArrowDownRight, ArrowUpRight} from 'lucide-react';
+import {Card} from '@/components/ui/card';
 
 interface IPageInfoItem {
   title: string;

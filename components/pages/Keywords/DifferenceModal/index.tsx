@@ -1,5 +1,5 @@
 import React from 'react';
-import { IKeyword } from '@/types';
+import {IKeyword} from '@/types';
 import KeywordItemSection from '@/components/pages/Keywords/DifferenceModal/KeywordItemSection';
 
 interface IDifferenceModal {

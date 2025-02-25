@@ -1,16 +1,10 @@
-import React, { useCallback } from 'react';
-import { Button } from '@/components/ui/button';
-import {
-  DownloadIcon,
-  Minus,
-  Plus,
-  SquareArrowOutUpRight,
-  Trash,
-} from 'lucide-react';
-import { IKeyword } from '@/types';
+import React, {useCallback} from 'react';
+import {Button} from '@/components/ui/button';
+import {DownloadIcon, Minus, Plus, SquareArrowOutUpRight, Trash,} from 'lucide-react';
+import {IKeyword} from '@/types';
 import axiosClient from '@/lib/axiosClient';
-import { useToast } from '@/hooks/use-toast';
-import { generateCSV } from '@/lib/utils';
+import {useToast} from '@/hooks/use-toast';
+import {generateCSV} from '@/lib/utils';
 
 interface IActionsComponent {
   keyword: any;

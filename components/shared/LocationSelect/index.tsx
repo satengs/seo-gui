@@ -1,12 +1,6 @@
-import React, {
-  ChangeEvent,
-  useCallback,
-  useEffect,
-  useState,
-  useRef,
-} from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Input } from '@/components/ui/input';
+import React, {ChangeEvent, useCallback, useEffect, useRef, useState,} from 'react';
+import {useToast} from '@/hooks/use-toast';
+import {Input} from '@/components/ui/input';
 import axiosClient from '@/lib/axiosClient';
 
 interface ILocation {
