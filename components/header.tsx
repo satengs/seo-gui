@@ -7,10 +7,28 @@ import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
 import { ThemeToggle } from './theme-toggle';
 import AccountInfoItem from './shared/AccountInfoItem';
+import {Button} from "@/components/ui/button";
+import { createBrowserClient } from '@supabase/ssr';
+import { useRouter } from 'next/navigation';
 
 export default function Header() {
     const [account, setAccount] = useState<IAccount>();
     const { toast } = useToast();
+    const router = useRouter();
+
+
+    const handleSignOut = async () => {
+        try {
+            await axiosClient.post('/api/auth/logout');
+            router.push('/login');
+        } catch (error) {
+            toast({
+                title: 'Error',
+                description: 'Failed to sign out',
+                variant: 'destructive',
+            });
+        }
+    };
 
     useEffect(() => {
         const fetchAccountData = async () => {
@@ -41,6 +59,9 @@ export default function Header() {
                     <div className="flex items-center space-x-2">
                         <ThemeToggle />
                         {account && <AccountInfoItem account={account} />}
+                        <Button variant="ghost" onClick={handleSignOut}>
+                            Sign out
+                        </Button>
                         {!account && (
                             <div className="flex items-center gap-2">
                                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">

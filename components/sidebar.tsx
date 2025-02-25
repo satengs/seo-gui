@@ -4,7 +4,7 @@ import {useState} from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {cn} from '@/lib/utils';
-import {BarChart3, Calendar, KeyRound, Map, Menu, Search, Users,} from 'lucide-react';
+import {BarChart3, Calendar, KeyRound, Map, Menu, Search, Users, UserCog} from 'lucide-react';
 import Image from "next/image";
 
 const menuItems = [
@@ -37,6 +37,11 @@ const menuItems = [
     title: 'Daily Runs',
     icon: Calendar,
     href: '/daily-runs',
+  },
+  {
+    title: 'User Management',
+    icon: UserCog,
+    href: '/users',
   },
 ];
 
