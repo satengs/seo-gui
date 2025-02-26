@@ -4,40 +4,40 @@ import {useState} from 'react';
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
 import {cn} from '@/lib/utils';
-import {BarChart3, Calendar, KeyRound, Map, Menu, Search, Users,} from 'lucide-react';
+import {BarChart3, KeyRound, Menu} from 'lucide-react';
 import Image from "next/image";
 
 const menuItems = [
   {
-    title: 'AI Overview',
+    title: 'Overview',
     icon: BarChart3,
     href: '/',
   },
-  {
-    title: 'Engines',
-    icon: Search,
-    href: '/engines',
-  },
-  {
-    title: 'Map API',
-    icon: Map,
-    href: '/map',
-  },
+  // {
+  //   title: 'Engines',
+  //   icon: Search,
+  //   href: '/engines',
+  // },
+  // {
+  //   title: 'Map API',
+  //   icon: Map,
+  //   href: '/map',
+  // },
   {
     title: 'Keywords',
     icon: KeyRound,
     href: '/keywords',
   },
-  {
-    title: 'Competitors',
-    icon: Users,
-    href: '/competitors',
-  },
-  {
-    title: 'Daily Runs',
-    icon: Calendar,
-    href: '/daily-runs',
-  },
+  // {
+  //   title: 'Competitors',
+  //   icon: Users,
+  //   href: '/competitors',
+  // },
+  // {
+  //   title: 'Daily Runs',
+  //   icon: Calendar,
+  //   href: '/daily-runs',
+  // },
 ];
 
 export default function Sidebar() {
