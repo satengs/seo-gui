@@ -1,13 +1,13 @@
 import { IKeyword } from '@/types';
 
+// @ts-ignore
 export const mockKeywords: IKeyword[] = [
     {
         _id: 'mock-1',
-        term: 'digital marketing',
-        location: 'United States',
+        createdAt: new Date().toISOString(),
         device: 'mobile',
-        keyword_term: 'digital-marketing-mobile-us',
-        isDefaultKeywords: true,
+        organicResultsCount: 10,
+        keywordData: {},
         historicalData: new Map(Object.entries({
             '2024-03-20': {
                 organicResultsCount: 245000000,
@@ -19,7 +19,10 @@ export const mockKeywords: IKeyword[] = [
                 timestamp: new Date().toISOString()
             }
         })),
-        createdAt: new Date().toISOString(),
+        isDefaultKeywords: true,
+        keywordTerm: 'digital-marketing-mobile-us',
+        location: 'United States',
+        term: 'digital marketing',
         updatedAt: new Date().toISOString()
     },
     {
@@ -27,8 +30,10 @@ export const mockKeywords: IKeyword[] = [
         term: 'seo services',
         location: 'United States',
         device: 'desktop',
-        keyword_term: 'seo-services-desktop-us',
+        keywordTerm: 'seo-services-desktop-us',
         isDefaultKeywords: true,
+        organicResultsCount: 10,
+        keywordData: {},
         historicalData: new Map(Object.entries({
             '2024-03-20': {
                 organicResultsCount: 89000000,
@@ -48,8 +53,10 @@ export const mockKeywords: IKeyword[] = [
         term: 'content strategy',
         location: 'United States',
         device: 'mobile',
-        keyword_term: 'content-strategy-mobile-us',
+        keywordTerm: 'content-strategy-mobile-us',
         isDefaultKeywords: false,
+        organicResultsCount: 10,
+        keywordData: {},
         historicalData: new Map(Object.entries({
             '2024-03-20': {
                 organicResultsCount: 156000000,

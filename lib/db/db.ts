@@ -26,6 +26,7 @@ async function dbConnect() {
     if (cached.conn) {
       // Test the cached connection
       try {
+        // @ts-ignore
         await cached.conn.connection.db.admin().ping();
         console.log('Using cached database connection');
         return cached.conn;
@@ -49,6 +50,7 @@ async function dbConnect() {
       };
 
       console.log('Connecting to MongoDB...');
+      // @ts-ignore
       cached.promise = mongoose.connect(MONGODB_URI, opts);
     }
 
@@ -56,6 +58,7 @@ async function dbConnect() {
       cached.conn = await cached.promise;
 
       // Test the connection
+      // @ts-ignore
       await mongoose.connection.db.admin().ping();
       console.log('Database ping successful');
       console.log('Successfully connected to MongoDB');

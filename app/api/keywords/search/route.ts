@@ -28,9 +28,9 @@ export async function POST(request: Request) {
       device,
       isDefaultKeywords,
       historicalData: new Map([[todayKey, {
-        organicResultsCount: searchResponse.searchInformation?.totalResults || 0,
-        kgmTitle: searchResponse.knowledgeGraph?.title || '',
-        kgmWebsite: searchResponse.knowledgeGraph?.website || '',
+        organicResultsCount: searchResponse.search_information?.total_results || 0,
+        kgmTitle: searchResponse.knowledge_graph?.title || '',
+        kgmWebsite: searchResponse.knowledge_graph?.website || '',
         difficulty: null,
         volume: null,
         backlinksNeeded: null,

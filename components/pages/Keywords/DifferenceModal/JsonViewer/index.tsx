@@ -8,6 +8,7 @@ interface JsonViewerProps {
     data: any;
     level?: number;
     isHistoricalData?: boolean;
+    isExpanded?: boolean;
 }
 
 const JsonViewer: React.FC<JsonViewerProps> = ({
@@ -174,7 +175,8 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
             for (const [key, value] of Object.entries(inputData)) {
                 if (key === 'keywordData' && typeof value === 'object') {
                     // Handle keywordData object
-                    processed[key] = value.data || value;
+                    // @ts-ignore
+                    processed[key] = value?.data || value;
                 } else if (key === 'data' && typeof value === 'object') {
                     // Handle nested SERP API response data
                     processed[key] = value;

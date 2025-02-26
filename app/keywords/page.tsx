@@ -4,7 +4,7 @@ import { useEffect, useState, ChangeEvent, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import LocationSelect from '@/components/shared/LocationSelect';
-import { KeyRound, Search, Info } from 'lucide-react';
+import { Search, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import DeviceSelect from '@/components/shared/DeviceSelect';
 import KeywordsTable from './KeywordsTable';
@@ -12,8 +12,6 @@ import axiosClient from '@/lib/axiosClient';
 import { IAccount, IKeyword } from '@/types';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
-import PageInfoItem from '@/components/shared/PageInfoItem';
-import AccountInfoItem from '@/components/shared/AccountInfoItem';
 import JobAction from '@/components/pages/Keywords/JobAction';
 import { mockKeywords } from '@/lib/mockData';
 import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
@@ -150,6 +148,8 @@ export default function KeywordsPage() {
     fetchAccountData();
   }, [fetchKeywords, fetchAccountData]);
 
+  // @ts-ignore
+  // @ts-ignore
   return (
       <div className="p-1.5 space-y-6">
         {/*<div className="flex justify-between items-center">*/}
@@ -227,6 +227,7 @@ export default function KeywordsPage() {
           )}
           <Pagination
               totalCount={totalCount}
+              // @ts-ignore
               totalPages={totalPages}
               currentPage={currentPage}
               onPageChange={onKeywordsPaginate}

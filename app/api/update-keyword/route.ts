@@ -38,9 +38,9 @@ export async function GET() {
                 ) as SearchKeywordResponse;
 
                 const dailyData = {
-                    organicResultsCount: updateKeywordSearch.searchInformation?.totalResults || 0,
-                    kgmTitle: updateKeywordSearch.knowledgeGraph?.title || '',
-                    kgmWebsite: updateKeywordSearch.knowledgeGraph?.website || '',
+                    organicResultsCount: updateKeywordSearch.search_information?.total_results || 0,
+                    kgmTitle: updateKeywordSearch.knowledge_graph?.title || '',
+                    kgmWebsite: updateKeywordSearch.knowledge_graph?.website || '',
                     difficulty: null,
                     volume: null,
                     backlinksNeeded: null,

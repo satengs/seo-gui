@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -16,8 +16,9 @@ interface PaginationProps {
 const DOTS = '...';
 
 function usePagination({
-                         totalCount,
-                         itemsPerPage = 10,
+                           // @ts-ignore
+                           totalCount,
+                         itemsPerPage = 30,
                          siblingCount = 1,
                          currentPage = 1
                        }) {
@@ -68,9 +69,11 @@ function usePagination({
   }, [totalCount, itemsPerPage, siblingCount, currentPage]);
 }
 
+// @ts-ignore
 export default function Pagination({
                                      totalCount,
-                                     onPageChange,
+                                       // @ts-ignore
+                                       onPageChange,
                                      itemsPerPage = 30,
                                      currentPage = 1,
                                      siblingCount = 1

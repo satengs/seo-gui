@@ -26,14 +26,12 @@ export async function GET() {
 
       if (existDefaultKeywords?.length) {
         for (let i = 0; i < existDefaultKeywords.length; i++) {
-          const updateKeywordSearch = await searchKeyword(
+          const updateKeywordSearch: any = await searchKeyword(
             existDefaultKeywords[i].term,
             existDefaultKeywords[i].location,
             existDefaultKeywords[i].device
           );
-          const updateKeywordData = getKeywordData(updateKeywordSearch, {
-            isDefaultKeywords: true,
-          });
+          const updateKeywordData = getKeywordData(updateKeywordSearch, existDefaultKeywords[i].location, existDefaultKeywords[i].device);
           await Keyword.findOneAndUpdate(
             { _id: existDefaultKeywords[i]._id },
             updateKeywordData,

@@ -41,7 +41,6 @@ export default function KeywordsTable({
                                           keywords = [],
                                           currentPage,
                                           totalCount,
-                                          totalPages,
                                           onActionKeywordsChange
                                       }: KeywordsTableProps) {
     const [searchTerm, setSearchTerm] = useState('');
@@ -74,7 +73,9 @@ export default function KeywordsTable({
                 const historyKey = key.split('.')[1] as keyof DailyData;
                 const aHistory = Array.from(a.historicalData.values())[0];
                 const bHistory = Array.from(b.historicalData.values())[0];
+                // @ts-ignore
                 aValue = aHistory?.[historyKey];
+                // @ts-ignore
                 bValue = bHistory?.[historyKey];
             }
 

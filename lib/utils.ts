@@ -18,11 +18,11 @@ export function checkDateDifference(dateOne: any, dateTwo: any) {
 function prepareDataForCSV(keyword: IKeyword): Record<string, any> {
   const baseData = { ...keyword };
 
-  if (baseData.dynamicData && baseData.dynamicData.data) {
-    const dynamicFields = baseData.dynamicData.data;
+  if (baseData.keywordData && baseData.keywordData.data) {
+    const dynamicFields = baseData.keywordData.data;
     Object.assign(baseData, dynamicFields);
   }
-  delete baseData.dynamicData;
+  delete baseData.keywordData;
 
   return baseData;
 }
