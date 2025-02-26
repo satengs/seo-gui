@@ -19,7 +19,7 @@ const menuItems = [
   //   href: '/engines',
   // },
   // {
-  //   title: 'Map API',
+  //   title: 'Map',
   //   icon: Map,
   //   href: '/map',
   // },
