@@ -3,7 +3,6 @@ import dbConnect from '@/lib/db/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/types';
-import DailyRun from "@/lib/db/models/DailyRun";
 
 
 const extractTotalResults = (searchResults: SearchKeywordResponse): number => {
@@ -63,14 +62,6 @@ export async function POST() {
         };
 
 
-        // Create a daily run record
-        const dailyRun = await DailyRun.create({
-          keyword: keyword._id,
-          ranking: extractTotalResults(searchResults),
-          impressions: extractTotalResults(searchResults),
-          ctr: 0,
-          date: new Date()
-        });
         // Update keyword with latest results
         await Keyword.findByIdAndUpdate(
             keyword._id,
@@ -92,7 +83,6 @@ export async function POST() {
           keyword: keyword.term,
           success: true,
           dailyData,
-          dailyRun
         });
       } catch (error) {
         console.error(`Failed to check keyword ${keyword.term}:`, error);
