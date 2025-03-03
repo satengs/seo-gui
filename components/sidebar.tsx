@@ -1,11 +1,11 @@
 'use client';
 
-import {useState} from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import {usePathname} from 'next/navigation';
-import {cn} from '@/lib/utils';
-import {BarChart3, KeyRound, Menu} from 'lucide-react';
-import Image from "next/image";
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { BarChart3, KeyRound, Menu } from 'lucide-react';
+import Image from 'next/image';
 
 const menuItems = [
   {
@@ -53,7 +53,7 @@ export default function Sidebar() {
     >
       <div className="sticky top-0 z-50 flex h-16 items-center justify-between p-4">
         {!collapsed && (
-          <Image src={'/gifik.gif'} alt={'searching'} width={130} height={50}/>
+          <Image src={'/gifik.gif'} alt={'searching'} width={130} height={50} />
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

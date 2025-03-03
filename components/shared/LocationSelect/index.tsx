@@ -1,6 +1,12 @@
-import React, {ChangeEvent, useCallback, useEffect, useRef, useState,} from 'react';
-import {useToast} from '@/hooks/use-toast';
-import {Input} from '@/components/ui/input';
+import React, {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
 import axiosClient from '@/lib/axiosClient';
 
 interface ILocation {
@@ -30,9 +36,6 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
   const [locationText, setLocationText] = useState<string>(
     defaultLocation || ''
   );
-  // const [selectedLocation, setSelectedLocation] = useState<string | undefined>(
-  //   defaultLocation
-  // );
   const [locations, setLocations] = useState<ILocation[]>([]);
   const [openList, setOpenList] = useState<boolean>(false);
 
@@ -93,7 +96,6 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
   };
 
   const handleClickOutside = useCallback((event: MouseEvent) => {
-    // @ts-ignore
     if (
       locationSelectRef.current &&
       !locationSelectRef.current?.contains(event.target as Node)
@@ -105,7 +107,6 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
   useEffect(() => {
     document.addEventListener('mousedown', handleClickOutside);
 
-    // Cleanup the event listener on component unmount
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };

@@ -43,11 +43,10 @@ export interface IKeyword {
 
 export interface SearchKeywordResponse {
   search_information?: {
-    query_displayed: string,
-    total_results?: number,
-    time_taken_displayed?: number,
-    organic_results_state?: string
-
+    query_displayed: string;
+    total_results?: number;
+    time_taken_displayed?: number;
+    organic_results_state?: string;
   };
   knowledge_graph?: {
     title?: string;
@@ -79,7 +78,8 @@ export interface SearchKeywordResponse {
   organic_results?: any[];
   related_questions?: any[];
   related_searches?: any[];
-  error?: string;}
+  error?: string;
+}
 
 export interface PaginationResult<T> {
   entitiesData: T[];

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/db';
+import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
 import { seedInitialKeywords } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities } from '@/lib/db/helpers';
@@ -89,7 +89,6 @@ export async function PATCH(request: Request) {
       },
       { new: true, runValidators: true }
     );
-    console.log('p patch: ', page);
 
     const keywords = await paginateEntities(
       page as number,

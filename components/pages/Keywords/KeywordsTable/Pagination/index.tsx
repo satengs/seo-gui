@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
@@ -16,12 +16,16 @@ interface PaginationProps {
 const DOTS = '...';
 
 function usePagination({
-                           // @ts-ignore
-                           totalCount,
-                         itemsPerPage = 30,
-                         siblingCount = 1,
-                         currentPage = 1
-                       }) {
+  totalCount,
+  itemsPerPage = 30,
+  siblingCount = 1,
+  currentPage = 1,
+}: {
+  totalCount: number;
+  itemsPerPage: number;
+  siblingCount: number;
+  currentPage: number;
+}) {
   return useMemo(() => {
     const totalPageCount = Math.ceil(totalCount / itemsPerPage);
 
@@ -34,7 +38,10 @@ function usePagination({
     }
 
     const leftSiblingIndex = Math.max(currentPage - siblingCount, 1);
-    const rightSiblingIndex = Math.min(currentPage + siblingCount, totalPageCount);
+    const rightSiblingIndex = Math.min(
+      currentPage + siblingCount,
+      totalPageCount
+    );
 
     const shouldShowLeftDots = leftSiblingIndex > 2;
     const shouldShowRightDots = rightSiblingIndex < totalPageCount - 2;
@@ -50,8 +57,8 @@ function usePagination({
     if (shouldShowLeftDots && !shouldShowRightDots) {
       const rightItemCount = 3 + 2 * siblingCount;
       const rightRange = Array.from(
-          { length: rightItemCount },
-          (_, i) => totalPageCount - rightItemCount + i + 1
+        { length: rightItemCount },
+        (_, i) => totalPageCount - rightItemCount + i + 1
       );
       return [1, DOTS, ...rightRange];
     }
@@ -59,8 +66,8 @@ function usePagination({
     // Third case: show both left and right dots
     if (shouldShowLeftDots && shouldShowRightDots) {
       const middleRange = Array.from(
-          { length: rightSiblingIndex - leftSiblingIndex + 1 },
-          (_, i) => leftSiblingIndex + i
+        { length: rightSiblingIndex - leftSiblingIndex + 1 },
+        (_, i) => leftSiblingIndex + i
       );
       return [1, DOTS, ...middleRange, DOTS, totalPageCount];
     }
@@ -69,20 +76,18 @@ function usePagination({
   }, [totalCount, itemsPerPage, siblingCount, currentPage]);
 }
 
-// @ts-ignore
 export default function Pagination({
-                                     totalCount,
-                                       // @ts-ignore
-                                       onPageChange,
-                                     itemsPerPage = 30,
-                                     currentPage = 1,
-                                     siblingCount = 1
-                                   }: PaginationProps) {
+  totalCount,
+  onPageChange,
+  itemsPerPage = 30,
+  currentPage = 1,
+  siblingCount = 1,
+}: PaginationProps) {
   const paginationRange = usePagination({
     totalCount,
     itemsPerPage,
     siblingCount,
-    currentPage
+    currentPage,
   });
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
@@ -101,64 +106,68 @@ export default function Pagination({
   };
 
   return (
-      <div className="mt-4 flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Previous
-          </Button>
+    <div className="mt-4 flex items-center justify-between">
+      <div className="flex items-center space-x-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage - 1)}
+          disabled={currentPage === 1}
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Previous
+        </Button>
 
-          <div className="flex items-center space-x-1">
-            {paginationRange.map((pageNumber, index) => {
-              if (pageNumber === DOTS) {
-                return (
-                    <span key={`dots-${index}`} className="px-2 text-muted-foreground">
+        <div className="flex items-center space-x-1">
+          {paginationRange.map((pageNumber, index) => {
+            if (pageNumber === DOTS) {
+              return (
+                <span
+                  key={`dots-${index}`}
+                  className="px-2 text-muted-foreground"
+                >
                   {DOTS}
                 </span>
-                );
-              }
-
-              return (
-                  <Button
-                      key={pageNumber}
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handlePageChange(pageNumber as number)}
-                      className={cn(
-                          currentPage === pageNumber && "bg-primary text-primary-foreground"
-                      )}
-                  >
-                    {pageNumber}
-                  </Button>
               );
-            })}
-          </div>
+            }
 
-          <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-          >
-            Next
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+            return (
+              <Button
+                key={pageNumber}
+                variant="ghost"
+                size="sm"
+                onClick={() => handlePageChange(pageNumber as number)}
+                className={cn(
+                  currentPage === pageNumber &&
+                    'bg-primary text-primary-foreground'
+                )}
+              >
+                {pageNumber}
+              </Button>
+            );
+          })}
         </div>
 
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handlePageChange(currentPage + 1)}
+          disabled={currentPage === totalPages}
+        >
+          Next
+          <ChevronRight className="h-4 w-4 ml-1" />
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>
           {start}-{end} of {totalCount} items
         </span>
-          <span className="text-muted-foreground/50">•</span>
-          <span>
+        <span className="text-muted-foreground/50">•</span>
+        <span>
           Page {currentPage} of {totalPages}
         </span>
-        </div>
       </div>
+    </div>
   );
 }

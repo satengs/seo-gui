@@ -1,8 +1,5 @@
 import { getHtml, getJson, getLocations, getAccount } from 'serpapi';
 
-
-const API_KEY = process.env.NEXT_PUBLIC_SERP_API_KEY;
-
 export async function searchLocations(loc: string = '', limit: number) {
   return await getLocations({
     q: loc,
@@ -19,10 +16,10 @@ export async function getAccountInfo() {
 }
 
 export async function searchKeyword(
-    keyword: string,
-    location?: string,
-    device?: string,
-    type = 'json'
+  keyword: string,
+  location?: string,
+  device?: string,
+  type = 'json'
 ) {
   const searchData = {
     q: keyword,

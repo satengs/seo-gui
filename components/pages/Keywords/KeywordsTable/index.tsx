@@ -1,74 +1,173 @@
 'use client';
 
-import {useCallback, useMemo, useState} from 'react';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow,} from '@/components/ui/table';
+import React, { useState, useMemo, useCallback } from 'react';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import Link from 'next/link';
-import {Button} from '@/components/ui/button';
-import {ArrowUpDown, Download, Search} from 'lucide-react';
-import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
-import {Checkbox} from '@/components/ui/checkbox';
+import { Button } from '@/components/ui/button';
+import {
+  Download,
+  Search,
+  ArrowUpDown,
+  ChevronRight,
+  ChevronDown,
+  History,
+  ExternalLink,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
 import Modal from '@/components/shared/Modal';
 import DifferenceModal from '@/components/pages/Keywords/DifferenceModal';
-import ActionsComponent from '@/components/pages/Keywords/KeywordsTable/ActionsComponent';
-import {generateMultiCSV} from '@/lib/utils';
+import ActionsComponent from './ActionsComponent';
+import { generateMultiCSV } from '@/lib/utils';
+import { IKeyword } from '@/types';
 
-interface IKeywordsTable {
-  keywords: any[];
+interface KeywordsTableProps {
+  keywords: IKeyword[];
   currentPage: number;
+  totalCount: number;
+  totalPages: number;
   onActionKeywordsChange: (data: any) => void;
 }
 
-const KeywordsTable: React.FC<IKeywordsTable> = ({
-  keywords,
+export default function KeywordsTable({
+  keywords = [],
   currentPage,
+  totalCount,
   onActionKeywordsChange,
-}) => {
+}: KeywordsTableProps) {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
+  const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState({
     key: '',
     direction: 'asc',
   });
   const [showModal, setShowModal] = useState<boolean>(false);
 
-  // Sorting function
-  const sortData = (data: any[], key: string, direction: string) => {
-    const sortedData = data.filter((item) => item[key]);
-    const nonSortedData = data.filter((item) => !item[key]);
-    const _data = [...sortedData].sort((a, b): any => {
-      let aValue = a[key];
-      let bValue = b[key];
-
-      if (aValue && bValue && typeof aValue === 'string') {
-        aValue = aValue.toLowerCase();
-        bValue = bValue.toLowerCase();
+  const toggleRowExpansion = useCallback((id: string) => {
+    setExpandedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
       }
-
-      if (aValue < bValue) {
-        return direction === 'asc' ? -1 : 1;
-      }
-
-      if (aValue > bValue) {
-        return direction === 'asc' ? 1 : -1;
-      }
-      return 0;
+      return newSet;
     });
-    return [..._data, ...nonSortedData];
-  };
+  }, []);
+
+  const sortData = useCallback(
+    (data: IKeyword[], key: string, direction: string) => {
+      return [...data].sort((a: any, b: any) => {
+        let aValue = a[key];
+        let bValue = b[key];
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+
+        if (typeof aValue === 'string') {
+          aValue = aValue.toLowerCase();
+          bValue = bValue.toLowerCase();
+        }
+
+        return direction === 'asc'
+          ? aValue < bValue
+            ? -1
+            : aValue > bValue
+              ? 1
+              : 0
+          : aValue > bValue
+            ? -1
+            : aValue < bValue
+              ? 1
+              : 0;
+      });
+    },
+    []
+  );
 
   const filteredAndSortedData = useMemo(() => {
-    let filtered = keywords.filter((keyword) => {
-      return keyword.term.toLowerCase().includes(searchTerm.toLowerCase());
+    if (!keywords?.length) return [];
+
+    const processedKeywords = keywords.map((keyword) => ({
+      ...keyword,
+      historicalData:
+        keyword.historicalData instanceof Map
+          ? keyword.historicalData
+          : new Map(Object.entries(keyword.historicalData || {})),
+    }));
+
+    let filtered = processedKeywords.filter((keyword) =>
+      keyword.term.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (sortConfig.key) {
+      filtered = sortData(filtered, sortConfig.key, sortConfig.direction);
+    }
+
+    return filtered;
+  }, [keywords, searchTerm, sortConfig, sortData]);
+
+  const getHistoricalDates = useCallback((keyword: IKeyword) => {
+    const data = [];
+    for (const [key, value] of keyword.historicalData) {
+      data.push({
+        date: key,
+        kgmid: value.kgmid,
+        kgmTitle: value.kgmTitle,
+        kgmWebsite: value.kgmWebsite,
+        organicResultsCount: value.organicResultsCount,
+        timestamp: value.timestamp,
+      });
+    }
+    return data.sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+  }, []);
+
+  const handleSort = useCallback((key: string) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  }, []);
+
+  const toggleAllRows = useCallback(() => {
+    setSelectedRows((prev) =>
+      prev.size === filteredAndSortedData.length
+        ? new Set()
+        : new Set(filteredAndSortedData.map((k) => k._id))
+    );
+  }, [filteredAndSortedData]);
+
+  const toggleRowSelection = useCallback((id: string) => {
+    setSelectedRows((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
     });
+  }, []);
 
-    return sortData(filtered, sortConfig.key, sortConfig.direction);
-  }, [searchTerm, sortConfig, keywords]);
+  const selectedKeywords = useMemo(() => {
+    return filteredAndSortedData.filter((keyword) =>
+      selectedRows.has(keyword._id)
+    );
+  }, [selectedRows, filteredAndSortedData]);
 
-  const downloadAsCSV = (data: any[]) => {
-    const csvMulti = generateMultiCSV(data);
-
-    const blob = new Blob([csvMulti], { type: 'text/csv' });
+  const downloadAsCSV = useCallback((data: IKeyword[]) => {
+    const csvContent = generateMultiCSV(data);
+    const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -77,58 +176,20 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-  };
-
-  const handleSort = (key: string) => {
-    setSortConfig({
-      key,
-      direction:
-        sortConfig.key === key && sortConfig.direction === 'asc'
-          ? 'desc'
-          : 'asc',
-    });
-  };
-
-  const toggleAllRows = () => {
-    if (selectedRows.size === filteredAndSortedData.length) {
-      setSelectedRows(new Set());
-    } else {
-      setSelectedRows(new Set(filteredAndSortedData.map((_, index) => index)));
-    }
-  };
-
-  const toggleRowSelection = (index: number) => {
-    const newSelected = new Set(selectedRows);
-    if (newSelected.has(index)) {
-      newSelected.delete(index);
-    } else {
-      newSelected.add(index);
-    }
-    setSelectedRows(newSelected);
-  };
-
-  const selectedKeywords = useMemo(() => {
-    if (selectedRows?.size) {
-      const _keywords = Array.from(selectedRows);
-      return _keywords.map((item) => {
-        if (filteredAndSortedData[item]) {
-          return filteredAndSortedData[item];
-        }
-      });
-    }
-    return [];
-  }, [selectedRows, filteredAndSortedData]);
+  }, []);
 
   const onModalOpen = useCallback(() => setShowModal(true), []);
-
   const onModalClose = useCallback(() => setShowModal(false), []);
 
   return (
-    <div className="container mx-auto py-8">
-      <Card>
+    <div className="mx-1 py-3">
+      <Card className="bg-opacity-5 bg-gray-200">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Keywords </CardTitle>
+            <CardTitle>Keywords</CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Total: {totalCount} keywords
+            </div>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
@@ -142,13 +203,7 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() =>
-                    downloadAsCSV(
-                      filteredAndSortedData.filter((_, index) =>
-                        selectedRows.has(index)
-                      )
-                    )
-                  }
+                  onClick={() => downloadAsCSV(selectedKeywords)}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export Selected ({selectedRows.size})
@@ -181,33 +236,10 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                       onCheckedChange={toggleAllRows}
                     />
                   </TableHead>
-                  <TableHead>
+                  <TableHead className="w-[30px]"></TableHead>
+                  <TableHead className="w-[300px]">
                     <Button variant="ghost" onClick={() => handleSort('term')}>
                       Keyword
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button variant="ghost" onClick={() => handleSort('kgmid')}>
-                      KGMID
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('kgmTitle')}
-                    >
-                      KGM Title
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('kgmWebsite')}
-                    >
-                      KGM Website
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
@@ -230,6 +262,22 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                     </Button>
                   </TableHead>
                   <TableHead>
+                    <Button variant="ghost" onClick={() => handleSort('kgmid')}>
+                      KGM ID
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>
+                    <Button
+                      variant="ghost"
+                      onClick={() => handleSort('kgmTitle')}
+                    >
+                      KGM Title
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                  <TableHead>KGM Website</TableHead>
+                  <TableHead className="text-right">
                     <Button
                       variant="ghost"
                       onClick={() => handleSort('organicResultsCount')}
@@ -238,107 +286,194 @@ const KeywordsTable: React.FC<IKeywordsTable> = ({
                       <ArrowUpDown className="ml-2 h-4 w-4" />
                     </Button>
                   </TableHead>
-                  <TableHead>
-                    <Button
-                      variant="ghost"
-                      onClick={() => handleSort('lastChecked')}
-                    >
-                      Last Checked
-                      <ArrowUpDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                  <TableHead className="w-[100px]">Actions</TableHead>
                 </TableRow>
               </TableHeader>
-              <TableBody className={'text-center'}>
-                {filteredAndSortedData.map((keyword, index) => (
-                  <TableRow key={index}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedRows.has(index)}
-                        onCheckedChange={() => toggleRowSelection(index)}
-                      />
-                    </TableCell>
-                    <TableCell className={`font-medium`}>
-                      <span
-                        className={`${keyword.isDefaultKeywords ? 'bg-blue-default dark:bg-blue-950' : 'bg-white'} p-1 leading-8`}
-                      >
-                        {keyword?.term || ''}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {keyword?.kgmid || keyword?.knowledge_graph?.kgmid}
-                    </TableCell>
-                    <TableCell>
-                      {keyword?.knowledge_graph?.title ||
-                        keyword?.dynamicData?.data?.knowledge_graph?.title ||
-                        ''}
-                    </TableCell>
-                    <TableCell>
-                      {keyword?.kgmWebsite ? (
-                        <Link href={keyword?.kgmWebsite} target={'_blank'}>
-                          {keyword?.kgmWebsite || ''}
-                        </Link>
-                      ) : null}
-                    </TableCell>
-                    <TableCell>
-                      {keyword?.location ||
-                        keyword?.search_parameters?.location_used ||
-                        ''}
-                    </TableCell>
-                    <TableCell className="capitalize">
-                      {keyword?.device ||
-                        keyword?.search_parameters?.device ||
-                        ''}
-                    </TableCell>
-                    <TableCell>
-                      {keyword?.organicResultsCount?.toLocaleString() ||
-                        keyword?.organic_results?.length ||
-                        ''}
-                    </TableCell>
-                    <TableCell>
-                      {keyword?.updatedAt
-                        ? new Date(keyword?.updatedAt).toLocaleDateString()
-                        : ''}
-                    </TableCell>
-                    <TableCell>
-                      <ActionsComponent
-                        keyword={keyword}
-                        onActionKeywordsChange={onActionKeywordsChange}
-                        currentPage={currentPage}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+              <TableBody className="text-md">
+                {filteredAndSortedData.map((keyword) => {
+                  const dates = getHistoricalDates(keyword);
+                  return (
+                    <React.Fragment key={keyword._id}>
+                      <TableRow className="hover:bg-muted/50 cursor-pointer">
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedRows.has(keyword._id)}
+                            onCheckedChange={() =>
+                              toggleRowSelection(keyword._id)
+                            }
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => toggleRowExpansion(keyword._id)}
+                          >
+                            {expandedRows.has(keyword._id) ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <div
+                            className={`${keyword.isDefaultKeywords ? 'bg-blue-100 dark:bg-blue-950' : ''} px-2 py-1 rounded-md`}
+                            title={
+                              keyword.isDefaultKeywords ? 'Default keyword' : ''
+                            }
+                          >
+                            {keyword.term}
+                          </div>
+                        </TableCell>
+                        <TableCell>{keyword.location}</TableCell>
+                        <TableCell className="capitalize">
+                          {keyword.device}
+                        </TableCell>
+                        <TableCell>{keyword.kgmid || '-'}</TableCell>
+                        <TableCell>{keyword.kgmTitle || '-'}</TableCell>
+                        <TableCell>
+                          {keyword.kgmWebsite && (
+                            <Link
+                              href={keyword.kgmWebsite}
+                              target="_blank"
+                              className="flex items-center hover:underline"
+                            >
+                              {new URL(keyword.kgmWebsite).hostname}
+                              <ExternalLink className="ml-1 h-3 w-3" />
+                            </Link>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {keyword.organicResultsCount?.toLocaleString() || '-'}
+                        </TableCell>
+                        <TableCell>
+                          {keyword.updatedAt
+                            ? new Date(keyword.updatedAt).toLocaleDateString()
+                            : '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <ActionsComponent
+                              keyword={keyword}
+                              onActionKeywordsChange={onActionKeywordsChange}
+                              currentPage={currentPage}
+                            />
+                            {/*<Button*/}
+                            {/*    variant="ghost"*/}
+                            {/*    size="sm"*/}
+                            {/*    onClick={() => downloadAsCSV([keyword])}*/}
+                            {/*    className="h-8 w-8 p-0"*/}
+                            {/*    title="Export keyword history"*/}
+                            {/*>*/}
+                            {/*    <Download className="h-4 w-4" />*/}
+                            {/*</Button>*/}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      {expandedRows.has(keyword._id) && (
+                        <TableRow>
+                          <TableCell colSpan={13} className="p-0">
+                            <div className="bg-muted/50 border-y">
+                              <div className="p-2 border-b bg-muted/70">
+                                <span className="flex items-center text-sm font-medium text-muted-foreground">
+                                  <History className="h-4 w-4 mr-2" />
+                                  Historical Data
+                                </span>
+                              </div>
+                              <div className="px-4">
+                                <Table>
+                                  <TableHeader>
+                                    <TableRow className="hover:bg-transparent">
+                                      <TableHead className="w-[540px]">
+                                        Date
+                                      </TableHead>
+                                      <TableHead>KGM ID</TableHead>
+                                      <TableHead>KGM Title</TableHead>
+                                      <TableHead>KGM Website</TableHead>
+                                      <TableHead className="text-right">
+                                        Total Results
+                                      </TableHead>
+                                    </TableRow>
+                                  </TableHeader>
+                                  <TableBody className="text-xs">
+                                    {dates.map((entry) => (
+                                      <TableRow
+                                        key={entry.date}
+                                        className="hover:bg-muted/30"
+                                      >
+                                        <TableCell className="py-2 font-medium">
+                                          {new Date(
+                                            entry.date
+                                          ).toLocaleDateString()}
+                                        </TableCell>
+                                        <TableCell>
+                                          {entry.kgmid || '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                          {entry.kgmTitle || '-'}
+                                        </TableCell>
+                                        <TableCell>
+                                          {entry.kgmWebsite && (
+                                            <Link
+                                              href={entry.kgmWebsite}
+                                              target="_blank"
+                                              className="flex items-center hover:underline"
+                                            >
+                                              {
+                                                new URL(entry.kgmWebsite)
+                                                  .hostname
+                                              }
+                                              <ExternalLink className="ml-1 h-3 w-3" />
+                                            </Link>
+                                          )}
+                                        </TableCell>
+                                        <TableCell
+                                          className="text-right font-mono"
+                                          title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
+                                        >
+                                          {entry.organicResultsCount?.toLocaleString() ||
+                                            '-'}
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
-          {selectedRows?.size >= 2 ? (
-            <div className={'my-3'}>
+          {selectedRows.size >= 1 && (
+            <div className="fixed top-1/2 right-0">
               <Button
-                variant={'secondary'}
-                className={
-                  'text-white bg-gray-800 border-[0.5px] hover:bg-gray-500 border-red-800 h-auto py-3 px-4'
-                }
+                variant="secondary"
+                className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-red-800 h-auto py-3 px-4"
                 onClick={onModalOpen}
               >
-                See difference
+                View Data
               </Button>
             </div>
-          ) : null}
-          {showModal ? (
+          )}
+          {showModal && (
             <Modal
               isOpen={showModal}
               onClose={onModalClose}
-              customContainerClassName={'bg-white rounded-md'}
+              customContainerClassName="bg-white rounded-md"
             >
               <DifferenceModal keywords={selectedKeywords} />
             </Modal>
-          ) : null}
+          )}
         </CardContent>
       </Card>
     </div>
   );
-};
-
-export default KeywordsTable;
+}
