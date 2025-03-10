@@ -1,6 +1,13 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  ChangeEvent,
+  useRef,
+  useEffect,
+} from 'react';
 import {
   Table,
   TableBody,
@@ -26,30 +33,37 @@ import { Checkbox } from '@/components/ui/checkbox';
 import Modal from '@/components/shared/Modal';
 import DifferenceModal from '@/components/pages/Keywords/DifferenceModal';
 import ActionsComponent from './ActionsComponent';
+import debounce from 'lodash.debounce';
 import { generateMultiCSV } from '@/lib/utils';
-import { IKeyword } from '@/types';
+import { IKeyword, IKeywordPaginateParams } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import axiosClient from '@/lib/axiosClient';
 
 interface KeywordsTableProps {
   keywords: IKeyword[];
   currentPage: number;
   totalCount: number;
   totalPages: number;
-  onActionKeywordsChange: (data: any) => void;
+  onActionKeywordsChange: (data: any, obj?: any) => void;
+  onKeywordFilterChange: (data: any) => void;
+  onKeywordsPaginate: (data: IKeywordPaginateParams) => void;
 }
 
 export default function KeywordsTable({
   keywords = [],
   currentPage,
   totalCount,
+  onKeywordFilterChange,
   onActionKeywordsChange,
 }: KeywordsTableProps) {
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState({
     key: '',
     direction: 'asc',
   });
+  const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
 
   const toggleRowExpansion = useCallback((id: string) => {
@@ -64,56 +78,29 @@ export default function KeywordsTable({
     });
   }, []);
 
-  const sortData = useCallback(
-    (data: IKeyword[], key: string, direction: string) => {
-      return [...data].sort((a: any, b: any) => {
-        let aValue = a[key];
-        let bValue = b[key];
-        if (aValue === null || aValue === undefined) return 1;
-        if (bValue === null || bValue === undefined) return -1;
-
-        if (typeof aValue === 'string') {
-          aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
-        }
-
-        return direction === 'asc'
-          ? aValue < bValue
-            ? -1
-            : aValue > bValue
-              ? 1
-              : 0
-          : aValue > bValue
-            ? -1
-            : aValue < bValue
-              ? 1
-              : 0;
-      });
-    },
-    []
-  );
-
   const filteredAndSortedData = useMemo(() => {
     if (!keywords?.length) return [];
 
-    const processedKeywords = keywords.map((keyword) => ({
+    return keywords.map((keyword) => ({
       ...keyword,
       historicalData:
         keyword.historicalData instanceof Map
           ? keyword.historicalData
           : new Map(Object.entries(keyword.historicalData || {})),
     }));
+  }, [keywords]);
 
-    let filtered = processedKeywords.filter((keyword) =>
-      keyword.term.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+  const debouncedSearch = useRef(
+    debounce(async (value: string) => {
+      onKeywordFilterChange({ searchTerm: value });
+    }, 800)
+  ).current;
 
-    if (sortConfig.key) {
-      filtered = sortData(filtered, sortConfig.key, sortConfig.direction);
-    }
-
-    return filtered;
-  }, [keywords, searchTerm, sortConfig, sortData]);
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
 
   const getHistoricalDates = useCallback((keyword: IKeyword) => {
     const data = [];
@@ -132,12 +119,32 @@ export default function KeywordsTable({
     );
   }, []);
 
-  const handleSort = useCallback((key: string) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  }, []);
+  const handleSort = useCallback(
+    async (key: string) => {
+      let direction = 'asc';
+      setSortConfig((prev) => {
+        direction =
+          prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc';
+        return {
+          key,
+          direction:
+            prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      });
+      onKeywordFilterChange({
+        sortBy: { key, direction },
+      });
+    },
+    [onKeywordFilterChange]
+  );
+
+  const handleTermChange = useCallback(
+    async (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchTerm(e.target.value);
+      await debouncedSearch(e.target.value);
+    },
+    [debouncedSearch]
+  );
 
   const toggleAllRows = useCallback(() => {
     setSelectedRows((prev) =>
@@ -178,6 +185,27 @@ export default function KeywordsTable({
     window.URL.revokeObjectURL(url);
   }, []);
 
+  const downloadAsCSVAll = useCallback(async () => {
+    try {
+      const resp = await axiosClient.get(`/api/keywords?fullList=${true}`);
+      const csvContent = generateMultiCSV(resp?.data);
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'keyword-data.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      toast({
+        title: 'Failed to export csv',
+        description: 'Something went wrong',
+      });
+    }
+  }, []);
+
   const onModalOpen = useCallback(() => setShowModal(true), []);
   const onModalClose = useCallback(() => setShowModal(false), []);
 
@@ -191,11 +219,7 @@ export default function KeywordsTable({
               Total: {totalCount} keywords
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => downloadAsCSV(filteredAndSortedData)}
-              >
+              <Button variant="outline" size="sm" onClick={downloadAsCSVAll}>
                 <Download className="h-4 w-4 mr-2" />
                 Export All
               </Button>
@@ -219,7 +243,7 @@ export default function KeywordsTable({
               <Input
                 placeholder="Search keywords..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={handleTermChange}
                 className="max-w-sm"
               />
             </div>
@@ -373,7 +397,7 @@ export default function KeywordsTable({
                           </div>
                         </TableCell>
                       </TableRow>
-                      {expandedRows.has(keyword._id) && (
+                      {expandedRows.has(keyword._id) && dates?.length ? (
                         <TableRow>
                           <TableCell colSpan={13} className="p-0">
                             <div className="bg-muted/50 border-y">
@@ -399,53 +423,55 @@ export default function KeywordsTable({
                                     </TableRow>
                                   </TableHeader>
                                   <TableBody className="text-xs">
-                                    {dates.map((entry) => (
-                                      <TableRow
-                                        key={entry.date}
-                                        className="hover:bg-muted/30"
-                                      >
-                                        <TableCell className="py-2 font-medium">
-                                          {new Date(
-                                            entry.date
-                                          ).toLocaleDateString()}
-                                        </TableCell>
-                                        <TableCell>
-                                          {entry.kgmid || '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                          {entry.kgmTitle || '-'}
-                                        </TableCell>
-                                        <TableCell>
-                                          {entry.kgmWebsite && (
-                                            <Link
-                                              href={entry.kgmWebsite}
-                                              target="_blank"
-                                              className="flex items-center hover:underline"
-                                            >
-                                              {
-                                                new URL(entry.kgmWebsite)
-                                                  .hostname
-                                              }
-                                              <ExternalLink className="ml-1 h-3 w-3" />
-                                            </Link>
-                                          )}
-                                        </TableCell>
-                                        <TableCell
-                                          className="text-right font-mono"
-                                          title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
+                                    {dates.map((entry) => {
+                                      return (
+                                        <TableRow
+                                          key={entry.date}
+                                          className="hover:bg-muted/30"
                                         >
-                                          {entry.organicResultsCount?.toLocaleString() ||
-                                            '-'}
-                                        </TableCell>
-                                      </TableRow>
-                                    ))}
+                                          <TableCell className="py-2 font-medium">
+                                            {new Date(
+                                              entry.date
+                                            ).toLocaleDateString()}{' '}
+                                          </TableCell>
+                                          <TableCell>
+                                            {entry.kgmid || '-'}
+                                          </TableCell>
+                                          <TableCell>
+                                            {entry.kgmTitle || '-'}
+                                          </TableCell>
+                                          <TableCell>
+                                            {entry.kgmWebsite && (
+                                              <Link
+                                                href={entry.kgmWebsite}
+                                                target="_blank"
+                                                className="flex items-center hover:underline"
+                                              >
+                                                {
+                                                  new URL(entry.kgmWebsite)
+                                                    .hostname
+                                                }
+                                                <ExternalLink className="ml-1 h-3 w-3" />
+                                              </Link>
+                                            )}
+                                          </TableCell>
+                                          <TableCell
+                                            className="text-right font-mono"
+                                            title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
+                                          >
+                                            {entry.organicResultsCount?.toLocaleString() ||
+                                              '-'}
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
                                   </TableBody>
                                 </Table>
                               </div>
                             </div>
                           </TableCell>
                         </TableRow>
-                      )}
+                      ) : null}
                     </React.Fragment>
                   );
                 })}

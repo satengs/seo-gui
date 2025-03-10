@@ -4,10 +4,11 @@ import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { IKeywordPaginateParams } from '@/types';
 
 interface PaginationProps {
   totalCount: number;
-  onPageChange: (value: number) => void;
+  onPageChange: (data: IKeywordPaginateParams) => void;
   itemsPerPage?: number;
   currentPage?: number;
   siblingCount?: number;
@@ -79,7 +80,7 @@ function usePagination({
 export default function Pagination({
   totalCount,
   onPageChange,
-  itemsPerPage = 30,
+  itemsPerPage = 10,
   currentPage = 1,
   siblingCount = 1,
 }: PaginationProps) {
@@ -101,12 +102,12 @@ export default function Pagination({
 
   const handlePageChange = (pageNumber: number) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
-      onPageChange(pageNumber);
+      onPageChange({ page: pageNumber });
     }
   };
 
   return (
-    <div className="mt-4 flex items-center justify-between">
+    <div className="my-4 flex items-center justify-between">
       <div className="flex items-center space-x-2">
         <Button
           variant="outline"

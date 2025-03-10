@@ -10,12 +10,12 @@ import {
 import { IKeyword } from '@/types';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
-import { generateCSV } from '@/lib/utils';
+import { generateMultiCSV } from '@/lib/utils';
 
 interface IActionsComponent {
   keyword: any;
   currentPage: number;
-  onActionKeywordsChange: (data: any) => void;
+  onActionKeywordsChange: (data: any, obj?: any) => void;
 }
 
 const ActionsComponent: React.FC<IActionsComponent> = ({
@@ -99,7 +99,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
   };
 
   const downloadAsCSV = useCallback((keyword: any) => {
-    const csvContent = generateCSV(keyword);
+    const csvContent = generateMultiCSV([keyword]);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');

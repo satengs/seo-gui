@@ -14,7 +14,8 @@ import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 import { useToast } from '@/hooks/use-toast';
 import axiosClient from '@/lib/axiosClient';
 import { mockKeywords } from '@/lib/mockData';
-import { IKeyword } from '@/types';
+import { SIZE } from '@/consts';
+import { IKeyword, IKeywordPaginateParams, ISortConfig } from '@/types';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -26,18 +27,34 @@ export default function KeywordsPage() {
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(true);
   const [location, setLocation] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [sortBy, setSortBy] = useState<ISortConfig>();
   const { toast } = useToast();
 
   const fetchKeywords = useCallback(
-    async (page: number = 1, size?: number) => {
+    async (
+      page: number = 1,
+      size: number = SIZE,
+      searchTerm: string = '',
+      sortBy: ISortConfig = { sortKey: '', sortDirection: 'asc' }
+    ) => {
       try {
-        const response = await axiosClient.get(
-          `/api/keywords?page=${page || 1}&size=${size || 30}`
-        );
+        let queryString = `/api/keywords?page=${page}`;
+        if (size) {
+          queryString += `&size=${size}`;
+        }
+        if (searchTerm) {
+          queryString += `&searchTerm=${searchTerm}`;
+        }
+        if (sortBy?.sortKey?.length) {
+          queryString += `&sortKey=${sortBy?.sortKey}&sortDirection=${sortBy?.sortDirection}`;
+        }
+
+        const response = await axiosClient.get(queryString);
         if (response?.data?.entitiesData) {
           setKeywords(response.data.entitiesData);
           setTotalCount(response.data.totalCount);
-          setTotalPages(5);
+          // setTotalPages(5);
         } else {
           // Fallback to mock data if no real data is available
           setKeywords(mockKeywords);
@@ -85,6 +102,7 @@ export default function KeywordsPage() {
         title: 'Success',
         description: 'Keywords searched successfully',
       });
+      setSearchText('');
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
       // Return mock data filtered by search term
@@ -119,12 +137,24 @@ export default function KeywordsPage() {
     setTotalPages(data?.totalPages);
   }, []);
 
+  const onKeywordFilterChange = useCallback(async (obj?: any) => {
+    if (obj?.searchTerm || obj.searchTerm === '') {
+      setSearchTerm(obj?.searchTerm);
+    }
+    if (obj?.sortBy) {
+      setSortBy({
+        sortKey: obj?.sortBy.key,
+        sortDirection: obj?.sortBy.direction,
+      });
+    }
+  }, []);
+
   const onKeywordsPaginate = useCallback(
-    async (page: number) => {
-      await fetchKeywords(page);
+    async ({ page = 1 }: IKeywordPaginateParams) => {
+      await fetchKeywords(page, 10, searchTerm, sortBy);
       setCurrentPage(page);
     },
-    [fetchKeywords]
+    [fetchKeywords, searchTerm, sortBy]
   );
 
   const onSwitchToggle = useCallback(() => {
@@ -132,8 +162,8 @@ export default function KeywordsPage() {
   }, []);
 
   useEffect(() => {
-    fetchKeywords();
-  }, [fetchKeywords]);
+    fetchKeywords(1, SIZE, searchTerm, sortBy);
+  }, [fetchKeywords, searchTerm, sortBy]);
 
   return (
     <div className="p-1.5 space-y-6">
@@ -157,6 +187,7 @@ export default function KeywordsPage() {
                 placeholder="Search keywords..."
                 className="w-full"
                 onChange={onInputChange}
+                value={searchText}
               />
             </div>
           </div>
@@ -192,9 +223,11 @@ export default function KeywordsPage() {
           <KeywordsTable
             keywords={keywords}
             onActionKeywordsChange={onKeywordsChange}
+            onKeywordFilterChange={onKeywordFilterChange}
             currentPage={currentPage}
             totalCount={totalCount}
             totalPages={totalPages}
+            onKeywordsPaginate={onKeywordsPaginate}
           />
         ) : (
           <p>...Loading keywords</p>

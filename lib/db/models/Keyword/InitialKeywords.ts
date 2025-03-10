@@ -1,4 +1,3 @@
-import { IKeyword } from '@/types';
 import Keyword from './Keyword';
 import { searchKeyword } from '@/lib/serpApi';
 
@@ -565,42 +564,23 @@ export const initialKeywords = [
   },
 ] as const;
 
-export const getKeywordData1 = (srcObj: any, existingData: any) => {
-  const keywordData: IKeyword = {
-    _id: existingData?._id,
-    term: srcObj?.search_parameters?.q || srcObj?.term,
-    kgmid: srcObj?.knowledge_graph?.kgmid,
-    kgmTitle: srcObj?.knowledge_graph?.kgmTitle,
-    kgmWebsite: srcObj?.knowledge_graph?.website,
-    location: srcObj?.search_parameters?.location_used || 'United States',
-    device: srcObj?.search_parameters?.device,
-    organicResultsCount: srcObj?.organic_results?.length || 0,
-    keywordTerm: existingData?.keywordTerm,
-    isDefaultKeywords: existingData?.isDefaultKeywords,
-    historicalData: existingData?.historicalData,
-    createdAt: existingData?.createdAt,
-    updatedAt: existingData?.update,
-    keywordData: {
-      data: { ...srcObj },
-    },
-  };
-  return keywordData;
-};
-
 export async function getKeywordData(
   term: string,
   location: string,
-  device: string
+  device: string,
+  newKeyword?: boolean
 ) {
   try {
     const searchResults: any = await searchKeyword(term, location, device);
     const todayKey = new Date().toISOString().split('T')[0];
 
     const dailyData = {
-      organicResultsCount: searchResults?.search_information?.totalResults || 0,
+      organicResultsCount: searchResults?.organic_results?.length || 0,
       kgmid: searchResults?.knowledge_graph?.kgmid || '',
       kgmTitle: searchResults?.knowledge_graph?.title || '',
       kgmWebsite: searchResults?.knowledge_graph?.website || '',
+      totalResultsCount:
+        searchResults?.search_information?.total_results?.length || 0,
       term,
       device,
       location,
@@ -611,10 +591,9 @@ export async function getKeywordData(
       timestamp: new Date().toISOString(),
     };
 
-    console.log('________________________', dailyData);
     return {
       ...dailyData,
-      historicalData: new Map([[todayKey, dailyData]]),
+      historicalData: newKeyword ? null : new Map([[todayKey, dailyData]]),
       isDefaultKeywords: true,
     };
   } catch (error) {

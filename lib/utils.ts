@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { IKeyword } from '@/types';
+import { IKeyword, IHistoricalEntry } from '@/types';
 import { Parser } from '@json2csv/plainjs';
 
 export function cn(...inputs: ClassValue[]) {
@@ -15,28 +15,44 @@ export function checkDateDifference(dateOne: any, dateTwo: any) {
   return Math.floor(differenceInMs / msInOneDay);
 }
 
-function prepareDataForCSV(keyword: IKeyword): Record<string, any> {
-  const baseData = { ...keyword };
-
-  if (baseData.keywordData && baseData.keywordData.data) {
-    const dynamicFields = baseData.keywordData.data;
-    Object.assign(baseData, dynamicFields);
+function formatHistoricalData(
+  historicalData: Record<string, IHistoricalEntry>
+) {
+  if (historicalData) {
+    return Object.entries(historicalData)
+      .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+      .map(([date, data]) => ({
+        date,
+        data,
+      }));
   }
-  delete baseData.keywordData;
-
-  return baseData;
 }
 
-export function generateCSV(keyword: IKeyword): string {
-  const dataForCSV = prepareDataForCSV(keyword);
-
-  const parser = new Parser();
-  return parser.parse([dataForCSV]);
+function prepareDataForCSV(keyword: IKeyword): Record<string, any> {
+  return {
+    term: keyword.term,
+    createdAt: keyword.createdAt,
+    updatedAt: keyword.updatedAt,
+    device: keyword.device,
+    location: keyword.location,
+    organicResultsCount: keyword.organicResultsCount,
+    kgmTitle: keyword.kgmTitle,
+    kgmWebsite: keyword.kgmWebsite,
+    kgmid: keyword.kgmid,
+    isDefaultKeywords: keyword.isDefaultKeywords,
+    keywordData: JSON.stringify(keyword.keywordData),
+    historicalData: JSON.stringify(
+      formatHistoricalData(keyword.historicalData)
+    ),
+  };
 }
 
 export function generateMultiCSV(keywords: IKeyword[]): string {
   const dataForCSV = keywords.map((keyword) => prepareDataForCSV(keyword));
+  const parser = new Parser({
+    flatten: true,
+    flattenSeparator: '_',
+  });
 
-  const parser = new Parser();
   return parser.parse(dataForCSV);
 }

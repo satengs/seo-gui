@@ -35,10 +35,48 @@ export interface IKeyword {
   keywordTerm: string;
   organicResultsCount: number;
   isDefaultKeywords: boolean;
-  keywordData: any;
+  keywordData: IKeywordData;
   historicalData: any;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface IKeywordData {
+  data: SearchKeywordResponse;
+  _id: string;
+}
+
+export interface IPaginatedKeywords {
+  entitiesData: IKeyword[];
+  totalCount: any;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface IHistoricalKeyword {
+  date: Date;
+  kgmid: string;
+  kgmTitle: string;
+  kgmWebsite: string;
+  totalResultsCount: number;
+  timestamp: Date;
+}
+
+export interface IHistoricalEntry {
+  organicResultsCount: number;
+  kgmid: string;
+  kgmTitle: string;
+  kgmWebsite: string;
+  backlinksNeeded: number | null;
+  difficulty: number | null;
+  keywordData: IKeywordData;
+  timestamp: string;
+  volume: number | null;
+}
+
+export interface IHistoricalData {
+  _id: string;
+  data: IHistoricalKeyword;
 }
 
 export interface SearchKeywordResponse {
@@ -86,4 +124,20 @@ export interface PaginationResult<T> {
   totalCount: number;
   totalPages: number;
   currentPage: number;
+}
+
+export interface ISortObj {
+  [key: string]: number;
+}
+
+export interface ISortConfig {
+  sortKey: string;
+  sortDirection: string;
+}
+
+export interface IKeywordPaginateParams {
+  page?: number;
+  size?: number;
+  searchTerm?: string;
+  sortBy?: ISortConfig;
 }
