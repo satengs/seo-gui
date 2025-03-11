@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, ChangeEvent, useCallback } from 'react';
+import React, { useEffect, useState, ChangeEvent, useCallback } from 'react';
 import { Search, Info } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import axiosClient from '@/lib/axiosClient';
 import { mockKeywords } from '@/lib/mockData';
 import { SIZE } from '@/consts';
 import { IKeyword, IKeywordPaginateParams, ISortConfig } from '@/types';
+import { DateRange } from 'react-day-picker';
+import DateFilter from '@/components/pages/Keywords/DateFilter';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -28,6 +30,7 @@ export default function KeywordsPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [location, setLocation] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<ISortConfig>();
   const { toast } = useToast();
 
@@ -36,7 +39,8 @@ export default function KeywordsPage() {
       page: number = 1,
       size: number = SIZE,
       searchTerm: string = '',
-      sortBy: ISortConfig = { sortKey: '', sortDirection: 'asc' }
+      sortBy: ISortConfig = { sortKey: '', sortDirection: 'asc' },
+      dateRange: DateRange | undefined
     ) => {
       try {
         let queryString = `/api/keywords?page=${page}`;
@@ -48,6 +52,9 @@ export default function KeywordsPage() {
         }
         if (sortBy?.sortKey?.length) {
           queryString += `&sortKey=${sortBy?.sortKey}&sortDirection=${sortBy?.sortDirection}`;
+        }
+        if (dateRange?.from && dateRange?.to) {
+          queryString += `&dateFrom=${dateRange?.from}&dateTo=${dateRange?.to}`;
         }
 
         const response = await axiosClient.get(queryString);
@@ -121,6 +128,12 @@ export default function KeywordsPage() {
     }
   }
 
+  const onDateRangeChange = useCallback(
+    (start: Date | undefined, end: Date | undefined) =>
+      setDateRange({ from: start, to: end }),
+    []
+  );
+
   const onInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     setSearchText(e.target.value);
   };
@@ -151,10 +164,10 @@ export default function KeywordsPage() {
 
   const onKeywordsPaginate = useCallback(
     async ({ page = 1 }: IKeywordPaginateParams) => {
-      await fetchKeywords(page, 10, searchTerm, sortBy);
+      await fetchKeywords(page, 10, searchTerm, sortBy, dateRange);
       setCurrentPage(page);
     },
-    [fetchKeywords, searchTerm, sortBy]
+    [fetchKeywords, searchTerm, sortBy, dateRange]
   );
 
   const onSwitchToggle = useCallback(() => {
@@ -162,8 +175,9 @@ export default function KeywordsPage() {
   }, []);
 
   useEffect(() => {
-    fetchKeywords(1, SIZE, searchTerm, sortBy);
-  }, [fetchKeywords, searchTerm, sortBy]);
+    setCurrentPage(1);
+    fetchKeywords(1, SIZE, searchTerm, sortBy, dateRange);
+  }, [fetchKeywords, searchTerm, sortBy, dateRange]);
 
   return (
     <div className="p-1.5 space-y-6">
@@ -219,18 +233,24 @@ export default function KeywordsPage() {
             Search
           </Button>
         </div>
-        {keywords?.length ? (
-          <KeywordsTable
-            keywords={keywords}
-            onActionKeywordsChange={onKeywordsChange}
-            onKeywordFilterChange={onKeywordFilterChange}
-            currentPage={currentPage}
-            totalCount={totalCount}
-            totalPages={totalPages}
-            onKeywordsPaginate={onKeywordsPaginate}
-          />
+        <DateFilter onDateFilterChange={onDateRangeChange} />
+
+        {keywords ? (
+          keywords.length ? (
+            <KeywordsTable
+              keywords={keywords}
+              onActionKeywordsChange={onKeywordsChange}
+              onKeywordFilterChange={onKeywordFilterChange}
+              currentPage={currentPage}
+              totalCount={totalCount}
+              totalPages={totalPages}
+              onKeywordsPaginate={onKeywordsPaginate}
+            />
+          ) : (
+            <p className={'py-3'}>No keywords</p>
+          )
         ) : (
-          <p>...Loading keywords</p>
+          <p className={'py-3'}>..Loading keyword</p>
         )}
         <Pagination
           totalCount={totalCount}

@@ -1,4 +1,6 @@
 import { ISortConfig, ISortObj } from '@/types';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 export const paginateEntities = async (
   page: number,
@@ -26,7 +28,7 @@ export const paginateEntities = async (
   }
 };
 
-export const paginateEntitiesByFilter = async (
+export const paginateEntitiesByFilterEx = async (
   page: number,
   pageSize: number,
   schema: any,
@@ -61,5 +63,74 @@ export const paginateEntitiesByFilter = async (
     };
   } catch (err: any) {
     throw new Error('Error fetching paginated data: ', err?.message || '');
+  }
+};
+
+export const paginateEntitiesByFilter = async (
+  page: number,
+  pageSize: number,
+  schema: any,
+  term: string,
+  sortBy?: ISortConfig,
+  dateRange?: DateRange
+) => {
+  const skip = (page - 1) * pageSize;
+
+  try {
+    const regex = new RegExp(term, 'i');
+    let query = term ? { term: { $regex: regex } } : {};
+    const sort: ISortObj = {};
+    if (sortBy?.sortKey?.length) {
+      sort[`${sortBy.sortKey}`] = sortBy.sortDirection === 'asc' ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    if (dateRange?.from && dateRange?.to) {
+      const fromDate = format(dateRange.from, 'yyyy-MM-dd');
+      const toDate = format(dateRange.to, 'yyyy-MM-dd');
+
+      const allEntities = await schema.find(query).sort(sort);
+
+      const filteredEntities = allEntities.filter((doc: any) => {
+        if (doc.historicalData) {
+          const keywordTimestamps = [];
+          for (let k of doc.historicalData.keys()) {
+            keywordTimestamps.push(k);
+          }
+          return keywordTimestamps.some(
+            (timestamp) => timestamp >= fromDate && timestamp < toDate
+          );
+        }
+      });
+      const startIndex = skip;
+      const endIndex = startIndex + pageSize;
+      const paginatedEntities = filteredEntities.slice(startIndex, endIndex);
+
+      return {
+        entitiesData: paginatedEntities,
+        totalCount: filteredEntities.length,
+        totalPages: Math.ceil(filteredEntities.length / pageSize),
+        currentPage: page,
+      };
+    }
+
+    const entitiesData = await schema
+      .find(query)
+      .skip(skip)
+      .limit(pageSize)
+      .sort(sort);
+
+    const totalCount = await schema.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      entitiesData,
+      totalCount,
+      totalPages,
+      currentPage: page,
+    };
+  } catch (err: any) {
+    throw new Error('Error fetching paginated data: ' + (err?.message || ''));
   }
 };

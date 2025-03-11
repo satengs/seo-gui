@@ -16,6 +16,8 @@ export async function GET(req: Request) {
     const searchTerm = searchParams.get('searchTerm') || '';
     const sortKey = searchParams.get('sortKey') || '';
     const sortDirection = searchParams.get('sortDirection') || 'asc';
+    const dateRangeFrom = searchParams.get('dateFrom');
+    const dateRangeTo = searchParams.get('dateTo');
 
     // Seed initial keywords if none exist
     const count = await Keyword.countDocuments();
@@ -29,12 +31,14 @@ export async function GET(req: Request) {
     }
 
     let _keywords: IPaginatedKeywords;
+    // @ts-ignore
     _keywords = await paginateEntitiesByFilter(
       page as number,
       size as number,
       Keyword,
       searchTerm,
-      { sortKey, sortDirection }
+      { sortKey, sortDirection },
+      { from: dateRangeFrom, to: dateRangeTo }
     );
 
     return NextResponse.json(_keywords);

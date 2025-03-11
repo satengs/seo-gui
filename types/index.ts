@@ -1,3 +1,5 @@
+import { DateRange } from 'react-day-picker';
+
 export interface IAccount {
   account_email: string;
   account_id: string;
@@ -140,4 +142,5 @@ export interface IKeywordPaginateParams {
   size?: number;
   searchTerm?: string;
   sortBy?: ISortConfig;
+  rangeOfDate: DateRange | undefined;
 }
