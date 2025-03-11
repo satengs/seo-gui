@@ -80,7 +80,7 @@ function usePagination({
 export default function Pagination({
   totalCount,
   onPageChange,
-  itemsPerPage = 10,
+  itemsPerPage = 50,
   currentPage = 1,
   siblingCount = 1,
 }: PaginationProps) {
