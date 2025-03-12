@@ -18,7 +18,7 @@ const DOTS = '...';
 
 function usePagination({
   totalCount,
-  itemsPerPage = 30,
+  itemsPerPage = 50,
   siblingCount = 1,
   currentPage = 1,
 }: {

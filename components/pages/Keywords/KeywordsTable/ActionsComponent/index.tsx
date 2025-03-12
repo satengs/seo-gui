@@ -112,7 +112,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
   }, []);
 
   return (
-    <section className={'col-span-1 m-1 flex items-center gap-4'}>
+    <section className={'col-span-1 m-1 flex items-center gap-2'}>
       {!keyword?.isDefaultKeywords ? (
         <div className={'relative group'}>
           <Button

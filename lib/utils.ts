@@ -56,3 +56,38 @@ export function generateMultiCSV(keywords: IKeyword[]): string {
 
   return parser.parse(dataForCSV);
 }
+
+const CITY_ABBREVIATIONS: Record<string, string> = {
+  'los angeles': 'LA', 'new york': 'NYC', 'san francisco': 'SF','san antonio': 'SA',
+  'las vegas': 'LV', 'washington': 'DC', 'chicago': 'CHI', 'dallas': 'DAL',
+  'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR',
+  'california': 'CA', 'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE',
+  'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID',
+  'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas': 'KS',
+  'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
+  'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS',
+  'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV',
+  'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM',
+  'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK',
+  'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
+  'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT',
+  'vermont': 'VT', 'virginia': 'VA', 'west virginia': 'WV',
+  'wisconsin': 'WI', 'wyoming': 'WY',
+  'united states': 'US', 'united kingdom': 'UK', 'canada': 'CA', 'australia': 'AU',
+  'germany': 'DE', 'france': 'FR', 'italy': 'IT', 'spain': 'ES',
+  'japan': 'JP', 'china': 'CN'
+};
+
+export function shortenLocation(location: string): string {
+  if (!location) return '';
+
+  const parts = location.split(', ').map(part => part.toLowerCase().trim());
+
+  let name1 = CITY_ABBREVIATIONS[parts[0]] || parts[0]; // Shorten city if possible.
+  let name2 = CITY_ABBREVIATIONS[parts[1]] || parts[1]; // Shorten city if possible.
+  let name3 = CITY_ABBREVIATIONS[parts[2]] || parts[2]; // Shorten city if possible.
+
+  // Handle other countries
+  const country = CITY_ABBREVIATIONS[parts[parts.length - 1]] || parts[parts.length - 1].toUpperCase();
+  return `${name1?.toLowerCase()}, ${name2?.toLowerCase()}, ${name3?.toLowerCase()}`;
+}

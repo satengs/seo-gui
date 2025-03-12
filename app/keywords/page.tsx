@@ -164,7 +164,7 @@ export default function KeywordsPage() {
 
   const onKeywordsPaginate = useCallback(
     async ({ page = 1 }: IKeywordPaginateParams) => {
-      await fetchKeywords(page, 10, searchTerm, sortBy, dateRange);
+      await fetchKeywords(page, 50, searchTerm, sortBy, dateRange);
       setCurrentPage(page);
     },
     [fetchKeywords, searchTerm, sortBy, dateRange]
