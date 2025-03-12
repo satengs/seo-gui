@@ -14,7 +14,6 @@ import {
   subWeeks,
   subMonths,
   isValid,
-  endOfDay,
 } from 'date-fns';
 
 interface IDateFilterProps {
@@ -54,11 +53,10 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
       },
     ];
   }, []);
-
   const handleFilterBtn = useCallback(
     (id: string) => {
       setSelectedFilter(id);
-      const todayEnd = endOfDay(new Date());
+      const todayEnd = startOfDay(new Date());
       let startDate: Date | null = null;
       let endDate: Date | null = todayEnd;
 
@@ -112,7 +110,7 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
       isValid(rangeData.to)
     ) {
       setSelectedFilter('custom');
-      onDateFilterChange(startOfDay(rangeData.from), endOfDay(rangeData.to));
+      onDateFilterChange(startOfDay(rangeData.from), startOfDay(rangeData.to));
       setShowCalendar(false);
     }
   };

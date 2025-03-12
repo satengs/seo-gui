@@ -25,6 +25,7 @@ export default function KeywordsPage() {
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(30);
   const [searchText, setSearchText] = useState<string>('');
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(true);
@@ -32,6 +33,8 @@ export default function KeywordsPage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<ISortConfig>();
+  const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+
   const { toast } = useToast();
 
   const fetchKeywords = useCallback(
@@ -43,6 +46,7 @@ export default function KeywordsPage() {
       dateRange: DateRange | undefined
     ) => {
       try {
+        setFetchLoading(true);
         let queryString = `/api/keywords?page=${page}`;
         if (size) {
           queryString += `&size=${size}`;
@@ -83,7 +87,7 @@ export default function KeywordsPage() {
           description: 'Connected to demo environment',
         });
       } finally {
-        setLoading(false);
+        setFetchLoading(false);
       }
     },
     [toast]
@@ -162,12 +166,17 @@ export default function KeywordsPage() {
     }
   }, []);
 
+  const onItemPerPageChange = useCallback(
+    (value: number) => setItemsPerPage(value),
+    []
+  );
+
   const onKeywordsPaginate = useCallback(
     async ({ page = 1 }: IKeywordPaginateParams) => {
-      await fetchKeywords(page, 50, searchTerm, sortBy, dateRange);
+      await fetchKeywords(page, itemsPerPage, searchTerm, sortBy, dateRange);
       setCurrentPage(page);
     },
-    [fetchKeywords, searchTerm, sortBy, dateRange]
+    [fetchKeywords, searchTerm, sortBy, dateRange, itemsPerPage]
   );
 
   const onSwitchToggle = useCallback(() => {
@@ -176,8 +185,8 @@ export default function KeywordsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-    fetchKeywords(1, SIZE, searchTerm, sortBy, dateRange);
-  }, [fetchKeywords, searchTerm, sortBy, dateRange]);
+    fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
+  }, [fetchKeywords, searchTerm, sortBy, dateRange, itemsPerPage]);
 
   return (
     <div className="p-1.5 space-y-6">
@@ -235,7 +244,9 @@ export default function KeywordsPage() {
         </div>
         <DateFilter onDateFilterChange={onDateRangeChange} />
 
-        {keywords ? (
+        {fetchLoading ? (
+          <p className={'py-3'}>..Loading keyword</p>
+        ) : keywords ? (
           keywords.length ? (
             <KeywordsTable
               keywords={keywords}
@@ -256,6 +267,8 @@ export default function KeywordsPage() {
           totalCount={totalCount}
           currentPage={currentPage}
           onPageChange={onKeywordsPaginate}
+          onItemPerPageChange={onItemPerPageChange}
+          itemsPerPage={itemsPerPage}
         />
       </Card>
     </div>

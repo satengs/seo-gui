@@ -1,4 +1,4 @@
-import { ISortConfig, ISortObj } from '@/types';
+import { IHistoricalMapEntry, IKeyword, ISortConfig, ISortObj } from '@/types';
 import { DateRange } from 'react-day-picker';
 import { format } from 'date-fns';
 
@@ -91,26 +91,37 @@ export const paginateEntitiesByFilter = async (
       const toDate = format(dateRange.to, 'yyyy-MM-dd');
 
       const allEntities = await schema.find(query).sort(sort);
-
-      const filteredEntities = allEntities.filter((doc: any) => {
-        if (doc.historicalData) {
-          const keywordTimestamps = [];
-          for (let k of doc.historicalData.keys()) {
-            keywordTimestamps.push(k);
+      const filteredKeywords: IKeyword[] = [];
+      allEntities.forEach((keyword: IKeyword) => {
+        if (keyword.historicalData) {
+          const historicalKeys: string[] = [];
+          for (let k of keyword.historicalData.keys()) {
+            historicalKeys.push(k);
           }
-          return keywordTimestamps.some(
-            (timestamp) => timestamp >= fromDate && timestamp < toDate
-          );
+          let historicalMap: Record<string, IHistoricalMapEntry> = {};
+          historicalKeys.forEach((key: string) => {
+            if (key >= fromDate && key <= toDate) {
+              const timestampKeyword = keyword.historicalData.get(`${key}`);
+              historicalMap = { ...historicalMap, [key]: timestampKeyword };
+            }
+          });
+
+          if (Object.keys(historicalMap)?.length) {
+            filteredKeywords.push({
+              ...keyword[`_doc`],
+              historicalData: historicalMap,
+            });
+          }
         }
       });
+
       const startIndex = skip;
       const endIndex = startIndex + pageSize;
-      const paginatedEntities = filteredEntities.slice(startIndex, endIndex);
-
+      const paginatedEntities = filteredKeywords.slice(startIndex, endIndex);
       return {
         entitiesData: paginatedEntities,
-        totalCount: filteredEntities.length,
-        totalPages: Math.ceil(filteredEntities.length / pageSize),
+        totalCount: filteredKeywords.length,
+        totalPages: Math.ceil(filteredKeywords.length / pageSize),
         currentPage: page,
       };
     }

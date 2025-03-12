@@ -27,6 +27,7 @@ export interface DailyData {
 }
 
 export interface IKeyword {
+  _doc: any;
   _id: string;
   term: string;
   kgmid?: string;
@@ -62,6 +63,10 @@ export interface IHistoricalKeyword {
   kgmWebsite: string;
   totalResultsCount: number;
   timestamp: Date;
+}
+
+export interface IHistoricalMapEntry {
+  [key: string]: IHistoricalData;
 }
 
 export interface IHistoricalEntry {
@@ -139,8 +144,9 @@ export interface ISortConfig {
 
 export interface IKeywordPaginateParams {
   page?: number;
+  perPage?: number;
   size?: number;
   searchTerm?: string;
   sortBy?: ISortConfig;
-  rangeOfDate: DateRange | undefined;
+  rangeOfDate?: DateRange | undefined;
 }
