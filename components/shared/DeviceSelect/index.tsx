@@ -1,7 +1,13 @@
 'use client';
 
 import React from 'react';
-import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue,} from '../../ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../ui/select';
 
 interface ICustomSelectInput {
   onValue: (value: string) => void;

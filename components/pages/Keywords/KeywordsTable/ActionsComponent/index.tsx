@@ -1,15 +1,21 @@
-import React, {useCallback} from 'react';
-import {Button} from '@/components/ui/button';
-import {DownloadIcon, Minus, Plus, SquareArrowOutUpRight, Trash,} from 'lucide-react';
-import {IKeyword} from '@/types';
+import React, { useCallback } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  DownloadIcon,
+  Minus,
+  Plus,
+  SquareArrowOutUpRight,
+  Trash,
+} from 'lucide-react';
+import { IKeyword } from '@/types';
 import axiosClient from '@/lib/axiosClient';
-import {useToast} from '@/hooks/use-toast';
-import {generateCSV} from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
+import { generateMultiCSV } from '@/lib/utils';
 
 interface IActionsComponent {
   keyword: any;
   currentPage: number;
-  onActionKeywordsChange: (data: any) => void;
+  onActionKeywordsChange: (data: any, obj?: any) => void;
 }
 
 const ActionsComponent: React.FC<IActionsComponent> = ({
@@ -93,7 +99,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
   };
 
   const downloadAsCSV = useCallback((keyword: any) => {
-    const csvContent = generateCSV(keyword);
+    const csvContent = generateMultiCSV([keyword]);
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -106,7 +112,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
   }, []);
 
   return (
-    <section className={'col-span-1 m-1 flex items-center gap-4'}>
+    <section className={'col-span-1 m-1 flex items-center gap-2'}>
       {!keyword?.isDefaultKeywords ? (
         <div className={'relative group'}>
           <Button

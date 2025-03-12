@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import {cn} from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 const Table = React.forwardRef<
   HTMLTableElement,
@@ -73,7 +73,7 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      'h-12 px-4 text-left align-middle font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
+      'h-12 px-1 align-middle justify-items-center justify-center text-center font-medium text-muted-foreground [&:has([role=checkbox])]:pr-0',
       className
     )}
     {...props}
@@ -87,7 +87,10 @@ const TableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <td
     ref={ref}
-    className={cn('px-4 py-1 align-middle [&:has([role=checkbox])]:pr-0', className)}
+    className={cn(
+      'px-4 py-1 align-middle border-l border-gray-500  border-opacity-20 ',
+      className
+    )}
     {...props}
   />
 ));

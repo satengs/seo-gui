@@ -1,9 +1,9 @@
 import React from 'react';
 import JsonViewer from '../JsonViewer';
+import { IKeyword } from '@/types';
 
 interface IKeywordItemSection {
-  // keyword: IKeyword;
-  keyword: any;
+  keyword: IKeyword;
 }
 
 const KeywordItemSection: React.FC<IKeywordItemSection> = ({ keyword }) => {

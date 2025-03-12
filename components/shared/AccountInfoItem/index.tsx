@@ -1,6 +1,6 @@
 import React from 'react';
-import {Card} from '@/components/ui/card';
-import {IAccount} from '@/types';
+import { Card } from '@/components/ui/card';
+import { IAccount } from '@/types';
 
 interface IAccountInfoItem {
   account: IAccount;

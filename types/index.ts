@@ -1,3 +1,5 @@
+import { DateRange } from 'react-day-picker';
+
 export interface IAccount {
   account_email: string;
   account_id: string;
@@ -25,6 +27,7 @@ export interface DailyData {
 }
 
 export interface IKeyword {
+  _doc: any;
   _id: string;
   term: string;
   kgmid?: string;
@@ -35,19 +38,60 @@ export interface IKeyword {
   keywordTerm: string;
   organicResultsCount: number;
   isDefaultKeywords: boolean;
-  keywordData: any;
+  keywordData: IKeywordData;
   historicalData: any;
   createdAt: string;
   updatedAt: string;
 }
 
+export interface IKeywordData {
+  data: SearchKeywordResponse;
+  _id: string;
+}
+
+export interface IPaginatedKeywords {
+  entitiesData: IKeyword[];
+  totalCount: any;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface IHistoricalKeyword {
+  date: Date;
+  kgmid: string;
+  kgmTitle: string;
+  kgmWebsite: string;
+  totalResultsCount: number;
+  timestamp: Date;
+}
+
+export interface IHistoricalMapEntry {
+  [key: string]: IHistoricalData;
+}
+
+export interface IHistoricalEntry {
+  organicResultsCount: number;
+  kgmid: string;
+  kgmTitle: string;
+  kgmWebsite: string;
+  backlinksNeeded: number | null;
+  difficulty: number | null;
+  keywordData: IKeywordData;
+  timestamp: string;
+  volume: number | null;
+}
+
+export interface IHistoricalData {
+  _id: string;
+  data: IHistoricalKeyword;
+}
+
 export interface SearchKeywordResponse {
   search_information?: {
-    query_displayed: string,
-    total_results?: number,
-    time_taken_displayed?: number,
-    organic_results_state?: string
-
+    query_displayed: string;
+    total_results?: number;
+    time_taken_displayed?: number;
+    organic_results_state?: string;
   };
   knowledge_graph?: {
     title?: string;
@@ -79,11 +123,30 @@ export interface SearchKeywordResponse {
   organic_results?: any[];
   related_questions?: any[];
   related_searches?: any[];
-  error?: string;}
+  error?: string;
+}
 
 export interface PaginationResult<T> {
   entitiesData: T[];
   totalCount: number;
   totalPages: number;
   currentPage: number;
+}
+
+export interface ISortObj {
+  [key: string]: number;
+}
+
+export interface ISortConfig {
+  sortKey: string;
+  sortDirection: string;
+}
+
+export interface IKeywordPaginateParams {
+  page?: number;
+  perPage?: number;
+  size?: number;
+  searchTerm?: string;
+  sortBy?: ISortConfig;
+  rangeOfDate?: DateRange | undefined;
 }

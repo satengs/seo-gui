@@ -1,17 +1,17 @@
-import mongoose from 'mongoose';
+import mongoose, { Mongoose } from 'mongoose';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
   throw new Error(
-      'Please define the MONGODB_URI environment variable. Example: mongodb+srv://username:password@cluster.mongodb.net/database'
+    'Please define the MONGODB_URI environment variable. Example: mongodb+srv://username:password@cluster.mongodb.net/database'
   );
 }
 
 declare global {
   var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
+    conn: Mongoose | null;
+    promise: Promise<Mongoose> | null;
   };
 }
 
@@ -26,10 +26,11 @@ async function dbConnect() {
     if (cached.conn) {
       // Test the cached connection
       try {
-        // @ts-ignore
-        await cached.conn.connection.db.admin().ping();
-        console.log('Using cached database connection');
-        return cached.conn;
+        if (cached.conn.connection.db) {
+          await cached.conn.connection.db.admin().ping();
+          console.log('Using cached database connection');
+          return cached.conn;
+        }
       } catch (error) {
         console.log('Cached connection failed, creating new connection');
         cached.conn = null;
@@ -40,29 +41,29 @@ async function dbConnect() {
     if (!cached.promise) {
       const opts = {
         bufferCommands: false,
-        maxPoolSize: 50,
-        serverSelectionTimeoutMS: 60000,
-        socketTimeoutMS: 60000,
+        maxPoolSize: 10,
+        serverSelectionTimeoutMS: 30000,
+        socketTimeoutMS: 45000,
+        family: 4,
         retryWrites: true,
         retryReads: true,
-        connectTimeoutMS: 60000
+        connectTimeoutMS: 30000,
       };
 
       console.log('Connecting to MongoDB...');
-      // @ts-ignore
-      cached.promise = mongoose.connect(MONGODB_URI, opts);
+      cached.promise = mongoose.connect(MONGODB_URI!, opts);
     }
 
     try {
       cached.conn = await cached.promise;
-
-      // Test the connection
-      // @ts-ignore
-      await mongoose.connection.db.admin().ping();
-      console.log('Database ping successful');
-      console.log('Successfully connected to MongoDB');
-
-      return cached.conn;
+      if (mongoose.connection.db) {
+        await mongoose.connection.db.admin().ping();
+        console.log('Database ping successful');
+        console.log('Successfully connected to MongoDB');
+        return cached.conn;
+      } else {
+        throw new Error('No connection to the db');
+      }
     } catch (e) {
       cached.promise = null;
       cached.conn = null;
@@ -73,7 +74,9 @@ async function dbConnect() {
     // Clear cached connection on error
     cached.conn = null;
     cached.promise = null;
-    throw new Error(`Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(
+      `Database connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   }
 }
 

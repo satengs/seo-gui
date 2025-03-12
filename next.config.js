@@ -20,12 +20,18 @@ const nextConfig = {
   },
   images: { unoptimized: true },
   experimental: {
-    serverComponentsExternalPackages: ['mongoose']
+    serverComponentsExternalPackages: ['mongoose'],
   },
+  env: {
+    MONGODB_URI: process.env.MONGODB_URI_stage,
+    SERP_API_KEY: process.env.SERP_API_KEY,
+    BASE_API_URL: process.env.BASE_API_URL,
+  },
+
   webpack: (config) => {
     config.externals = [...config.externals, 'mongoose'];
     return config;
-  }
+  },
 };
 
 module.exports = nextConfig;

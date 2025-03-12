@@ -1,9 +1,11 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/db';
+import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/types';
 
+const CHUNK_SIZE = 10;
+const PROCESSING_STATUS = new Map();
 
 const extractTotalResults = (searchResults: SearchKeywordResponse): number => {
   if (searchResults.organic_results?.length) {
@@ -11,9 +13,95 @@ const extractTotalResults = (searchResults: SearchKeywordResponse): number => {
   }
   return 0;
 };
-export async function POST() {
+
+async function processKeywordChunk(keywords: any[], startIndex: number) {
+  const chunk = keywords.slice(startIndex, startIndex + CHUNK_SIZE);
+  const results = [];
+  const todayKey = new Date().toISOString().split('T')[0];
+
+  for (const keyword of chunk) {
+    try {
+      console.log(`Processing keyword: ${keyword.term}`);
+
+      // Check if processing was cancelled
+      if (PROCESSING_STATUS.get('cancelled')) {
+        return { cancelled: true, results };
+      }
+
+      const searchResults = await searchKeyword(
+          keyword.term,
+          keyword.location,
+          keyword.device
+      ) as SearchKeywordResponse;
+
+      if (searchResults.error) {
+        results.push({
+          keyword: keyword.term,
+          error: `SERP API error: ${searchResults.error}`
+        });
+        continue;
+      }
+
+      // Create daily metrics data
+      const dailyData = {
+        organicResultsCount: searchResults.search_information?.total_results || 0,
+        kgmid: searchResults?.knowledge_graph?.kgmid || '',
+        kgmTitle: searchResults.knowledge_graph?.title || '',
+        kgmWebsite: searchResults.knowledge_graph?.website || '',
+        difficulty: null,
+        volume: null,
+        term: keyword.term,
+        device: keyword.device,
+        location: keyword.location,
+        backlinksNeeded: null,
+        timestamp: new Date().toISOString(),
+        'keywordData.data': { ...searchResults }
+      };
+
+      // Update keyword with latest results while preserving historical data
+      await Keyword.findByIdAndUpdate(
+          keyword._id,
+          {
+            $set: {
+              [`historicalData.${todayKey}`]: dailyData,
+              kgmid: searchResults.knowledge_graph?.kgmid || '',
+              kgmTitle: searchResults.knowledge_graph?.title || '',
+              kgmWebsite: searchResults.knowledge_graph?.website || '',
+              organicResultsCount: extractTotalResults(searchResults),
+              'keywordData.data': { ...searchResults },
+              updatedAt: new Date()
+            }
+          },
+          { new: true }
+      );
+
+      results.push({
+        keyword: keyword.term,
+        success: true,
+        dailyData
+      });
+    } catch (error) {
+      console.error(`Failed to check keyword ${keyword.term}:`, error);
+      results.push({
+        keyword: keyword.term,
+        error: error instanceof Error ? error.message : 'Failed to check keyword'
+      });
+    }
+  }
+
+  return { cancelled: false, results };
+}
+
+export async function DELETE() {
+  PROCESSING_STATUS.set('cancelled', true);
+  return NextResponse.json({ message: 'Keyword check cancelled' });
+}
+
+export async function POST(request: Request) {
   try {
     await dbConnect();
+    PROCESSING_STATUS.set('cancelled', false);
+
     console.log('Fetching default keywords...');
     const keywords = await Keyword.find({ isDefaultKeywords: true });
 
@@ -24,84 +112,27 @@ export async function POST() {
       });
     }
 
-    const results = [];
-    const todayKey = new Date().toISOString().split('T')[0];
-
-    for (const keyword of keywords) {
-      try {
-        console.log(`Searching keyword: ${keyword.term}`);
-        const searchResults = await searchKeyword(
-            keyword.term,
-            keyword.location,
-            keyword.device,
-        ) as SearchKeywordResponse;
-
-        console.log({searchResults})
-        if (searchResults.error) {
-          results.push({
-            keyword: keyword.term,
-            error: `SERP API error: ${searchResults.error}`
-          });
-          continue;
-        }
-
-        // Create daily metrics data
-        const dailyData = {
-          organicResultsCount: searchResults.search_information?.total_results || 0,
-          kgmid: searchResults?.knowledge_graph?.kgmid || '',
-          kgmTitle: searchResults.knowledge_graph?.title || '',
-          kgmWebsite: searchResults.knowledge_graph?.website || '',
-          difficulty: null,
-          volume: null,
-          term: keyword.term,
-          device: keyword.device,
-          location: keyword.location,
-          backlinksNeeded: null,
-          timestamp: new Date().toISOString(),
-          'keywordData.data': {...searchResults},
-        };
-
-
-        // Update keyword with latest results
-        await Keyword.findByIdAndUpdate(
-            keyword._id,
-            {
-              $set: {
-                [`historicalData.${todayKey}`]: dailyData,
-                kgmid: searchResults.knowledge_graph?.kgmid || '',
-                kgmTitle: searchResults.knowledge_graph?.title || '',
-                kgmWebsite: searchResults.knowledge_graph?.website || '',
-                organicResultsCount: extractTotalResults(searchResults),
-                'keywordData.data': {...searchResults},
-                updatedAt: new Date(),
-              }
-            },
-            { new: true }
-        );
-
-        results.push({
-          keyword: keyword.term,
-          success: true,
-          dailyData,
-        });
-      } catch (error) {
-        console.error(`Failed to check keyword ${keyword.term}:`, error);
-        results.push({
-          keyword: keyword.term,
-          error: 'Failed to check keyword'
-        });
-      }
-    }
+    const { searchParams } = new URL(request.url);
+    const startIndex = parseInt(searchParams.get('startIndex') || '0');
+    const { cancelled, results } = await processKeywordChunk(keywords, startIndex);
+    const nextIndex = startIndex + CHUNK_SIZE;
+    const hasMore = nextIndex < keywords.length;
 
     return NextResponse.json({
-      message: `Successfully checked ${results.filter(r => !r.error).length} keywords. ` +
-          `Failed: ${results.filter(r => r.error).length}`,
-      results
+      totalKeywords: keywords.length,
+      processedKeywords: Math.min(nextIndex, keywords.length),
+      hasMore: hasMore && !cancelled,
+      nextIndex: hasMore ? nextIndex : null,
+      results,
+      cancelled
     });
   } catch (error) {
     console.error('Failed to check keywords:', error);
     return NextResponse.json(
-        { error: 'Failed to check keywords' },
+        {
+          error: 'Failed to check keywords',
+          details: error instanceof Error ? error.message : 'Unknown error'
+        },
         { status: 500 }
     );
   }

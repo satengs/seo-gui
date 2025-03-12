@@ -45,7 +45,7 @@
     "@types/react-dom": "18.2.7",
     "@types/react-lottie": "^1.2.10",
     "autoprefixer": "10.4.15",
-    "axios": "^1.7.9",
+    "axios": "1.8.2",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
@@ -54,6 +54,7 @@
     "eslint": "8.49.0",
     "eslint-config-next": "13.5.1",
     "input-otp": "^1.2.4",
+    "lodash.debounce": "^4.0.8",
     "lottie-react": "^2.4.0",
     "lucide-react": "^0.446.0",
     "mongoose": "^8.2.3",
@@ -80,6 +81,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/lodash.debounce": "^4.0.9",
     "prettier": "^3.4.2"
   }
 }

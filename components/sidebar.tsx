@@ -1,11 +1,11 @@
 'use client';
 
-import {useState} from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
-import {usePathname} from 'next/navigation';
-import {cn} from '@/lib/utils';
-import {BarChart3, KeyRound, Menu} from 'lucide-react';
-import Image from "next/image";
+import { usePathname } from 'next/navigation';
+import { cn } from '@/lib/utils';
+import { BarChart3, KeyRound, Menu } from 'lucide-react';
+// import Image from 'next/image';
 
 const menuItems = [
   {
@@ -52,8 +52,16 @@ export default function Sidebar() {
       )}
     >
       <div className="sticky top-0 z-50 flex h-16 items-center justify-between p-4">
+        {/*{!collapsed && (*/}
+        {/*  <Image src={'/gifik.gif'} alt={'searching'} width={130} height={50} />*/}
+        {/*)}*/}
         {!collapsed && (
-          <Image src={'/gifik.gif'} alt={'searching'} width={130} height={50}/>
+            <svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polyline points="10,40 40,15 60,28 85,10 110,28" stroke="#34D399" strokeWidth="3" fill="none"/>
+              <circle cx="135" cy="18" r="8" stroke="#007BFF" strokeWidth="3"/>
+              <line x1="140" y1="22" x2="155" y2="33" stroke="#007BFF" strokeWidth="3"/>
+            </svg>
+
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

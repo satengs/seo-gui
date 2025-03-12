@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/db/db';
+import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
-import {
-  seedInitialKeywords,
-} from '@/lib/db/models/Keyword/InitialKeywords';
+import { seedInitialKeywords } from '@/lib/db/models/Keyword/InitialKeywords';
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/lib/types/serp';
 
@@ -21,7 +19,8 @@ export async function GET() {
     if (count === 0) {
       await seedInitialKeywords();
       return NextResponse.json({
-        message: 'There are no keywords. Default keywords are seeding by cron job',
+        message:
+          'There are no keywords. Default keywords are seeding by cron job',
       });
     }
 
@@ -35,60 +34,61 @@ export async function GET() {
 
     const todayKey = getTodayKey();
     const updates = await Promise.all(
-        existDefaultKeywords.map(async (keyword) => {
-          const updateKeywordSearch = await searchKeyword(
-              keyword.term,
-              keyword.location,
-              keyword.device
-          ) as SearchKeywordResponse;
+      existDefaultKeywords.map(async (keyword) => {
+        const updateKeywordSearch = (await searchKeyword(
+          keyword.term,
+          keyword.location,
+          keyword.device
+        )) as SearchKeywordResponse;
 
-          const dailyData = {
-            organicResultsCount: updateKeywordSearch.searchInformation?.totalResults || 0,
-            kgmTitle: updateKeywordSearch.knowledgeGraph?.title || '',
-            kgmWebsite: updateKeywordSearch.knowledgeGraph?.website || '',
-            // Add any other metrics you want to track daily
-            timestamp: new Date(),
-          };
+        const dailyData = {
+          organicResultsCount:
+            updateKeywordSearch.searchInformation?.totalResults || 0,
+          kgmTitle: updateKeywordSearch.knowledgeGraph?.title || '',
+          kgmWebsite: updateKeywordSearch.knowledgeGraph?.website || '',
+          // Add any other metrics you want to track daily
+          timestamp: new Date(),
+        };
 
-          // Create new dynamic data entry for today
-          const newDynamicData = {
-            [todayKey]: dailyData
-          };
+        // Create new dynamic data entry for today
+        const newDynamicData = {
+          [todayKey]: dailyData,
+        };
 
-          // Merge with existing dynamic data if it exists
-          const existingDynamicData = keyword.dynamicData?.data || {};
-          const updatedDynamicData = {
-            ...existingDynamicData,
-            ...newDynamicData
-          };
+        // Merge with existing dynamic data if it exists
+        const existingDynamicData = keyword.dynamicData?.data || {};
+        const updatedDynamicData = {
+          ...existingDynamicData,
+          ...newDynamicData,
+        };
 
-          // Update the keyword document
-          return Keyword.findByIdAndUpdate(
-              keyword._id,
-              {
-                $set: {
-                  'dynamicData.data': updatedDynamicData,
-                  updatedAt: new Date()
-                }
-              },
-              {
-                new: true,
-                upsert: true,
-                setDefaultsOnInsert: true
-              }
-          );
-        })
+        // Update the keyword document
+        return Keyword.findByIdAndUpdate(
+          keyword._id,
+          {
+            $set: {
+              'keywordData.data': updatedDynamicData,
+              updatedAt: new Date(),
+            },
+          },
+          {
+            new: true,
+            upsert: true,
+            setDefaultsOnInsert: true,
+          }
+        );
+      })
     );
 
     return NextResponse.json({
       message: 'Default keywords daily update is done.',
-      updated: updates.length
+      updated: updates.length,
     });
   } catch (error) {
     console.error('Failed to update keywords:', error);
     return NextResponse.json(
-        { error: 'Failed to update keywords' },
-        { status: 500 }
+      { error: 'Failed to update keywords' },
+      { status: 500 }
     );
   }
 }
