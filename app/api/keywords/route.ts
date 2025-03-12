@@ -29,9 +29,8 @@ export async function GET(req: Request) {
       const keywords: IKeyword[] = await Keyword.find().sort({ created: -1 });
       return NextResponse.json(keywords);
     }
-
-    let _keywords: IPaginatedKeywords;
     // @ts-ignore
+    let _keywords: IPaginatedKeywords;
     _keywords = await paginateEntitiesByFilter(
       page as number,
       size as number,

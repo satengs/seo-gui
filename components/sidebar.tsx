@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { BarChart3, KeyRound, Menu } from 'lucide-react';
-import Image from 'next/image';
+// import Image from 'next/image';
 
 const menuItems = [
   {
@@ -57,9 +57,9 @@ export default function Sidebar() {
         {/*)}*/}
         {!collapsed && (
             <svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="20" cy="20" r="10" stroke="#007BFF" strokeWidth="3"/>
-              <line x1="28" y1="28" x2="38" y2="38" stroke="#007BFF" strokeWidth="3"/>
-              <polyline points="50,30 70,15 90,25 110,10 130,20" stroke="#34D399" strokeWidth="3" fill="none"/>
+              <polyline points="10,40 40,15 60,28 85,10 110,28" stroke="#34D399" strokeWidth="3" fill="none"/>
+              <circle cx="135" cy="18" r="8" stroke="#007BFF" strokeWidth="3"/>
+              <line x1="140" y1="22" x2="155" y2="33" stroke="#007BFF" strokeWidth="3"/>
             </svg>
 
         )}

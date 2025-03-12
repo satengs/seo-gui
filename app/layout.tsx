@@ -20,6 +20,19 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+    <head>
+      <title>Search Analytics</title>
+      <link rel="icon" type="image/ico" href="/favicon.ico"/>
+      <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+      <link rel="shortcut icon" href="/favicon.ico" />
+      <link
+          rel="apple-touch-icon"
+          type="image/png"
+          href="/apple-icon.png"
+      />
+      <link rel="manifest" href="/manifest.json" />
+    </head>
+
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"

@@ -42,48 +42,37 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         continue;
       }
 
+      // Create daily metrics data
       const dailyData = {
         organicResultsCount: searchResults.search_information?.total_results || 0,
+        kgmid: searchResults?.knowledge_graph?.kgmid || '',
         kgmTitle: searchResults.knowledge_graph?.title || '',
         kgmWebsite: searchResults.knowledge_graph?.website || '',
         difficulty: null,
         volume: null,
+        term: keyword.term,
+        device: keyword.device,
+        location: keyword.location,
         backlinksNeeded: null,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        'keywordData.data': { ...searchResults }
       };
 
-      // First find the existing keyword to check if it exists
-      const existingKeyword = await Keyword.findById(keyword._id);
-
-      // Prepare update operation
-      const updateOperation = {
-        $set: {
-          kgmTitle: searchResults.knowledge_graph?.title || '',
-          kgmWebsite: searchResults.knowledge_graph?.website || '',
-          organicResultsCount: extractTotalResults(searchResults),
-          keywordData: searchResults,
-          updatedAt: new Date(),
-          [`historicalData.${todayKey}`]: dailyData
-        }
-      };
-
-      // If keyword doesn't exist, initialize historicalData
-      if (!existingKeyword) {
-        updateOperation.$setOnInsert = {
-          historicalData: {
-            [todayKey]: dailyData
-          }
-        };
-      }
-
-      // Update or create the keyword
+      // Update keyword with latest results while preserving historical data
       await Keyword.findByIdAndUpdate(
           keyword._id,
-          updateOperation,
           {
-            new: true,
-            upsert: true
-          }
+            $set: {
+              [`historicalData.${todayKey}`]: dailyData,
+              kgmid: searchResults.knowledge_graph?.kgmid || '',
+              kgmTitle: searchResults.knowledge_graph?.title || '',
+              kgmWebsite: searchResults.knowledge_graph?.website || '',
+              organicResultsCount: extractTotalResults(searchResults),
+              'keywordData.data': { ...searchResults },
+              updatedAt: new Date()
+            }
+          },
+          { new: true }
       );
 
       results.push({
@@ -100,7 +89,7 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
     }
   }
 
-  return results;
+  return { cancelled: false, results };
 }
 
 export async function DELETE() {

@@ -125,7 +125,7 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
   return (
     <div
       className={
-        'flex items-center border border-input rounded-md shadow-md my-3'
+        'flex items-center my-3'
       }
     >
       {dateFilterOptions.map((filter) => (
@@ -196,7 +196,6 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
           )}
         </div>
       ))}
-      <sup className="text-red-600 m-1 font-bold">beta</sup>
     </div>
   );
 };

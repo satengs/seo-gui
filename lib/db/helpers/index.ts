@@ -72,7 +72,7 @@ export const paginateEntitiesByFilter = async (
   schema: any,
   term: string,
   sortBy?: ISortConfig,
-  dateRange?: DateRange
+  dateRange?: DateRange | any
 ) => {
   const skip = (page - 1) * pageSize;
 

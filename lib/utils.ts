@@ -50,6 +50,7 @@ function prepareDataForCSV(keyword: IKeyword): Record<string, any> {
 export function generateMultiCSV(keywords: IKeyword[]): string {
   const dataForCSV = keywords.map((keyword) => prepareDataForCSV(keyword));
   const parser = new Parser({
+    // @ts-ignore
     flatten: true,
     flattenSeparator: '_',
   });
@@ -88,6 +89,5 @@ export function shortenLocation(location: string): string {
   let name3 = CITY_ABBREVIATIONS[parts[2]] || parts[2]; // Shorten city if possible.
 
   // Handle other countries
-  const country = CITY_ABBREVIATIONS[parts[parts.length - 1]] || parts[parts.length - 1].toUpperCase();
   return `${name1?.toLowerCase()}, ${name2?.toLowerCase()}, ${name3?.toLowerCase()}`;
 }

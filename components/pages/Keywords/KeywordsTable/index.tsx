@@ -33,7 +33,7 @@ import {
   Newspaper,
   Link as Link1,
   Search as ListSearch,
-  Sparkles, Phone, Tablet, Computer,
+  Sparkles, Phone, Computer,
   Link2, FilterIcon, Star, Menu, Map as MapIcon, PlayCircle, MessageSquare, Video, MessagesSquare, MapPinned, Target
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -527,17 +527,18 @@ export default function KeywordsTable({
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-0.5">
-                                {keyword.keywordData && keyword.keywordData.data && Object.keys(keyword.keywordData.data).map((item) => {
+                                {keyword.keywordData && keyword.keywordData.data && Object.keys(keyword.keywordData.data).map((field) => {
                                   // Skip metadata and parameter fields
-                                  if (fieldsArr.includes(item)) return null;
+                                  if (fieldsArr.includes(field)) return null;
 
-                                  const feature = featureIcons[item];
-                                  if (!feature) return item;
+                                  // @ts-ignore
+                                  const feature = featureIcons[field];
+                                  if (!feature) return field;
 
                                   const IconComponent = feature.icon;
 
                                   return (
-                                        <div key={item} className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`} title={feature.label}>
+                                        <div key={field} className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`} title={feature.label}>
                                           <IconComponent className="h-3.5 w-3.5"/>
                                         </div>
                                   );
