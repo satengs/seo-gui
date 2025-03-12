@@ -2,6 +2,13 @@
 
 import React, { useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { IKeywordPaginateParams } from '@/types';
@@ -9,11 +16,13 @@ import { IKeywordPaginateParams } from '@/types';
 interface PaginationProps {
   totalCount: number;
   onPageChange: (data: IKeywordPaginateParams) => void;
+  onItemPerPageChange: (value: number) => void;
   itemsPerPage?: number;
   currentPage?: number;
   siblingCount?: number;
 }
 
+const PER_PAGE_OPTIONS = [10, 20, 30, 50, 100];
 const DOTS = '...';
 
 function usePagination({
@@ -80,6 +89,7 @@ function usePagination({
 export default function Pagination({
   totalCount,
   onPageChange,
+  onItemPerPageChange,
   itemsPerPage = 10,
   currentPage = 1,
   siblingCount = 1,
@@ -104,6 +114,10 @@ export default function Pagination({
     if (pageNumber >= 1 && pageNumber <= totalPages) {
       onPageChange({ page: pageNumber });
     }
+  };
+
+  const handlePerPageChange = (value: string) => {
+    onItemPerPageChange(+value);
   };
 
   return (
@@ -158,6 +172,24 @@ export default function Pagination({
           Next
           <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
+      </div>
+      <div className="flex items-center space-x-2">
+        <span className="text-sm text-muted-foreground">Show</span>
+        <Select
+          value={itemsPerPage.toString()}
+          onValueChange={handlePerPageChange}
+        >
+          <SelectTrigger className="h-8 w-[70px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {PER_PAGE_OPTIONS.map((option) => (
+              <SelectItem key={option} value={option.toString()}>
+                {option}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
