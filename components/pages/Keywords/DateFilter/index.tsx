@@ -132,7 +132,7 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
         <div key={filter.id}>
           {filter.id !== 'custom' ? (
             <Button
-              className={'px-3 text-sm'}
+              className={'px-3 text-sm border border-input rounded-md shadow-md'}
               variant={getButtonStyleByFilter(filter.id)}
               onClick={() => handleFilterBtn(filter.id)}
             >
@@ -144,7 +144,7 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
                 <Button
                   variant={getButtonStyleByFilter('custom')}
                   size="sm"
-                  className="rounded-l-none rounded-r-lg space-x-2"
+                  className="rounded-l-none rounded-r-lg space-x-1 border border-input rounded-md shadow-md"
                 >
                   <CalendarDays className="h-4 w-4" />
                   <span className="hidden sm:inline">{formatDateRange()}</span>
@@ -196,6 +196,7 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
           )}
         </div>
       ))}
+      <sup className="text-red-600 m-1 font-bold">beta</sup>
     </div>
   );
 };
