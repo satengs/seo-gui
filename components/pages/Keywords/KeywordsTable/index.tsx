@@ -55,6 +55,7 @@ interface KeywordsTableProps {
   totalCount: number;
   totalPages: number;
   onActionKeywordsChange: (data: any, obj?: any) => void;
+  onActionKeywordChange: (data: any, obj?: any) => void;
   onKeywordFilterChange: (data: any) => void;
   onKeywordsPaginate: (data: IKeywordPaginateParams) => void;
 }
@@ -65,6 +66,7 @@ export default function KeywordsTable({
                                         totalCount,
                                         onKeywordFilterChange,
                                         onActionKeywordsChange,
+                                        onActionKeywordChange,
                                       }: KeywordsTableProps) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -531,9 +533,9 @@ export default function KeywordsTable({
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                {keyword.tags?.length > 0 ? (
+                                {keyword?.tags && keyword?.tags?.length > 0 ? (
                                     <div className="flex flex-wrap gap-1">
-                                      {keyword.tags.map(tag => (
+                                      {keyword?.tags.map(tag => (
                                           <span
                                               key={tag}
                                               className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
@@ -723,9 +725,7 @@ export default function KeywordsTable({
                     isOpen={showTagsDialog}
                     onCloseAction={() => setShowTagsDialog(false)} // Renamed from onClose
                     keyword={selectedKeyword}
-                    onSaveAction={() => {
-                      onActionKeywordsChange({ refresh: true });
-                    }} // Renamed from onSave
+                    onSaveAction={onActionKeywordChange} // Renamed from onSave
                 />
             )}
 

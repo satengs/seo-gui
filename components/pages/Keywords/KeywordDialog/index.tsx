@@ -15,9 +15,10 @@ import axiosClient from "@/lib/axiosClient";
 
 interface KeywordDialogProps {
     isOpen: boolean;
-    onCloseAction: () => void;  // Renamed from onClose to onCloseAction
+    onCloseAction: () => void;
     keyword: IKeyword | null;
-    onSaveAction: () => void;  // Renamed from onSave to onSaveAction
+    onSaveAction:(data: any, obj?: any) => void;
+
 }
 
 const MAX_TAGS = 10;
@@ -50,6 +51,11 @@ export default function KeywordDialog({
                 throw new Error("Invalid keyword");
             }
 
+            const updatedKeyword = {
+                ...keyword,
+                tags, // Only updating the tags field
+            };
+
             await axiosClient.patch(`/api/keywords/${keyword._id}`, {
                 tags,
             });
@@ -59,7 +65,7 @@ export default function KeywordDialog({
                 description: "Tags updated successfully",
             });
 
-            onSaveAction();
+            onSaveAction(updatedKeyword); // Correctly call onSaveAction with updated data
             onCloseAction();
         } catch (error) {
             toast({

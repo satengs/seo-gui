@@ -1,15 +1,15 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
 
-export async function PATCH(
-    request: Request,
-    { params }: { params: { id?: string } } // Direct destructuring of 'params'
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     try {
         await dbConnect();
 
-        if (!params?.id) {
+        // Await the params object to get the id
+        const { id } = await params;
+
+        if (!id) {
             return NextResponse.json(
                 { error: 'Keyword ID is required' },
                 { status: 400 }
@@ -26,7 +26,7 @@ export async function PATCH(
         }
 
         const keyword = await Keyword.findByIdAndUpdate(
-            params.id.toString(),
+            id,
             { $set: { tags } },
             { new: true }
         );
