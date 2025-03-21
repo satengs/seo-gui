@@ -4,13 +4,10 @@ import Keyword from '@/lib/db/models/Keyword/Keyword';
 
 export async function PATCH(
     request: Request,
-    context: { params: { id?: string } } // Optional 'id' to avoid destructuring errors
+    { params }: { params: { id?: string } } // Direct destructuring of 'params'
 ) {
     try {
         await dbConnect();
-
-        // Fix: Explicitly await params
-        const params = await context.params;
 
         if (!params?.id) {
             return NextResponse.json(

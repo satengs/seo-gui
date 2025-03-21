@@ -69,6 +69,7 @@ export default function TagsInput({
                     onClick={addTag}
                     variant="outline"
                     size="sm"
+                    className="bg-emerald-200"
                     disabled={!input.trim() || tags.length >= maxTags}
                 >
                     Add Tag
