@@ -38,6 +38,7 @@ export interface IKeyword {
   keywordTerm: string;
   organicResultsCount: number;
   isDefaultKeywords: boolean;
+  tags?: string[];
   keywordData: IKeywordData;
   historicalData: any;
   createdAt: string;

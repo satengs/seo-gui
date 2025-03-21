@@ -154,6 +154,16 @@ export default function KeywordsPage() {
     setTotalPages(data?.totalPages);
   }, []);
 
+  const onKeywordChange = useCallback((updatedKeyword: IKeyword) => {
+    setKeywords((prevKeywords: IKeyword[] | null) => {
+      if (!prevKeywords) return []; // Handle null or undefined prevKeywords
+
+      return prevKeywords.map((kw) =>
+          kw._id === updatedKeyword._id ? { ...kw, ...updatedKeyword } : kw
+      );
+    });
+  }, []);
+
   const onKeywordFilterChange = useCallback(async (obj?: any) => {
     if (obj?.searchTerm || obj.searchTerm === '') {
       setSearchTerm(obj?.searchTerm);
@@ -251,6 +261,7 @@ export default function KeywordsPage() {
             <KeywordsTable
               keywords={keywords}
               onActionKeywordsChange={onKeywordsChange}
+              onActionKeywordChange={onKeywordChange}
               onKeywordFilterChange={onKeywordFilterChange}
               currentPage={currentPage}
               totalCount={totalCount}

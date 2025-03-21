@@ -80,6 +80,10 @@ const KeywordSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    tags: [{
+      type: String,
+      trim: true
+    }],
     // Historical data stored by date
     historicalData: {
       type: Map,

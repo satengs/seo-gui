@@ -33,7 +33,7 @@ import {
   Newspaper,
   Link as Link1,
   Search as ListSearch,
-  Sparkles, Phone, Computer,
+  Sparkles, Phone, Computer, Tag, Gavel,
   Link2, FilterIcon, Star, Menu, Map as MapIcon, PlayCircle, MessageSquare, Video, MessagesSquare, MapPinned, Target
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -45,6 +45,7 @@ import debounce from 'lodash.debounce';
 import {generateMultiCSV, shortenLocation} from '@/lib/utils';
 import { IKeyword, IKeywordPaginateParams } from '@/types';
 import { useToast } from '@/hooks/use-toast';
+import KeywordDialog from '@/components/pages/Keywords/KeywordDialog';
 import axiosClient from '@/lib/axiosClient';
 import {Card, CardContent, CardHeader, CardTitle} from "@/components/ui/card";
 
@@ -54,6 +55,7 @@ interface KeywordsTableProps {
   totalCount: number;
   totalPages: number;
   onActionKeywordsChange: (data: any, obj?: any) => void;
+  onActionKeywordChange: (data: any, obj?: any) => void;
   onKeywordFilterChange: (data: any) => void;
   onKeywordsPaginate: (data: IKeywordPaginateParams) => void;
 }
@@ -64,14 +66,17 @@ export default function KeywordsTable({
                                         totalCount,
                                         onKeywordFilterChange,
                                         onActionKeywordsChange,
+                                        onActionKeywordChange,
                                       }: KeywordsTableProps) {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState({
     key: '',
-    direction: 'asc',
+    direction: 'asc'
   });
+  const [selectedKeyword, setSelectedKeyword] = useState<IKeyword | null>(null);
+  const [showTagsDialog, setShowTagsDialog] = useState<boolean>(false);
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
 
@@ -121,6 +126,7 @@ export default function KeywordsTable({
         kgmWebsite: value.kgmWebsite,
         organicResultsCount: value.organicResultsCount,
         timestamp: value.timestamp,
+        kgmData: value.keywordData,
       });
     }
     return data.sort(
@@ -349,7 +355,14 @@ export default function KeywordsTable({
     reviews: {
       icon: Star,
       label: 'Reviews',
-      bgClass: 'bg-orange,100 dark:bg-orange-900',
+      bgClass: 'bg-orange-100 dark:bg-orange-900',
+      textClass: 'text-orange-800 dark:text-orange-200',
+      borderClass: 'border-orange-200 dark:border-orange-800',
+    },
+    dmca_messages: {
+      icon: Gavel,
+      label: 'DMCA Messages',
+      bgClass: 'bg-fuchsia-100 dark:bg-fuchsia-900',
       textClass: 'text-orange-800 dark:text-orange-200',
       borderClass: 'border-orange-200 dark:border-orange-800',
     },
@@ -407,13 +420,13 @@ export default function KeywordsTable({
                       />
                     </TableHead>
                     <TableHead className="w-[30px]"></TableHead>
-                    <TableHead className="w-[350px]">
+                    <TableHead className="w-[300px]">
                       <Button variant="ghost" onClick={() => handleSort('term')}>
                         Keyword
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[100px]">
+                    <TableHead>
                       <Button
                           variant="ghost"
                           onClick={() => handleSort('location')}
@@ -422,22 +435,22 @@ export default function KeywordsTable({
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[100px]">
+                    <TableHead>
                       <Button
                           variant="ghost"
                           onClick={() => handleSort('device')}
                       >
-                        Device
+                        Device Type
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[100px]">
+                    <TableHead>
                       <Button variant="ghost" onClick={() => handleSort('kgmid')}>
                         KGM ID
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[100px]">
+                    <TableHead>
                       <Button
                           variant="ghost"
                           onClick={() => handleSort('kgmTitle')}
@@ -446,13 +459,14 @@ export default function KeywordsTable({
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[50px]">KGM Website</TableHead>
-                    <TableHead>
+                    <TableHead>KGM Website</TableHead>
+                    <TableHead>Tags</TableHead>
+                    <TableHead className="text-right">
                       <Button
                           variant="ghost"
                           onClick={() => handleSort('organicResultsCount')}
                       >
-                        Org. Results
+                        Organic Results
                         <ArrowUpDown className="ml-2 h-4 w-4" />
                       </Button>
                     </TableHead>
@@ -467,7 +481,7 @@ export default function KeywordsTable({
                     return (
                         <React.Fragment key={keyword._id}>
                           <TableRow className="hover:bg-muted/50 cursor-pointer">
-                            <TableCell className="justify-items-center">
+                            <TableCell>
                               <Checkbox
                                   checked={selectedRows.has(keyword._id)}
                                   onCheckedChange={() =>
@@ -510,12 +524,41 @@ export default function KeywordsTable({
                                   <Link
                                       href={keyword.kgmWebsite}
                                       target="_blank"
-                                      className="flex items-center hover:underline "
+                                      className="flex items-center hover:underline"
                                   >
                                     <span className="text-xs overflow-hidden text-ellipsis w-20">{new URL(keyword.kgmWebsite).hostname}</span>
                                     <ExternalLink className="ml-1 h-3 w-3"/>
                                   </Link>
                               )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {keyword?.tags && keyword?.tags?.length > 0 ? (
+                                    <div className="flex flex-wrap gap-1">
+                                      {keyword?.tags.map(tag => (
+                                          <span
+                                              key={tag}
+                                              className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                                          >
+                                        {tag}
+                                      </span>
+                                      ))}
+                                    </div>
+                                ) : (
+                                    <span className="text-muted-foreground text-sm">No tags</span>
+                                )}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-6 w-6 p-0"
+                                    onClick={() => {
+                                      setSelectedKeyword(keyword);
+                                      setShowTagsDialog(true);
+                                    }}
+                                >
+                                  <Tag className="h-3 w-3" />
+                                </Button>
+                              </div>
                             </TableCell>
                             <TableCell className="text-right font-mono">
                               {keyword.organicResultsCount?.toLocaleString() || '-'}
@@ -552,15 +595,6 @@ export default function KeywordsTable({
                                     onActionKeywordsChange={onActionKeywordsChange}
                                     currentPage={currentPage}
                                 />
-                                {/*<Button*/}
-                                {/*    variant="ghost"*/}
-                                {/*    size="sm"*/}
-                                {/*    onClick={() => downloadAsCSV([keyword])}*/}
-                                {/*    className="h-8 w-8 p-0"*/}
-                                {/*    title="Export keyword history"*/}
-                                {/*>*/}
-                                {/*    <Download className="h-4 w-4" />*/}
-                                {/*</Button>*/}
                               </div>
                             </TableCell>
                           </TableRow>
@@ -584,6 +618,7 @@ export default function KeywordsTable({
                                             <TableHead>KGM ID</TableHead>
                                             <TableHead>KGM Title</TableHead>
                                             <TableHead>KGM Website</TableHead>
+                                            <TableHead>Data Features</TableHead>
                                             <TableHead className="text-right">
                                               Total Results
                                             </TableHead>
@@ -621,6 +656,26 @@ export default function KeywordsTable({
                                                           <ExternalLink className="ml-1 h-3 w-3" />
                                                         </Link>
                                                     )}
+                                                  </TableCell>
+                                                  <TableCell>
+                                                    <div className="flex items-center gap-0.5">
+                                                      {entry.kgmData && entry.kgmData.data && Object.keys(entry.kgmData.data).map((field) => {
+                                                        // Skip metadata and parameter fields
+                                                        if (fieldsArr.includes(field)) return null;
+
+                                                        // @ts-ignore
+                                                        const feature = featureIcons[field];
+                                                        if (!feature) return field;
+
+                                                        const IconComponent = feature.icon;
+
+                                                        return (
+                                                            <div key={field} className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`} title={feature.label}>
+                                                              <IconComponent className="h-3.5 w-3.5"/>
+                                                            </div>
+                                                        );
+                                                      })}
+                                                    </div>
                                                   </TableCell>
                                                   <TableCell
                                                       className="text-right font-mono"
@@ -665,6 +720,15 @@ export default function KeywordsTable({
                   <DifferenceModal keywords={selectedKeywords} />
                 </Modal>
             )}
+            {showTagsDialog && selectedKeyword && (
+                <KeywordDialog
+                    isOpen={showTagsDialog}
+                    onCloseAction={() => setShowTagsDialog(false)} // Renamed from onClose
+                    keyword={selectedKeyword}
+                    onSaveAction={onActionKeywordChange} // Renamed from onSave
+                />
+            )}
+
           </CardContent>
         </Card>
       </div>
