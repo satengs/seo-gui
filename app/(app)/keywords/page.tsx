@@ -154,6 +154,16 @@ export default function KeywordsPage() {
     setTotalPages(data?.totalPages);
   }, []);
 
+  const onKeywordChange = useCallback((updatedKeyword: IKeyword) => {
+    setKeywords((prevKeywords: IKeyword[] | null) => {
+      if (!prevKeywords) return []; // Handle null or undefined prevKeywords
+
+      return prevKeywords.map((kw) =>
+          kw._id === updatedKeyword._id ? { ...kw, ...updatedKeyword } : kw
+      );
+    });
+  }, []);
+
   const onKeywordFilterChange = useCallback(async (obj?: any) => {
     if (obj?.searchTerm || obj.searchTerm === '') {
       setSearchTerm(obj?.searchTerm);
@@ -185,10 +195,6 @@ export default function KeywordsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-    // (async function () {
-    //   const resp = await axiosClient.get('/api/keywords/test');
-    //   console.log('resp: ', resp);
-    // })();
     fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
   }, [fetchKeywords, searchTerm, sortBy, dateRange, itemsPerPage]);
 

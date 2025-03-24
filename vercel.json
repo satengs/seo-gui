@@ -1,8 +1,8 @@
 {
   "crons": [
     {
-      "path": "/api/keywords/daily-update",
-      "schedule": "0 0 * * *"
+      "path": "/api/keywords/check",
+      "schedule": "59 22 * * *"
     }
   ]
 }
