@@ -28,12 +28,12 @@ export default function KeywordsPage() {
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
   const [searchText, setSearchText] = useState<string>('');
   const [device, setDevice] = useState<string>('mobile');
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<ISortConfig>();
-  const [fetchLoading, setFetchLoading] = useState<boolean>(false);
+  const [fetchLoading, setFetchLoading] = useState<boolean>(true);
 
   const { toast } = useToast();
 
@@ -185,6 +185,10 @@ export default function KeywordsPage() {
 
   useEffect(() => {
     setCurrentPage(1);
+    // (async function () {
+    //   const resp = await axiosClient.get('/api/keywords/test');
+    //   console.log('resp: ', resp);
+    // })();
     fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
   }, [fetchKeywords, searchTerm, sortBy, dateRange, itemsPerPage]);
 
@@ -207,7 +211,7 @@ export default function KeywordsPage() {
           <div className="flex-1">
             <div>
               <Textarea
-                placeholder="Search keywords..."
+                placeholder="Add keyword(s)..."
                 className="w-full"
                 onChange={onInputChange}
                 value={searchText}
@@ -243,26 +247,16 @@ export default function KeywordsPage() {
           </Button>
         </div>
         <DateFilter onDateFilterChange={onDateRangeChange} />
-
-        {fetchLoading ? (
-          <p className={'py-3'}>..Loading keyword</p>
-        ) : keywords ? (
-          keywords.length ? (
-            <KeywordsTable
-              keywords={keywords}
-              onActionKeywordsChange={onKeywordsChange}
-              onKeywordFilterChange={onKeywordFilterChange}
-              currentPage={currentPage}
-              totalCount={totalCount}
-              totalPages={totalPages}
-              onKeywordsPaginate={onKeywordsPaginate}
-            />
-          ) : (
-            <p className={'py-3'}>No keywords</p>
-          )
-        ) : (
-          <p className={'py-3'}>..Loading keyword</p>
-        )}
+        <KeywordsTable
+          keywords={keywords}
+          onActionKeywordsChange={onKeywordsChange}
+          onKeywordFilterChange={onKeywordFilterChange}
+          currentPage={currentPage}
+          totalCount={totalCount}
+          totalPages={totalPages}
+          onKeywordsPaginate={onKeywordsPaginate}
+          fetchLoading={fetchLoading}
+        />
         <Pagination
           totalCount={totalCount}
           currentPage={currentPage}

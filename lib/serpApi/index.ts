@@ -1,4 +1,5 @@
 import { getHtml, getJson, getLocations, getAccount } from 'serpapi';
+import { ISearchKeywordParams } from '@/types';
 
 export async function searchLocations(loc: string = '', limit: number) {
   return await getLocations({
@@ -15,12 +16,14 @@ export async function getAccountInfo() {
   return data;
 }
 
-export async function searchKeyword(
-  keyword: string,
-  location?: string,
-  device?: string,
-  type = 'json'
-) {
+export async function searchKeyword({
+  keyword,
+  location,
+  device,
+  type = 'json',
+  start = 0,
+  num = 10,
+}: ISearchKeywordParams) {
   const searchData = {
     q: keyword,
     api_key: process.env.SERP_API_KEY,
@@ -30,6 +33,8 @@ export async function searchKeyword(
     output: type,
     include_ai_overview: 'true',
     gl: 'us',
+    start,
+    num,
   };
   if (type === 'html') {
     return await getHtml(searchData);

@@ -23,7 +23,7 @@ const nextConfig = {
     serverComponentsExternalPackages: ['mongoose'],
   },
   env: {
-    MONGODB_URI: process.env.MONGODB_URI_stage,
+    MONGODB_URI: process.env.MONGODB_URI_LOCAL,
     SERP_API_KEY: process.env.SERP_API_KEY,
     BASE_API_URL: process.env.BASE_API_URL,
   },
