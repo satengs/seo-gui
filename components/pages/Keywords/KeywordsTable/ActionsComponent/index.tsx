@@ -13,7 +13,7 @@ import MoreHistorical from './MoreHistorical';
 import { IKeyword } from '@/types';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
-import { generateMultiCSV } from '@/lib/utils';
+import { generateCsvFile } from '@/utils';
 
 interface IActionsComponent {
   keyword: any;
@@ -55,7 +55,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
     }
   };
 
-  const deleteKeyword = async (keyword: IKeyword) => {
+  const deleteKeyword = useCallback(async (keyword: IKeyword) => {
     try {
       setRemoveModalLoading(true);
       const response = await axiosClient.delete(
@@ -71,7 +71,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
     } finally {
       setRemoveModalLoading(false);
     }
-  };
+  }, []);
 
   const addKeyword = async (keyword: IKeyword) => {
     try {
@@ -138,17 +138,8 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
     }
   };
 
-  const downloadAsCSV = useCallback((keyword: any) => {
-    const csvContent = generateMultiCSV([keyword]);
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'keyword-data.csv';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
+  const downloadAsCSV = useCallback((keyword: IKeyword) => {
+    generateCsvFile(keyword);
   }, []);
 
   const onCloseModal = useCallback(() => setShowModal(false), []);

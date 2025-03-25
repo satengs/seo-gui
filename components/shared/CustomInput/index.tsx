@@ -32,8 +32,6 @@ const Input = ({
   const togglePasswordEyeIcon = () =>
     setShowPassword((prevState) => !prevState);
 
-  console.log('value: ', props.value);
-
   return (
     <div
       className={mergeClassNames(
@@ -63,10 +61,9 @@ const Input = ({
               {...props}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 field.onChange(e);
-                console.log('value:  ', e.target.value);
-                // if (onInputAdditionalChange) {
-                //   onInputAdditionalChange(e);
-                // }
+                if (onInputAdditionalChange) {
+                  onInputAdditionalChange(e);
+                }
               }}
             />
           )}

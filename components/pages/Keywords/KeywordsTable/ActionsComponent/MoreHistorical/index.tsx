@@ -1,7 +1,7 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import Modal from '@/components/shared/Modal';
 import KeywordItemSection from '@/components/pages/Keywords/DifferenceModal/KeywordItemSection';
-import { Button } from '@/components/ui/button';
+// import { Button } from '@/components/ui/button';
 
 interface IMoreHistoricalProps {
   keywordHistorical: any;
@@ -15,11 +15,7 @@ const MoreHistorical = ({
   isOpen,
   onClose,
 }: IMoreHistoricalProps) => {
-  const onDownloadMoreHistorical = useCallback(() => {
-    if (keywordHistorical) {
-      alert('CSV upload');
-    }
-  }, [keywordHistorical]);
+  // const onDownloadMoreHistorical = useCallback(() => {}, []);
 
   return (
     <Modal
@@ -28,11 +24,11 @@ const MoreHistorical = ({
       customContainerClassName={`bg-white `}
     >
       <>
-        <div className={'flex items-center justify-end my-2'}>
-          <Button variant={'outline'} onClick={onDownloadMoreHistorical}>
-            Download
-          </Button>
-        </div>
+        {/*<div className={'flex items-center justify-end my-2'}>*/}
+        {/*  <Button variant={'outline'} onClick={onDownloadMoreHistorical}>*/}
+        {/*    Download*/}
+        {/*  </Button>*/}
+        {/*</div>*/}
         <div className={`grid grid-cols-1`}>
           {keywordHistorical
             ? [keywordHistorical].map((keyword: any) => (

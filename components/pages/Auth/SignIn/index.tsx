@@ -1,12 +1,12 @@
 'use client';
-import React, { useCallback, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import CustomCard from '@/components/shared/CustomCard';
 import CustomInput from '@/components/shared/CustomInput';
 import CustomButton from '@/components/shared/CustomButton';
-import AuthActionLinks from '@/components/pages/Auth/AuthActionLinks';
+import RememberMeBox from '@/components/pages/Auth/SignIn/RememberMeBox';
 import { useToast } from '@/hooks/use-toast';
 import axiosClient from '@/lib/axiosClient';
 import { signInValidationSchema } from './signInValidationSchema';
@@ -38,7 +38,6 @@ const SignInForm = () => {
       });
       router.push('/');
     } catch (err: any) {
-      console.log('err: ', err);
       toast({
         title: 'Failed',
         description: err?.response?.data?.message || 'Credentials are invalid',
@@ -48,12 +47,6 @@ const SignInForm = () => {
       setIsLoading(false);
     }
   };
-
-  console.log('a');
-
-  const onCreateAccountClick = useCallback(() => {
-    router.push('/auth/sign-up');
-  }, [router]);
 
   return (
     <CustomCard className={'shadow-slate-400 w-full'}>
@@ -79,12 +72,8 @@ const SignInForm = () => {
         <CustomButton isLoading={isLoading} variant={'primary'} type={'submit'}>
           Sign In
         </CustomButton>
+        <RememberMeBox />
       </form>
-      <AuthActionLinks
-        actionTitle={"Haven't account yet?"}
-        actionText={'Create an account'}
-        actionHandler={onCreateAccountClick}
-      />
     </CustomCard>
   );
 };

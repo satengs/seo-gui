@@ -1,4 +1,5 @@
 import mongoose, { Mongoose } from 'mongoose';
+import { seedRoles } from '@/lib/db/seeds/roles';
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
@@ -57,9 +58,15 @@ async function dbConnect() {
     try {
       cached.conn = await cached.promise;
       if (mongoose.connection.db) {
+        const existingRoles = await mongoose.connection.db
+          .collection('roles')
+          .countDocuments();
         await mongoose.connection.db.admin().ping();
         console.log('Database ping successful');
         console.log('Successfully connected to MongoDB');
+        if (existingRoles === 0) {
+          await seedRoles();
+        }
         return cached.conn;
       } else {
         throw new Error('No connection to the db');
