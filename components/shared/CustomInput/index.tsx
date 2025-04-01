@@ -13,6 +13,7 @@ interface IInputProps extends InputHTMLAttributes<HTMLInputElement> {
   type?: string;
   control: any;
   className?: string;
+  inputClassName?: string;
   onInputAdditionalChange?: (e: ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -24,6 +25,7 @@ const Input = ({
   control = {},
   type = 'text',
   className = '',
+  inputClassName = '',
   onInputAdditionalChange,
   ...props
 }: IInputProps) => {
@@ -57,7 +59,10 @@ const Input = ({
               {...field}
               id={name}
               type={eye ? (showPassword ? 'text' : 'password') : type}
-              className="px-3 py-2 w-full font-medium text-gray-600 h-10 shadow-sm text-sm rounded-md dark:bg-white  border shadow-gray-200 placeholder-gray-500 focus:outline-none"
+              className={mergeClassNames(
+                `px-3 py-2 w-full font-medium text-gray-600 h-10 shadow-sm text-sm rounded-md dark:bg-white  border shadow-gray-200 placeholder-gray-500 focus:outline-none ${eye ? 'pr-10' : 'pr-0'}`,
+                inputClassName
+              )}
               {...props}
               onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 field.onChange(e);
@@ -82,9 +87,11 @@ const Input = ({
           </div>
         )}
       </div>
-      <p className="text-sm font-medium text-red-800 min-h-[10px]">
-        {error || ''}
-      </p>
+      {error ? (
+        <p className="text-sm font-medium text-red-800 min-h-[10px]">
+          {error || ''}
+        </p>
+      ) : null}
     </div>
   );
 };

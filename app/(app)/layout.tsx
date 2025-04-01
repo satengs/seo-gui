@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import Sidebar from '@/components/sidebar';
 import { Toaster } from '@/components/ui/toaster';
 import Header from '@/components/header';
+import AuthContextProvider from '@/context/AuthContext';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -36,15 +37,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-              <Header />
-              <main className="flex-1 overflow-y-auto bg-background">
-                {children}
-              </main>
+          <AuthContextProvider>
+            <div className="flex min-h-screen">
+              <Sidebar />
+              <div className="flex-1 flex flex-col">
+                <Header />
+                <main className="flex-1 overflow-y-auto bg-background">
+                  {children}
+                </main>
+              </div>
             </div>
-          </div>
+          </AuthContextProvider>
           <Toaster />
         </ThemeProvider>
       </body>

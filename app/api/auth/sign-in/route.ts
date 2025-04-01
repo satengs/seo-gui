@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     const reqBody = await request.json();
     const { email, password } = reqBody;
-    const dbUser = await User.findOne({ email: email });
+    const dbUser = await User.findOne({ email: email }).populate('roleId');
     if (!dbUser) {
       return NextResponse.json(
         { message: "User doesn't registered" },
@@ -25,6 +25,8 @@ export async function POST(request: NextRequest) {
     }
     const tokenData = {
       id: dbUser._id,
+      roleId: dbUser.roleId?._id,
+      role: dbUser?.roleId?.name,
     };
 
     const token = jwt.sign(tokenData, process.env.JWT_SECRET!, {
@@ -43,6 +45,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (err) {
+    console.log('err: ', err);
     return NextResponse.json(
       { message: err instanceof Error ? err?.message : 'Server error' },
       { status: 500 }

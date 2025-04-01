@@ -1,5 +1,5 @@
 import { DateRange } from 'react-day-picker';
-import { Info } from 'lucide-react';
+import { BarChart3, Info } from 'lucide-react';
 
 export interface IAccount {
   account_email: string;
@@ -183,4 +183,61 @@ export interface ILoginFormValues {
 
 export interface IRegisterFormValues extends ILoginFormValues {
   fullName: string;
+  role?: string;
+}
+
+export interface IUser {
+  _id: string;
+  fullName: string;
+  email: string;
+  roleId: IRole;
+  permissions: string[];
+}
+
+export interface IUserTableItem {
+  fullName: string;
+  email: string;
+  password: string;
+  role: string;
+}
+
+export interface IUserPayload {
+  id: string;
+  roleId: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+export interface IPermission {
+  _id: string;
+  name: string;
+  description: string;
+}
+
+export interface IRole {
+  name: string;
+  _id: string;
+  permissions: IPermission[];
+}
+
+export interface IMenuItem {
+  title: string;
+  icon: any;
+  href: string;
+  termId: string;
+}
+
+export interface ISelectItem {
+  value: string;
+  label: string;
+}
+
+export interface IOrganization {
+  _id: string;
+  name: string;
+}
+
+export interface IOrganizationFormValues {
+  name: string;
 }

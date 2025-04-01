@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import axiosClient from '@/lib/axiosClient';
 import { signInValidationSchema } from './signInValidationSchema';
 import { ILoginFormValues } from '@/types';
+import AuthActionLinks from '@/components/pages/Auth/AuthActionLinks';
 
 const SignInForm = () => {
   const { toast } = useToast();
@@ -48,6 +49,10 @@ const SignInForm = () => {
     }
   };
 
+  const onCreateAccountClick = useCallback(() => {
+    router.push('/auth/sign-up');
+  }, [router]);
+
   return (
     <CustomCard className={'shadow-slate-400 w-full'}>
       <form
@@ -73,6 +78,12 @@ const SignInForm = () => {
           Sign In
         </CustomButton>
         <RememberMeBox />
+
+        <AuthActionLinks
+          actionTitle={`Don't have an account?`}
+          actionText={'Create your account'}
+          actionHandler={onCreateAccountClick}
+        />
       </form>
     </CustomCard>
   );

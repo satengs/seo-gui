@@ -1,7 +1,11 @@
 import mongoose, { Mongoose } from 'mongoose';
 import { seedRoles } from '@/lib/db/seeds/roles';
+import { seedPermissions } from '@/lib/db/seeds/permissions';
 
 const MONGODB_URI = process.env.MONGODB_URI;
+
+let isSeedingRolesDone = false;
+let isSeedingPermissionsDone = false;
 
 if (!MONGODB_URI) {
   throw new Error(
@@ -58,15 +62,18 @@ async function dbConnect() {
     try {
       cached.conn = await cached.promise;
       if (mongoose.connection.db) {
-        const existingRoles = await mongoose.connection.db
-          .collection('roles')
-          .countDocuments();
         await mongoose.connection.db.admin().ping();
         console.log('Database ping successful');
         console.log('Successfully connected to MongoDB');
-        if (existingRoles === 0) {
-          await seedRoles();
+        if (!isSeedingPermissionsDone) {
+          await seedPermissions();
+          isSeedingPermissionsDone = true;
         }
+        if (!isSeedingRolesDone) {
+          await seedRoles();
+          isSeedingRolesDone = true;
+        }
+
         return cached.conn;
       } else {
         throw new Error('No connection to the db');
