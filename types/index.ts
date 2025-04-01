@@ -1,4 +1,5 @@
 import { DateRange } from 'react-day-picker';
+import { Info } from 'lucide-react';
 
 export interface IAccount {
   account_email: string;
@@ -14,6 +15,7 @@ export interface IAccount {
   searches_per_month: number;
   this_hour_searches: number;
   this_month_usage: number;
+  lastSearch: IKeyword;
 }
 
 export interface DailyData {
@@ -27,7 +29,7 @@ export interface DailyData {
 }
 
 export interface IKeyword {
-  _doc: any;
+  _doc?: any;
   _id: string;
   term: string;
   kgmid?: string;
@@ -41,8 +43,9 @@ export interface IKeyword {
   tags?: string[];
   keywordData: IKeywordData;
   historicalData: any;
-  createdAt: string;
-  updatedAt: string;
+  organicResultsHistoricalData?: IOrganicResultsHistoricalData;
+  createdAt: Date | string;
+  updatedAt: Date | string;
 }
 
 export interface IKeywordData {
@@ -64,6 +67,10 @@ export interface IHistoricalKeyword {
   kgmWebsite: string;
   totalResultsCount: number;
   timestamp: Date;
+}
+
+export interface IOrganicResultsHistoricalData {
+  [key: string]: any;
 }
 
 export interface IHistoricalMapEntry {
@@ -89,7 +96,7 @@ export interface IHistoricalData {
 
 export interface SearchKeywordResponse {
   search_information?: {
-    query_displayed: string;
+    query_displayed?: string;
     total_results?: number;
     time_taken_displayed?: number;
     organic_results_state?: string;
@@ -150,4 +157,30 @@ export interface IKeywordPaginateParams {
   searchTerm?: string;
   sortBy?: ISortConfig;
   rangeOfDate?: DateRange | undefined;
+}
+
+export interface IFeaturedIcon {
+  icon: any;
+  label: string;
+  bgClass: string;
+  textClass: string;
+  borderClass: string;
+}
+
+export interface ISearchKeywordParams {
+  keyword: string;
+  location?: string;
+  device?: string;
+  type?: string;
+  start?: number;
+  num?: number;
+}
+
+export interface ILoginFormValues {
+  email: string;
+  password: string;
+}
+
+export interface IRegisterFormValues extends ILoginFormValues {
+  fullName: string;
 }

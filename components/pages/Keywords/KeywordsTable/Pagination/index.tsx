@@ -105,11 +105,6 @@ export default function Pagination({
   const start = (currentPage - 1) * itemsPerPage + 1;
   const end = Math.min(currentPage * itemsPerPage, totalCount);
 
-  // If there are less than 2 items in pagination range, don't render
-  if (currentPage === 0 || paginationRange.length < 2) {
-    return null;
-  }
-
   const handlePageChange = (pageNumber: number) => {
     if (pageNumber >= 1 && pageNumber <= totalPages) {
       onPageChange({ page: pageNumber });

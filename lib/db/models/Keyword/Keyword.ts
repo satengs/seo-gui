@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { IKeyword } from '@/types';
 
 // Schema for daily metrics and data
 const DynamicData = new mongoose.Schema({
@@ -65,7 +66,7 @@ const KeywordSchema = new mongoose.Schema(
     // Unique identifier combining term, device, and location
     keywordTerm: {
       type: String,
-      unique: true,
+      // unique: true,
     },
     kgmTitle: {
       type: String,

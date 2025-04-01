@@ -1,10 +1,8 @@
-import './globals.css';
+import '../globals.css';
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import { ThemeProvider } from '@/components/theme-provider';
-import Sidebar from '@/components/sidebar';
 import { Toaster } from '@/components/ui/toaster';
-import Header from '@/components/header';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,18 +18,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-    <head>
-      <title>Search Analytics</title>
-      <link rel="icon" type="image/ico" href="/favicon.ico"/>
-      <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-      <link rel="shortcut icon" href="/favicon.ico" />
-      <link
-          rel="apple-touch-icon"
-          type="image/png"
-          href="/apple-icon.png"
-      />
-      <link rel="manifest" href="/manifest.json" />
-    </head>
+      <head>
+        <title>Search Analytics</title>
+        <link rel="icon" type="image/ico" href="/favicon.ico" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="apple-touch-icon" type="image/png" href="/apple-icon.png" />
+        <link rel="manifest" href="/(app)/manifest.json" />
+      </head>
 
       <body className={inter.className} suppressHydrationWarning>
         <ThemeProvider
@@ -41,13 +35,15 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <div className="flex min-h-screen">
-            <Sidebar />
-            <div className="flex-1 flex flex-col">
-              <Header />
-              <main className="flex-1 overflow-y-auto bg-background">
-                {children}
-              </main>
-            </div>
+            <main className="flex-1 overflow-y-auto bg-background">
+              <div
+                className={
+                  'min-h-screen h-full bg-gray-50 flex flex-col items-center justify-center'
+                }
+              >
+                <div className={'max-w-lg mx-auto w-full'}>{children}</div>
+              </div>
+            </main>
           </div>
           <Toaster />
         </ThemeProvider>

@@ -31,26 +31,26 @@ export default function Header() {
   }, [toast]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 mb-3">
       <div className="flex h-14 items-center">
         <div className="mx-4 flex items-center">
           <Search className="h-6 w-6 text-primary" />
           <h1 className="ml-2 text-xl font-semibold">Search Analytics</h1>
         </div>
         <div className="flex flex-1 items-center justify-between  md:justify-end">
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 mt-2">
             <ThemeToggle />
             {account && <AccountInfoItem account={account} />}
             {!account && (
               <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
-                  <User className="h-4 w-4" />
-                </div>
                 <div>
                   <p className="text-sm font-medium">Loading...</p>
                   <p className="text-xs text-muted-foreground">
                     Fetching account data
                   </p>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+                  <User className="h-4 w-4" />
                 </div>
               </div>
             )}

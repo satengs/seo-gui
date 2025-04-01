@@ -1,15 +1,15 @@
 import { IKeyword } from '@/types';
 
-// @ts-ignore
-// @ts-ignore
 export const mockKeywords: IKeyword[] = [
   {
     _id: 'mock-1',
     createdAt: new Date().toISOString(),
     device: 'mobile',
     organicResultsCount: 10,
-    // @ts-ignore
-    keywordData: { _id: 'kd-1', data: { search_information: {} } },
+    keywordData: {
+      _id: 'kd-1',
+      data: { search_information: {} },
+    },
     historicalData: new Map(
       Object.entries({
         '2024-03-20': {
@@ -37,8 +37,10 @@ export const mockKeywords: IKeyword[] = [
     keywordTerm: 'seo-services-desktop-us',
     isDefaultKeywords: true,
     organicResultsCount: 10,
-    // @ts-ignore
-    keywordData: {},
+    keywordData: {
+      data: {},
+      _id: 'mock_123',
+    },
     historicalData: new Map(
       Object.entries({
         '2024-03-20': {
@@ -63,8 +65,10 @@ export const mockKeywords: IKeyword[] = [
     keywordTerm: 'content-strategy-mobile-us',
     isDefaultKeywords: false,
     organicResultsCount: 10,
-    // @ts-ignore
-    keywordData: {},
+    keywordData: {
+      data: {},
+      _id: 'mock_1234',
+    },
     historicalData: new Map(
       Object.entries({
         '2024-03-20': {

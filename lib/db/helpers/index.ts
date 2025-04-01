@@ -78,7 +78,24 @@ export const paginateEntitiesByFilter = async (
 
   try {
     const regex = new RegExp(term, 'i');
-    let query = term ? { term: { $regex: regex } } : {};
+    let query = term
+      ? {
+          $or: [
+            { term: { $regex: regex } },
+            { tags: { $in: [regex] } },
+            { location: { $regex: regex } },
+            { device: { $regex: regex } },
+            { kgmid: { $regex: regex } },
+            {
+              kgmTitle: { $regex: regex },
+            },
+            {
+              kgmTitle: { $regex: regex },
+            },
+          ],
+        }
+      : {};
+
     const sort: ISortObj = {};
     if (sortBy?.sortKey?.length) {
       sort[`${sortBy.sortKey}`] = sortBy.sortDirection === 'asc' ? 1 : -1;

@@ -81,11 +81,11 @@ export async function GET(request: Request) {
     const data = await request.json();
     const { term, location, device, isDefaultKeywords } = data;
 
-    const searchResponse = (await searchKeyword(
-      term,
+    const searchResponse = (await searchKeyword({
+      keyword: term,
       location,
-      device
-    )) as SearchKeywordResponse;
+      device,
+    })) as SearchKeywordResponse;
 
     if (searchResponse.error) {
       return NextResponse.json(

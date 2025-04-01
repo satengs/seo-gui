@@ -17,9 +17,11 @@ const KeywordItemSection: React.FC<IKeywordItemSection> = ({ keyword }) => {
         <JsonViewer data={keyword} isExpanded={true} />
       </div>
 
-      <div className="p-4 bg-gray-50 text-xs text-gray-500">
-        Last updated: {new Date(keyword?.updatedAt).toLocaleString()}
-      </div>
+      {keyword?.updatedAt ? (
+        <div className="p-4 bg-gray-50 text-xs text-gray-500">
+          Last updated: {new Date(keyword?.updatedAt).toLocaleString()}
+        </div>
+      ) : null}
     </div>
   );
 };

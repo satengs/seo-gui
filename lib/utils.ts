@@ -49,45 +49,115 @@ function prepareDataForCSV(keyword: IKeyword): Record<string, any> {
 
 export function generateMultiCSV(keywords: IKeyword[]): string {
   const dataForCSV = keywords.map((keyword) => prepareDataForCSV(keyword));
-  const parser = new Parser({
-    // @ts-ignore
-    flatten: true,
-    flattenSeparator: '_',
-  });
+  const parser = new Parser({});
 
   return parser.parse(dataForCSV);
 }
 
 const CITY_ABBREVIATIONS: Record<string, string> = {
-  'los angeles': 'LA', 'new york': 'NYC', 'san francisco': 'SF','san antonio': 'SA',
-  'las vegas': 'LV', 'washington': 'DC', 'chicago': 'CHI', 'dallas': 'DAL',
-  'alabama': 'AL', 'alaska': 'AK', 'arizona': 'AZ', 'arkansas': 'AR',
-  'california': 'CA', 'colorado': 'CO', 'connecticut': 'CT', 'delaware': 'DE',
-  'florida': 'FL', 'georgia': 'GA', 'hawaii': 'HI', 'idaho': 'ID',
-  'illinois': 'IL', 'indiana': 'IN', 'iowa': 'IA', 'kansas': 'KS',
-  'kentucky': 'KY', 'louisiana': 'LA', 'maine': 'ME', 'maryland': 'MD',
-  'massachusetts': 'MA', 'michigan': 'MI', 'minnesota': 'MN', 'mississippi': 'MS',
-  'missouri': 'MO', 'montana': 'MT', 'nebraska': 'NE', 'nevada': 'NV',
-  'new hampshire': 'NH', 'new jersey': 'NJ', 'new mexico': 'NM',
-  'north carolina': 'NC', 'north dakota': 'ND', 'ohio': 'OH', 'oklahoma': 'OK',
-  'oregon': 'OR', 'pennsylvania': 'PA', 'rhode island': 'RI', 'south carolina': 'SC',
-  'south dakota': 'SD', 'tennessee': 'TN', 'texas': 'TX', 'utah': 'UT',
-  'vermont': 'VT', 'virginia': 'VA', 'west virginia': 'WV',
-  'wisconsin': 'WI', 'wyoming': 'WY',
-  'united states': 'US', 'united kingdom': 'UK', 'canada': 'CA', 'australia': 'AU',
-  'germany': 'DE', 'france': 'FR', 'italy': 'IT', 'spain': 'ES',
-  'japan': 'JP', 'china': 'CN'
+  'los angeles': 'LA',
+  'new york': 'NY',
+  'san francisco': 'SF',
+  'san antonio': 'SA',
+  'san mateo': 'SM',
+  'las vegas': 'LV',
+  houston: 'Hou',
+  washington: 'DC',
+  chicago: 'CHI',
+  dallas: 'DAL',
+  alabama: 'AL',
+  alaska: 'AK',
+  arizona: 'AZ',
+  arkansas: 'AR',
+  california: 'CA',
+  colorado: 'CO',
+  connecticut: 'CT',
+  delaware: 'DE',
+  florida: 'FL',
+  georgia: 'GA',
+  hawaii: 'HI',
+  idaho: 'ID',
+  illinois: 'IL',
+  indiana: 'IN',
+  iowa: 'IA',
+  kansas: 'KS',
+  kentucky: 'KY',
+  louisiana: 'LA',
+  maine: 'ME',
+  maryland: 'MD',
+  massachusetts: 'MA',
+  michigan: 'MI',
+  minnesota: 'MN',
+  mississippi: 'MS',
+  missouri: 'MO',
+  montana: 'MT',
+  nebraska: 'NE',
+  nevada: 'NV',
+  'new hampshire': 'NH',
+  'new jersey': 'NJ',
+  'new mexico': 'NM',
+  'north carolina': 'NC',
+  'north dakota': 'ND',
+  ohio: 'OH',
+  oklahoma: 'OK',
+  oregon: 'OR',
+  pennsylvania: 'PA',
+  brooklyn: 'BK',
+  'rhode island': 'RI',
+  'south carolina': 'SC',
+  'south dakota': 'SD',
+  tennessee: 'TN',
+  texas: 'TX',
+  utah: 'UT',
+  vermont: 'VT',
+  virginia: 'VA',
+  'west virginia': 'WV',
+  wisconsin: 'WI',
+  wyoming: 'WY',
+  'united states': 'US',
+  'united kingdom': 'UK',
+  canada: 'CA',
+  australia: 'AU',
+  germany: 'DE',
+  france: 'FR',
+  italy: 'IT',
+  spain: 'ES',
+  japan: 'JP',
+  china: 'CN',
+};
+
+export const capitalizeFirstLetter = (value: string) => {
+  if (value) {
+    return value.replace(/\b\w/g, (char) => char.toUpperCase());
+  }
+  return '';
 };
 
 export function shortenLocation(location: string): string {
   if (!location) return '';
 
-  const parts = location.split(', ').map(part => part.toLowerCase().trim());
+  const parts = location.split(', ').map((part) => part.toLowerCase().trim());
 
-  let name1 = CITY_ABBREVIATIONS[parts[0]] || parts[0]; // Shorten city if possible.
-  let name2 = CITY_ABBREVIATIONS[parts[1]] || parts[1]; // Shorten city if possible.
-  let name3 = CITY_ABBREVIATIONS[parts[2]] || parts[2]; // Shorten city if possible.
+  let name1 =
+    CITY_ABBREVIATIONS[parts[0]] ||
+    (parts[0] && capitalizeFirstLetter(parts[0])); // Shorten city if possible.
+  let name2 =
+    CITY_ABBREVIATIONS[parts[1]] ||
+    (parts[1] && parts[1] && capitalizeFirstLetter(parts[1])); // Shorten city if possible.
+  let name3 =
+    CITY_ABBREVIATIONS[parts[2]] ||
+    (parts[2] && parts[2] && capitalizeFirstLetter(parts[2])); // Shorten city if possible.
 
+  let locationString = '';
+  if (name1) {
+    locationString += name1;
+  }
+  if (name2) {
+    locationString += ` , ${name2}`;
+  }
+  if (name3) {
+    locationString += ` , ${name3}`;
+  }
   // Handle other countries
-  return `${name1?.toLowerCase()}, ${name2?.toLowerCase()}, ${name3?.toLowerCase()}`;
+  return locationString;
 }

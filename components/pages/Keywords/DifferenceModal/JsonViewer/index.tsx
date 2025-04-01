@@ -24,7 +24,7 @@ import {
   MapPinned,
   Menu,
   Star,
-  Target
+  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -91,7 +91,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
             className="text-blue-500 hover:underline flex items-center gap-1"
           >
             <LinkIcon className="h-3 w-3" />
-            {new URL(value).hostname}
+            {value}
           </a>
         );
       }

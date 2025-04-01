@@ -28,23 +28,24 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         return { cancelled: true, results };
       }
 
-      const searchResults = await searchKeyword(
-          keyword.term,
-          keyword.location,
-          keyword.device
-      ) as SearchKeywordResponse;
+      const searchResults = (await searchKeyword({
+        keyword: keyword.term,
+        location: keyword.location,
+        device: keyword.device,
+      })) as SearchKeywordResponse;
 
       if (searchResults.error) {
         results.push({
           keyword: keyword.term,
-          error: `SERP API error: ${searchResults.error}`
+          error: `SERP API error: ${searchResults.error}`,
         });
         continue;
       }
 
       // Create daily metrics data
       const dailyData = {
-        organicResultsCount: searchResults.search_information?.total_results || 0,
+        organicResultsCount:
+          searchResults.search_information?.total_results || 0,
         kgmid: searchResults?.knowledge_graph?.kgmid || '',
         kgmTitle: searchResults.knowledge_graph?.title || '',
         kgmWebsite: searchResults.knowledge_graph?.website || '',
@@ -55,36 +56,37 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         location: keyword.location,
         backlinksNeeded: null,
         timestamp: new Date().toISOString(),
-        'keywordData.data': { ...searchResults }
+        'keywordData.data': { ...searchResults },
       };
 
       // Update keyword with latest results while preserving historical data
       await Keyword.findByIdAndUpdate(
-          keyword._id,
-          {
-            $set: {
-              [`historicalData.${todayKey}`]: dailyData,
-              kgmid: searchResults.knowledge_graph?.kgmid || '',
-              kgmTitle: searchResults.knowledge_graph?.title || '',
-              kgmWebsite: searchResults.knowledge_graph?.website || '',
-              organicResultsCount: extractTotalResults(searchResults),
-              'keywordData.data': { ...searchResults },
-              updatedAt: new Date()
-            }
+        keyword._id,
+        {
+          $set: {
+            [`historicalData.${todayKey}`]: dailyData,
+            kgmid: searchResults.knowledge_graph?.kgmid || '',
+            kgmTitle: searchResults.knowledge_graph?.title || '',
+            kgmWebsite: searchResults.knowledge_graph?.website || '',
+            organicResultsCount: extractTotalResults(searchResults),
+            'keywordData.data': { ...searchResults },
+            updatedAt: new Date(),
           },
-          { new: true }
+        },
+        { new: true }
       );
 
       results.push({
         keyword: keyword.term,
         success: true,
-        dailyData
+        dailyData,
       });
     } catch (error) {
       console.error(`Failed to check keyword ${keyword.term}:`, error);
       results.push({
         keyword: keyword.term,
-        error: error instanceof Error ? error.message : 'Failed to check keyword'
+        error:
+          error instanceof Error ? error.message : 'Failed to check keyword',
       });
     }
   }
@@ -108,13 +110,16 @@ export async function POST(request: Request) {
     if (!keywords.length) {
       return NextResponse.json({
         message: 'No default keywords found',
-        results: []
+        results: [],
       });
     }
 
     const { searchParams } = new URL(request.url);
     const startIndex = parseInt(searchParams.get('startIndex') || '0');
-    const { cancelled, results } = await processKeywordChunk(keywords, startIndex);
+    const { cancelled, results } = await processKeywordChunk(
+      keywords,
+      startIndex
+    );
     const nextIndex = startIndex + CHUNK_SIZE;
     const hasMore = nextIndex < keywords.length;
 
@@ -124,16 +129,16 @@ export async function POST(request: Request) {
       hasMore: hasMore && !cancelled,
       nextIndex: hasMore ? nextIndex : null,
       results,
-      cancelled
+      cancelled,
     });
   } catch (error) {
     console.error('Failed to check keywords:', error);
     return NextResponse.json(
-        {
-          error: 'Failed to check keywords',
-          details: error instanceof Error ? error.message : 'Unknown error'
-        },
-        { status: 500 }
+      {
+        error: 'Failed to check keywords',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+      { status: 500 }
     );
   }
 }

@@ -23,6 +23,7 @@ const config: Config = {
         blue: {
           default: '#21218B17',
           17: '#222534',
+          68: '#617bf9',
         },
         black: {
           base: '#13172D',

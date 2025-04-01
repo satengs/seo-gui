@@ -8,12 +8,12 @@ export async function GET(req: Request) {
     const location = searchParams.get('location') || 'United States';
     const device = searchParams.get('device') || 'desktop';
     const keywordQ = keyword.replace(/-/g, ' ');
-    const htmlData: any = await searchKeyword(
-      keywordQ,
+    const htmlData: any = await searchKeyword({
+      keyword: keywordQ,
       location,
       device,
-      'html'
-    );
+      type: 'html',
+    });
 
     return new Response(htmlData, {
       headers: { 'Content-Type': 'text/html' },
