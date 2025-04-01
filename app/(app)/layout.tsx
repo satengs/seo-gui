@@ -27,7 +27,6 @@ export default function RootLayout({
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" type="image/png" href="/apple-icon.png" />
-        <link rel="manifest" href="/app/manifest.json" />
       </head>
 
       <body className={inter.className} suppressHydrationWarning>

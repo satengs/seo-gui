@@ -8,7 +8,6 @@ export async function GET(req: NextRequest) {
   try {
     await dbConnect();
     const userPayloadSuper = (await getUserIdForSuper(req)) as IUserPayload;
-    console.log('pp: ', userPayloadSuper);
     const organizationsBySuper = await Organization.find({
       userId: userPayloadSuper.id,
     }).populate('userId');

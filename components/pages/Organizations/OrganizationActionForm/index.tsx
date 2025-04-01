@@ -42,7 +42,6 @@ const OrganizationActionForm = ({
         description: 'Organization successfully registered',
       });
     } catch (err) {
-      console.log('err: ', err);
       toast({
         title: 'failed',
         description: 'Organization creation failed.',

@@ -57,8 +57,6 @@ const UserListEditableItem = ({
     if (item && defaultValues) {
       const keys = Object.keys(defaultValues);
       keys.forEach((key) => {
-        console.log('key: ', key);
-        console.log('lll: ', item?.roleId._id);
         if (key === 'role') {
           setValue('role', item.roleId._id);
         } else {
@@ -73,7 +71,6 @@ const UserListEditableItem = ({
     async (data: IUserTableItem) => {
       if (item?._id) {
         try {
-          console.log('data: ', data);
           const resp = await axiosClient.patch(`/api/users/${item._id}`, data);
           onUserEdit(resp.data);
           onCancelEditing();

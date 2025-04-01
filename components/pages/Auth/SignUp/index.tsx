@@ -40,7 +40,6 @@ const SignUpForm = () => {
         description: 'User successfully registered',
       });
     } catch (err) {
-      console.log('err: ', err);
       toast({
         title: 'failed',
         description: 'User creation failed.',

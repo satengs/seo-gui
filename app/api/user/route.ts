@@ -22,11 +22,9 @@ export async function GET(req: NextRequest) {
     const dbUser = await User.findOne({ _id: userPayload.id }).select(
       '-password -createdAt -updatedAt -__v'
     );
-    console.log('user payload: ', userPayload);
     const permissionsByUserRole = await Role.findOne({
       _id: userPayload.roleId,
     }).populate('permissions');
-    console.log('perm: ', permissionsByUserRole);
     let permissions: IPermission | [] = [];
     if (permissionsByUserRole._id) {
       permissions = permissionsByUserRole.permissions.map(

@@ -14,8 +14,6 @@ export async function getAuthUserId(req: NextRequest) {
       process.env.JWT_SECRET!
     ) as IUserPayload;
 
-    console.log('pp: ', userPayload);
-
     if (userPayload.exp < Math.floor(Date.now() / 1000) || !userPayload.id) {
       const response = NextResponse.json(
         { message: 'Token has expired' },
@@ -48,7 +46,6 @@ export async function getUserIdForSuper(req: NextRequest) {
     }
     return userPayload;
   } catch (err) {
-    console.log('err: ', err);
     return NextResponse.json(
       { message: err instanceof Error ? err?.message : 'Server error' },
       { status: 500 }

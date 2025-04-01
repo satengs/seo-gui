@@ -49,7 +49,6 @@ const OrganizationListEditableItem = ({
     async (data: IOrganizationFormValues) => {
       if (item?._id) {
         try {
-          console.log('data: ', data);
           const resp = await axiosClient.patch(
             `/api/organizations/${item._id}`,
             data

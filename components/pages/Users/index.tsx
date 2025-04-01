@@ -47,7 +47,6 @@ const UsersSection = () => {
   const onUserEdit = useCallback(
     (item: IUser) => {
       if (users?.length) {
-        console.log('item: ', item);
         const data = users.map((_item) =>
           _item._id === item._id ? { ...item } : _item
         );
