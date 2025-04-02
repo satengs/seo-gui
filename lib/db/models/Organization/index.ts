@@ -7,10 +7,10 @@ const organizationSchema = new mongoose.Schema({
     unique: true,
     trim: true,
   },
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-  },
+  // userId: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'User',
+  // },
   users: [
     {
       type: mongoose.Schema.Types.ObjectId,
@@ -18,6 +18,9 @@ const organizationSchema = new mongoose.Schema({
     },
   ],
 });
+
+//super admin ->assign admin into organization, he can see all organization,create anuma u assign admini
+//admin crud organization, create i depqum assign inqn iran
 
 export default mongoose.models.Organization ||
   mongoose.model('Organization', organizationSchema);
