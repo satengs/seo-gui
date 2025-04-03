@@ -48,7 +48,7 @@ export default function Sidebar() {
     <div
       className={cn(
         'sticky top-0 z-50 border-r bg-card text-card-foreground transition-all duration-300',
-        collapsed ? 'w-16' : 'w-48 min-w-48'
+        collapsed ? 'w-16' : 'lg:w-32 lg:min-w-32 xl:w-48 xl:min-w-48'
       )}
     >
       <div className="sticky top-0 z-50 flex h-16 items-center justify-between p-4">
@@ -83,8 +83,8 @@ export default function Sidebar() {
               collapsed && 'justify-center'
             )}
           >
-            <item.icon className="h-5 w-5" />
-            {!collapsed && <span>{item.title}</span>}
+            <item.icon className="h-5 w-5 " />
+            {!collapsed && <span className={'text-sm xl:text-base'}>{item.title}</span>}
           </Link>
         ))}
       </nav>
