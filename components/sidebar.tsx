@@ -84,7 +84,7 @@ export default function Sidebar() {
             )}
           >
             <item.icon className="h-5 w-5 " />
-            {!collapsed && <span className={'text-sm xl:text-base'}>{item.title}</span>}
+            {!collapsed && <span className='text-sm xl:text-base'>{item.title}</span>}
           </Link>
         ))}
       </nav>
