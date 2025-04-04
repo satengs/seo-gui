@@ -34,6 +34,7 @@ import {
   Store,
   Twitter,
   TriangleAlertIcon,
+  MessageSquareWarning,
 } from 'lucide-react';
 import { IFeaturedIcon } from '@/types';
 
@@ -318,6 +319,13 @@ const featureIcons: Record<string, IFeaturedIcon> = {
     bgClass: 'bg-orange-100 dark:bg-orange-900',
     textClass: 'text-orange-800 dark:text-orange-200',
     borderClass: 'border-orange-200 dark:border-orange-800',
+  },
+  answer_box_list: {
+    icon: MessageSquareWarning,
+    label: 'Answer Box List',
+    bgClass: 'bg-red-100 dark:bg-red-900',
+    textClass: 'text-red-800 dark:text-red-200',
+    borderClass: 'border-red-200 dark:border-red-800',
   },
 };
 

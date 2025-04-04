@@ -25,11 +25,13 @@ interface ILocation {
 interface LocationSelectProps {
   onValueChange: (item: ILocation | string) => void;
   defaultLocation?: string;
+  disabled: boolean;
 }
 
 const LocationSelect: React.FC<LocationSelectProps> = ({
   onValueChange,
   defaultLocation,
+  disabled = false,
 }) => {
   const { toast } = useToast();
   const locationSelectRef = useRef<HTMLDivElement>(null);
@@ -82,9 +84,11 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
     [onValueChange]
   );
 
-  const onInputClick = () => {
-    onOpenList();
-  };
+  const onInputClick = useCallback(() => {
+    if (!disabled) {
+      onOpenList();
+    }
+  }, [disabled]);
 
   const onInputChange = async (e: ChangeEvent<HTMLInputElement>) => {
     setLocationText(e.target.value);
@@ -121,6 +125,7 @@ const LocationSelect: React.FC<LocationSelectProps> = ({
         value={locationText}
         onChange={onInputChange}
         onClick={onInputClick}
+        disabled={disabled}
       />
       {openList && locations?.length ? (
         <div

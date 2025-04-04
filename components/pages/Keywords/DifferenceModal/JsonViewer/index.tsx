@@ -6,27 +6,9 @@ import {
   ChevronDown,
   Calendar,
   Link as LinkIcon,
-  Search,
-  Globe,
-  Bot,
-  Info,
-  Search as ListSearch,
-  Image as ImageIcon,
-  HelpCircle,
-  Newspaper,
-  Link2,
-  Sparkles,
-  Video,
-  MessageSquare,
-  MessagesSquare,
-  PlayCircle,
-  Map as MapIcon,
-  MapPinned,
-  Menu,
-  Star,
-  Target,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import featureIcons from '@/components/pages/Keywords/KeywordsTable/feature-icons';
 
 interface JsonViewerProps {
   data: any;
@@ -105,51 +87,22 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
   }, []);
 
   const getKeyIcon = useCallback((key: string) => {
-    switch (key.toLowerCase()) {
-      case 'search_information':
-        return <Info className="h-4 w-4 text-blue-800" />;
-      case 'knowledge_graph':
-        return <ListSearch className="h-4 w-4 text-purple-800" />;
-      case 'inline_images':
-        return <ImageIcon className="h-4 w-4 text-green-800" />;
-      case 'inline_videos':
-        return <Video className="h-4 w-4 text-yellow-800" />;
-      case 'perspectives':
-        return <MessageSquare className="h-4 w-4 text-violet-800" />;
-      case 'discussions_and_forums':
-        return <MessagesSquare className="h-4 w-4 text-fuchsia-800" />;
-      case 'short_videos':
-        return <PlayCircle className="h-4 w-4 text-rose-800" />;
-      case 'ads':
-        return <Target className="h-4 w-4 text-lime-800" />;
-      case 'local_map':
-        return <MapPinned className="h-4 w-4 text-teal-800" />;
-      case 'local_results':
-        return <MapIcon className="h-4 w-4 text-emerald-800" />;
-      case 'menu_highlights':
-        return <Menu className="h-4 w-4 text-amber-800" />;
-      case 'related_questions':
-        return <HelpCircle className="h-4 w-4 text-orange-800" />;
-      case 'ai_overview':
-        return <Bot className="h-4 w-4 text-emerald-800" />;
-      case 'top_stories':
-        return <Newspaper className="h-4 w-4 text-red-800" />;
-      case 'top_stories_link':
-        return <Link2 className="h-4 w-4 text-indigo-800" />;
-      case 'top_stories_serpapi_link':
-        return <LinkIcon className="h-4 w-4 text-pink-800" />;
-      case 'related_searches':
-        return <Sparkles className="h-4 w-4 text-cyan-800" />;
-      case 'reviews':
-        return <Star className="h-4 w-4 text-orange-800" />;
-      case 'search_parameters':
-        return <Globe className="h-4 w-4 text-gray-700" />;
-      case 'data':
-      case 'keyworddata':
-        return <Search className="h-4 w-4 text-gray-700" />;
-      default:
-        return null;
-    }
+    const lowerCaseKey = key.toLowerCase();
+    const feature = featureIcons[lowerCaseKey];
+
+    if (!feature) return null;
+
+    const IconComponent = feature.icon;
+
+    return (
+      <div
+        key={lowerCaseKey}
+        className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
+        title={feature.label}
+      >
+        <IconComponent className="h-3.5 w-3.5" />
+      </div>
+    );
   }, []);
 
   const renderHistoricalData = useCallback(
@@ -205,11 +158,8 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
                       )}
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground flex items-center gap-1">
-                            {icon}
-                            {key}:
-                          </span>
-                          {!isObject && renderValue(value)}
+                          {icon}
+                          {key}:{!isObject && renderValue(value)}
                         </div>
                         {isObject && expandedKeys[key] && (
                           <div className="mt-2 pl-4 border-l-2 border-muted border-gray-500">

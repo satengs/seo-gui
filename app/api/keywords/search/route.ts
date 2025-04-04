@@ -2,10 +2,10 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/Keyword/Keyword';
 import { searchKeyword } from '@/lib/serpApi';
-import { checkDateDifference } from '@/lib/utils';
-import { getKeywordData } from '@/lib/db/models/Keyword/InitialKeywords';
+import { findAndUpdateDailyKeyword } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities } from '@/lib/db/helpers';
 import { SearchKeywordResponse } from '@/types';
+import { locationList } from '@/consts/locations';
 
 export async function POST(request: Request) {
   try {
@@ -15,48 +15,24 @@ export async function POST(request: Request) {
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || 10;
     const keywordsArr = data?.term?.split('\n');
-
     for (let i = 0; i < keywordsArr?.length; i++) {
-      const existKeyword = await Keyword.findOne({
-        term: keywordsArr[i],
-        location: data?.location,
-        device: data?.device,
-      });
-      if (existKeyword) {
-        const dateDiff = checkDateDifference(
-          new Date(),
-          existKeyword.updatedAt
-        );
-
-        if (dateDiff >= 1) {
-          const updatedKeywordData = await getKeywordData(
-            keywordsArr[i],
-            data?.location,
-            data?.device
-          );
-
-          if (updatedKeywordData) {
-            await Keyword.findOneAndUpdate(
-              {
-                term: keywordsArr[i],
-                location: data?.location,
-                device: data?.device,
-              },
-              {
-                $set: updatedKeywordData,
-              },
-              { new: true, runValidators: true }
-            );
-          }
+      if (data?.includeDefaultLocation && !data?.location) {
+        for (let l = 0; l < locationList.length; l++) {
+          const currentLocation = locationList[l];
+          await findAndUpdateDailyKeyword({
+            keyword: keywordsArr[i],
+            location: currentLocation,
+            device: data.device,
+            isDefaultKeywords: data.isDefaultKeywords,
+          });
         }
       } else {
-        const newKeywordData = await getKeywordData(
-          keywordsArr[i],
-          data?.location,
-          data?.device,
-          true
-        );
-        await Keyword.create(newKeywordData);
+        await findAndUpdateDailyKeyword({
+          keyword: keywordsArr[i],
+          location: data?.location,
+          device: data.device,
+          isDefaultKeywords: data.isDefaultKeywords,
+        });
       }
     }
     const keywords = await paginateEntities(

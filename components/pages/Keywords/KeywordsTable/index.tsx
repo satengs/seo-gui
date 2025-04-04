@@ -577,8 +577,10 @@ export default function KeywordsTable({
                   })
                 ) : (
                   <TableRow>
-                    <TableCell>
-                      <p className={'py-3'}>loading keywords . . .</p>
+                    <TableCell colSpan={11}>
+                      <p className={'py-3 font-medium'}>
+                        Loading keywords . . .
+                      </p>
                     </TableCell>
                   </TableRow>
                 )}
