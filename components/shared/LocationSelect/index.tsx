@@ -25,7 +25,7 @@ interface ILocation {
 interface LocationSelectProps {
   onValueChange: (item: ILocation | string) => void;
   defaultLocation?: string;
-  disabled: boolean;
+  disabled?: boolean;
 }
 
 const LocationSelect: React.FC<LocationSelectProps> = ({
