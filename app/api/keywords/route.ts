@@ -141,6 +141,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json(keywords);
   } catch (error) {
     console.error('Failed to fetch keywords:', error);
+
     return NextResponse.json(
       { error: 'Failed to fetch keywords' },
       { status: 500 }
