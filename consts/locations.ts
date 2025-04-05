@@ -15,3 +15,14 @@ export const LOCATIONS_MAP = {
   Nevada: 'NV',
   'San Antonio': 'SA',
 };
+
+export const locationList = [
+  'Los Angeles, California, United States',
+  'Tempe, Arizona, United States',
+  'San Mateo, California, United States',
+  'Houston, Texas, United States',
+  'Chicago, Illinois, United States',
+  'Brooklyn, New York, United States',
+  'Las Vegas, Nevada, United States',
+  'San Antonio, Texas, United States',
+];

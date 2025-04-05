@@ -2,12 +2,15 @@
 
 import React, { useEffect, useState, ChangeEvent, useCallback } from 'react';
 import { Search, Info } from 'lucide-react';
+import { DateRange } from 'react-day-picker';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import LocationSelect from '@/components/shared/LocationSelect';
 import DeviceSelect from '@/components/shared/DeviceSelect';
+import DateFilter from '@/components/pages/Keywords/DateFilter';
+import CustomCheckBox from '@/components/shared/CustomCheckBox';
 import KeywordsTable from '@/components/pages/Keywords/KeywordsTable';
 import JobAction from '@/components/pages/Keywords/JobAction';
 import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
@@ -16,8 +19,6 @@ import axiosClient from '@/lib/axiosClient';
 import { mockKeywords } from '@/lib/mockData';
 import { SIZE } from '@/consts';
 import { IKeyword, IKeywordPaginateParams, ISortConfig } from '@/types';
-import { DateRange } from 'react-day-picker';
-import DateFilter from '@/components/pages/Keywords/DateFilter';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -27,6 +28,8 @@ export default function KeywordsPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
   const [searchText, setSearchText] = useState<string>('');
+  const [includeDefaultLocations, setIncludeDefaultLocations] =
+    useState<boolean>(false);
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(false);
   const [location, setLocation] = useState<string>('');
@@ -101,7 +104,12 @@ export default function KeywordsPage() {
       setLoading(true);
       const reqBody = {
         term: searchText.trim(),
-        location: location?.length ? location : 'United States',
+        location: includeDefaultLocations
+          ? null
+          : location?.length
+            ? location
+            : 'United States',
+        includeDefaultLocation: includeDefaultLocations,
         device,
         isDefaultKeywords: asDefault,
       };
@@ -114,6 +122,7 @@ export default function KeywordsPage() {
         description: 'Keywords searched successfully',
       });
       setSearchText('');
+      setIncludeDefaultLocations(false);
     } catch (error) {
       console.error('Failed to fetch keywords:', error);
       // Return mock data filtered by search term
@@ -135,6 +144,11 @@ export default function KeywordsPage() {
   const onDateRangeChange = useCallback(
     (start: Date | undefined, end: Date | undefined) =>
       setDateRange({ from: start, to: end }),
+    []
+  );
+
+  const onDefaultLocationInputChange = useCallback(
+    (value: boolean) => setIncludeDefaultLocations(value),
     []
   );
 
@@ -225,20 +239,29 @@ export default function KeywordsPage() {
             </div>
           </div>
           <div className="flex-1">
-            <LocationSelect onValueChange={onValueChange} />
-
-            <div className="mt-4 flex items-center">
-              <Switch
-                onCheckedChange={onSwitchToggle}
-                checked={asDefault}
-                id="default-toggle"
+            <LocationSelect
+              onValueChange={onValueChange}
+              disabled={includeDefaultLocations}
+            />
+            <div className={'flex mt-4 items-center gap-4'}>
+              <div className=" flex items-center">
+                <Switch
+                  onCheckedChange={onSwitchToggle}
+                  checked={asDefault}
+                  id="default-toggle"
+                />
+                <label
+                  className="ml-2 text-blue-95 text-center text-sm opacity-60 cursor-pointer"
+                  htmlFor="default-toggle"
+                >
+                  Set as default
+                </label>
+              </div>
+              <CustomCheckBox
+                label={'Default locations include'}
+                onCheckBoxValueChange={onDefaultLocationInputChange}
+                defaultChecked={includeDefaultLocations}
               />
-              <label
-                className="ml-2 text-blue-95 text-center text-sm opacity-60 cursor-pointer"
-                htmlFor="default-toggle"
-              >
-                Set as default
-              </label>
             </div>
           </div>
           <div className="flex-0.5">

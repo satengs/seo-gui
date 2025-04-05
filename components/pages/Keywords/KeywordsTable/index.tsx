@@ -53,6 +53,7 @@ export default function KeywordsTable({
   keywords = [],
   currentPage,
   totalCount,
+  fetchLoading,
   onKeywordFilterChange,
   onSingleKeywordChange,
   onActionKeywordsChange,
@@ -316,258 +317,273 @@ export default function KeywordsTable({
                 </TableRow>
               </TableHeader>
               <TableBody className="text-md">
-                {filteredAndSortedData.map((keyword) => {
-                  const dates = getHistoricalDates(keyword);
-                  return (
-                    <React.Fragment key={keyword._id}>
-                      <TableRow className="hover:bg-muted/50 cursor-pointer">
-                        <TableCell>
-                          <Checkbox
-                            checked={selectedRows.has(keyword._id)}
-                            onCheckedChange={() =>
-                              toggleRowSelection(keyword._id)
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                            onClick={() => toggleRowExpansion(keyword._id)}
-                          >
-                            {expandedRows.has(keyword._id) ? (
-                              <ChevronDown className="h-4 w-4" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          <div
-                            className={`${keyword.isDefaultKeywords ? 'bg-blue-100 dark:bg-blue-950' : ''} px-2 py-1 rounded-md`}
-                            title={
-                              keyword.isDefaultKeywords ? 'Default keyword' : ''
-                            }
-                          >
-                            {keyword.term}
-                          </div>
-                        </TableCell>
-                        <TableCell className="justify-items-center text-xs">
-                          <span title={keyword.location}>
-                            {shortenLocation(keyword.location)}
-                          </span>
-                        </TableCell>
-                        <TableCell className="justify-items-center">
-                          {keyword.device === 'desktop' ? (
-                            <Computer className="h-4 w-4" />
-                          ) : (
-                            <Phone className="h-4 w-4" />
-                          )}
-                        </TableCell>
-                        <TableCell className="justify-items-center text-xs">
-                          {keyword.kgmid || '-'}
-                        </TableCell>
-                        <TableCell className="justify-items-center text-xs">
-                          {keyword.kgmTitle || '-'}
-                        </TableCell>
-                        <TableCell className="justify-items-center ">
-                          {keyword.kgmWebsite && (
-                            <Link
-                              href={keyword.kgmWebsite}
-                              target="_blank"
-                              className="flex items-center hover:underline"
-                            >
-                              <span className="text-xs overflow-hidden text-ellipsis w-20">
-                                {new URL(keyword.kgmWebsite).hostname}
-                              </span>
-                              <ExternalLink className="ml-1 h-3 w-3" />
-                            </Link>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {keyword?.tags && keyword?.tags?.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {keyword?.tags.map((tag) => (
-                                  <span
-                                    key={tag}
-                                    className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground text-sm">
-                                No tags
-                              </span>
-                            )}
+                {!fetchLoading ? (
+                  filteredAndSortedData.map((keyword) => {
+                    const dates = getHistoricalDates(keyword);
+                    return (
+                      <React.Fragment key={keyword._id}>
+                        <TableRow className="hover:bg-muted/50 cursor-pointer">
+                          <TableCell>
+                            <Checkbox
+                              checked={selectedRows.has(keyword._id)}
+                              onCheckedChange={() =>
+                                toggleRowSelection(keyword._id)
+                              }
+                            />
+                          </TableCell>
+                          <TableCell>
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => {
-                                setSelectedKeyword(keyword);
-                                setShowTagsDialog(true);
-                              }}
+                              className="h-8 w-8 p-0"
+                              onClick={() => toggleRowExpansion(keyword._id)}
                             >
-                              <Tag className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {keyword.organicResultsCount?.toLocaleString() || '-'}
-                        </TableCell>
-                        <TableCell>
-                          {keyword.updatedAt
-                            ? new Date(keyword.updatedAt).toLocaleDateString()
-                            : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-0.5">
-                            {keyword.keywordData &&
-                              keyword.keywordData.data &&
-                              Object.keys(keyword.keywordData.data).map(
-                                (field) => {
-                                  if (fieldsArr.includes(field)) return null;
-
-                                  const feature = featureIcons[field];
-                                  if (!feature) return field;
-
-                                  const IconComponent = feature.icon;
-
-                                  return (
-                                    <div
-                                      key={field}
-                                      className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
-                                      title={feature.label}
-                                    >
-                                      <IconComponent className="h-3.5 w-3.5" />
-                                    </div>
-                                  );
-                                }
+                              {expandedRows.has(keyword._id) ? (
+                                <ChevronDown className="h-4 w-4" />
+                              ) : (
+                                <ChevronRight className="h-4 w-4" />
                               )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <ActionsComponent
-                              keyword={keyword}
-                              onActionKeywordsChange={onActionKeywordsChange}
-                              currentPage={currentPage}
-                            />
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                      {expandedRows.has(keyword._id) && dates?.length ? (
-                        <TableRow>
-                          <TableCell colSpan={13} className="p-0">
-                            <div className="bg-muted/50 border-y">
-                              <div className="p-2 border-b bg-muted/70">
-                                <span className="flex items-center text-sm font-medium text-muted-foreground">
-                                  <History className="h-4 w-4 mr-2" />
-                                  Historical Data
+                            </Button>
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            <div
+                              className={`${keyword.isDefaultKeywords ? 'bg-blue-100 dark:bg-blue-950' : ''} px-2 py-1 rounded-md`}
+                              title={
+                                keyword.isDefaultKeywords
+                                  ? 'Default keyword'
+                                  : ''
+                              }
+                            >
+                              {keyword.term}
+                            </div>
+                          </TableCell>
+                          <TableCell className="justify-items-center text-xs">
+                            <span title={keyword.location}>
+                              {shortenLocation(keyword.location)}
+                            </span>
+                          </TableCell>
+                          <TableCell className="justify-items-center">
+                            {keyword.device === 'desktop' ? (
+                              <Computer className="h-4 w-4" />
+                            ) : (
+                              <Phone className="h-4 w-4" />
+                            )}
+                          </TableCell>
+                          <TableCell className="justify-items-center text-xs">
+                            {keyword.kgmid || '-'}
+                          </TableCell>
+                          <TableCell className="justify-items-center text-xs">
+                            {keyword.kgmTitle || '-'}
+                          </TableCell>
+                          <TableCell className="justify-items-center ">
+                            {keyword.kgmWebsite && (
+                              <Link
+                                href={keyword.kgmWebsite}
+                                target="_blank"
+                                className="flex items-center hover:underline"
+                              >
+                                <span className="text-xs overflow-hidden text-ellipsis w-20">
+                                  {new URL(keyword.kgmWebsite).hostname}
                                 </span>
-                              </div>
-                              <div className="px-4">
-                                <Table>
-                                  <TableHeader>
-                                    <TableRow className="hover:bg-transparent">
-                                      <TableHead className="w-[540px]">
-                                        Date
-                                      </TableHead>
-                                      <TableHead>KGM ID</TableHead>
-                                      <TableHead>KGM Title</TableHead>
-                                      <TableHead>KGM Website</TableHead>
-                                      <TableHead>Data Features</TableHead>
-                                      <TableHead className="text-right">
-                                        Total Results
-                                      </TableHead>
-                                    </TableRow>
-                                  </TableHeader>
-                                  <TableBody className="text-xs">
-                                    {dates.map((entry) => {
-                                      return (
-                                        <TableRow
-                                          key={entry.date}
-                                          className="hover:bg-muted/30"
-                                        >
-                                          <TableCell className="py-2 font-medium">
-                                            {new Date(
-                                              entry.date
-                                            ).toLocaleDateString()}{' '}
-                                          </TableCell>
-                                          <TableCell>
-                                            {entry.kgmid || '-'}
-                                          </TableCell>
-                                          <TableCell>
-                                            {entry.kgmTitle || '-'}
-                                          </TableCell>
-                                          <TableCell>
-                                            {entry.kgmWebsite && (
-                                              <Link
-                                                href={entry.kgmWebsite}
-                                                target="_blank"
-                                                className="flex items-center hover:underline"
-                                              >
-                                                {
-                                                  new URL(entry.kgmWebsite)
-                                                    .hostname
-                                                }
-                                                <ExternalLink className="ml-1 h-3 w-3" />
-                                              </Link>
-                                            )}
-                                          </TableCell>
-                                          <TableCell>
-                                            <div className="flex items-center gap-0.5">
-                                              {entry.kgmData &&
-                                                entry.kgmData.data &&
-                                                Object.keys(
-                                                  entry.kgmData.data
-                                                ).map((field) => {
-                                                  if (fieldsArr.includes(field))
-                                                    return null;
+                                <ExternalLink className="ml-1 h-3 w-3" />
+                              </Link>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              {keyword?.tags && keyword?.tags?.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {keyword?.tags.map((tag) => (
+                                    <span
+                                      key={tag}
+                                      className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                                    >
+                                      {tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => {
+                                  setSelectedKeyword(keyword);
+                                  setShowTagsDialog(true);
+                                }}
+                              >
+                                <Tag className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {keyword.organicResultsCount?.toLocaleString() ||
+                              '-'}
+                          </TableCell>
+                          <TableCell>
+                            {keyword.updatedAt
+                              ? new Date(keyword.updatedAt).toLocaleDateString()
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-0.5">
+                              {keyword.keywordData &&
+                                keyword.keywordData.data &&
+                                Object.keys(keyword.keywordData.data).map(
+                                  (field) => {
+                                    if (fieldsArr.includes(field)) return null;
 
-                                                  const feature =
-                                                    featureIcons[field];
-                                                  if (!feature) return field;
+                                    const feature = featureIcons[field];
+                                    if (!feature) return field;
 
-                                                  const IconComponent =
-                                                    feature.icon;
+                                    const IconComponent = feature.icon;
 
-                                                  return (
-                                                    <div
-                                                      key={field}
-                                                      className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
-                                                      title={feature.label}
-                                                    >
-                                                      <IconComponent className="h-3.5 w-3.5" />
-                                                    </div>
-                                                  );
-                                                })}
-                                            </div>
-                                          </TableCell>
-                                          <TableCell
-                                            className="text-right font-mono"
-                                            title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
-                                          >
-                                            {entry.organicResultsCount?.toLocaleString() ||
-                                              '-'}
-                                          </TableCell>
-                                        </TableRow>
-                                      );
-                                    })}
-                                  </TableBody>
-                                </Table>
-                              </div>
+                                    return (
+                                      <div
+                                        key={field}
+                                        className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
+                                        title={feature.label}
+                                      >
+                                        <IconComponent className="h-3.5 w-3.5" />
+                                      </div>
+                                    );
+                                  }
+                                )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
+                              <ActionsComponent
+                                keyword={keyword}
+                                onActionKeywordsChange={onActionKeywordsChange}
+                                currentPage={currentPage}
+                              />
                             </div>
                           </TableCell>
                         </TableRow>
-                      ) : null}
-                    </React.Fragment>
-                  );
-                })}
+                        {expandedRows.has(keyword._id) && dates?.length ? (
+                          <TableRow>
+                            <TableCell colSpan={13} className="p-0">
+                              <div className="bg-muted/50 border-y">
+                                <div className="p-2 border-b bg-muted/70">
+                                  <span className="flex items-center text-sm font-medium text-muted-foreground">
+                                    <History className="h-4 w-4 mr-2" />
+                                    Historical Data
+                                  </span>
+                                </div>
+                                <div className="px-4">
+                                  <Table>
+                                    <TableHeader>
+                                      <TableRow className="hover:bg-transparent">
+                                        <TableHead className="w-[540px]">
+                                          Date
+                                        </TableHead>
+                                        <TableHead>KGM ID</TableHead>
+                                        <TableHead>KGM Title</TableHead>
+                                        <TableHead>KGM Website</TableHead>
+                                        <TableHead>Data Features</TableHead>
+                                        <TableHead className="text-right">
+                                          Total Results
+                                        </TableHead>
+                                      </TableRow>
+                                    </TableHeader>
+                                    <TableBody className="text-xs">
+                                      {dates.map((entry) => {
+                                        return (
+                                          <TableRow
+                                            key={entry.date}
+                                            className="hover:bg-muted/30"
+                                          >
+                                            <TableCell className="py-2 font-medium">
+                                              {new Date(
+                                                entry.date
+                                              ).toLocaleDateString()}{' '}
+                                            </TableCell>
+                                            <TableCell>
+                                              {entry.kgmid || '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                              {entry.kgmTitle || '-'}
+                                            </TableCell>
+                                            <TableCell>
+                                              {entry.kgmWebsite && (
+                                                <Link
+                                                  href={entry.kgmWebsite}
+                                                  target="_blank"
+                                                  className="flex items-center hover:underline"
+                                                >
+                                                  {
+                                                    new URL(entry.kgmWebsite)
+                                                      .hostname
+                                                  }
+                                                  <ExternalLink className="ml-1 h-3 w-3" />
+                                                </Link>
+                                              )}
+                                            </TableCell>
+                                            <TableCell>
+                                              <div className="flex items-center gap-0.5">
+                                                {entry.kgmData &&
+                                                  entry.kgmData.data &&
+                                                  Object.keys(
+                                                    entry.kgmData.data
+                                                  ).map((field) => {
+                                                    if (
+                                                      fieldsArr.includes(field)
+                                                    )
+                                                      return null;
+
+                                                    const feature =
+                                                      featureIcons[field];
+                                                    if (!feature) return field;
+
+                                                    const IconComponent =
+                                                      feature.icon;
+
+                                                    return (
+                                                      <div
+                                                        key={field}
+                                                        className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
+                                                        title={feature.label}
+                                                      >
+                                                        <IconComponent className="h-3.5 w-3.5" />
+                                                      </div>
+                                                    );
+                                                  })}
+                                              </div>
+                                            </TableCell>
+                                            <TableCell
+                                              className="text-right font-mono"
+                                              title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
+                                            >
+                                              {entry.organicResultsCount?.toLocaleString() ||
+                                                '-'}
+                                            </TableCell>
+                                          </TableRow>
+                                        );
+                                      })}
+                                    </TableBody>
+                                  </Table>
+                                </div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : null}
+                      </React.Fragment>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={11}>
+                      <p className={'py-3 font-medium'}>
+                        Loading keywords . . .
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
