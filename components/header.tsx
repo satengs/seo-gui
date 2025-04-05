@@ -38,7 +38,7 @@ export default function Header() {
           <h1 className="ml-2 text-xl font-semibold">Search Analytics</h1>
         </div>
         <div className="flex flex-1 items-center justify-between  md:justify-end">
-          <div className="flex items-center space-x-2 mt-2">
+          <div className="flex items-center space-x-2 mt-2 px-4">
             <ThemeToggle />
             {account && <AccountInfoItem account={account} />}
             {!account && (
