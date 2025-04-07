@@ -92,7 +92,7 @@ const JobAction: React.FC = () => {
       setIsCancelled(false);
       setProgress(0);
     }
-  }, [toast]);
+  }, [processNextChunk, toast]);
 
   const handleStopChecking = useCallback(() => {
     setIsCancelled(true);
