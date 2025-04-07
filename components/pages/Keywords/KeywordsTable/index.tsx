@@ -192,7 +192,7 @@ export default function KeywordsTable({
   ];
 
   return (
-    <div className="mx-1 py-3">
+    <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">
       <Card className="bg-opacity-5 bg-gray-200">
         <CardHeader>
           <div className="flex items-center justify-between">
