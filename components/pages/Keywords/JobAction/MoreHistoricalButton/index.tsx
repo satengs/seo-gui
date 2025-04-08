@@ -6,7 +6,9 @@ function MoreHistoricalButton() {
 
   const checkStatus = useCallback(async () => {
     try {
-      const response = await fetch('/api/keywords/get-more?action=status');
+      const response = await fetch(
+        '/api/keywords/historical-more?action=status'
+      );
       const data = await response.json();
       setIsHistoricalFetching(data.isProcessing);
 
@@ -24,7 +26,7 @@ function MoreHistoricalButton() {
 
   const handleGetMoreHistorical = useCallback(async () => {
     try {
-      await fetch('/api/keywords/get-more?action=start');
+      await fetch('/api/keywords/historical-more?action=start');
       setIsHistoricalFetching(true);
       checkStatus();
     } catch (error) {
@@ -34,7 +36,7 @@ function MoreHistoricalButton() {
 
   const handleCancelHistorical = useCallback(async () => {
     try {
-      await fetch('/api/keywords/get-more?action=stop');
+      await fetch('/api/keywords/historical-more?action=stop');
     } catch (error) {
       console.error('Failed to stop processing:', error);
     }
