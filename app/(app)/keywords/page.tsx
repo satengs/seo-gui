@@ -19,6 +19,7 @@ import axiosClient from '@/lib/axiosClient';
 import { mockKeywords } from '@/lib/mockData';
 import { SIZE } from '@/consts';
 import { IKeyword, IKeywordPaginateParams, ISortConfig } from '@/types';
+import DataTypeFilter from "@/components/pages/Keywords/DataTypeFilter";
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -37,6 +38,7 @@ export default function KeywordsPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<ISortConfig>();
   const [fetchLoading, setFetchLoading] = useState<boolean>(true);
+  const [dataType, setDataType] = useState<string>('All');
 
   const { toast } = useToast();
 
@@ -276,6 +278,10 @@ export default function KeywordsPage() {
           </Button>
         </div>
         <DateFilter onDateFilterChange={onDateRangeChange} />
+        <DataTypeFilter
+            value={dataType}
+            onValueChange={setDataType}
+        />
         <KeywordsTable
           keywords={keywords}
           onActionKeywordsChange={onKeywordsChange}
