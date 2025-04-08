@@ -8,12 +8,12 @@ import {
   Trash,
   RefreshCcw,
 } from 'lucide-react';
-import RemoveModal from './RemoveModal';
 import MoreHistorical from './MoreHistorical';
 import { IKeyword } from '@/types';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
 import { generateCsvFile } from '@/utils';
+import RemoveAlerting from './RemoveAlerting/index';
 
 interface IActionsComponent {
   keyword: any;
@@ -258,13 +258,12 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
         </div>
       </section>
       {showModal ? (
-        <RemoveModal
-          onCancel={onCloseModal}
+        <RemoveAlerting
           keyword={keyword?.term}
           isDefaultKeywords={keyword.isDefaultKeywords}
+          setIsOpen={setShowModal}
           onConfirm={onConfirmRemove}
           isOpen={showModal}
-          loading={removeModalLoading}
         />
       ) : null}
 
