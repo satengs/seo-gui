@@ -177,7 +177,7 @@ export default function KeywordsTable({
         description: 'Something went wrong',
       });
     }
-  }, []);
+  }, [toast]);
 
   const handleKeywordsDelete = async () => {
     try {
@@ -636,7 +636,7 @@ export default function KeywordsTable({
                 className="text-white bg-red-500 border-[1px] rounded-l-3xl rounded-r-none hover:bg-red-600 border-red-600 h-auto py-3 px-4"
                 onClick={() => setIsOpen(true)}
               >
-                Delete All
+                Delete Keywords
               </Button>
             </div>
           )}
