@@ -19,7 +19,7 @@ import axiosClient from '@/lib/axiosClient';
 import { mockKeywords } from '@/lib/mockData';
 import { SIZE } from '@/consts';
 import { IKeyword, IKeywordPaginateParams, ISortConfig } from '@/types';
-import DataTypeFilter from "@/components/pages/Keywords/DataTypeFilter";
+import DataTypeFilter from '@/components/pages/Keywords/DataTypeFilter';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -279,8 +279,9 @@ export default function KeywordsPage() {
         </div>
         <DateFilter onDateFilterChange={onDateRangeChange} />
         <DataTypeFilter
-            value={dataType}
-            onValueChange={setDataType}
+          value={dataType}
+          onValueChange={setDataType}
+          keywords={keywords}
         />
         <KeywordsTable
           keywords={keywords}

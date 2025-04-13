@@ -320,6 +320,7 @@ export default function KeywordsTable({
                 {!fetchLoading ? (
                   filteredAndSortedData.map((keyword) => {
                     const dates = getHistoricalDates(keyword);
+
                     return (
                       <React.Fragment key={keyword._id}>
                         <TableRow className="hover:bg-muted/50 cursor-pointer">
