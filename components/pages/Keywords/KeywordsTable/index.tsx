@@ -183,7 +183,7 @@ export default function KeywordsTable({
     try {
       const keywordIds = Array.from(selectedRows);
 
-       await Promise.all(
+      await Promise.all(
         keywordIds.map((id) =>
           axiosClient.delete(`/api/keywords?keyword=${id}&page=${currentPage}`)
         )
@@ -193,7 +193,9 @@ export default function KeywordsTable({
         pageToFetch = currentPage - 1;
       }
 
-      const { data: updatedKeywords } = await axiosClient.get(`/api/keywords?page=${pageToFetch}`);
+      const { data: updatedKeywords } = await axiosClient.get(
+        `/api/keywords?page=${pageToFetch}`
+      );
 
       onActionKeywordsChange(updatedKeywords);
       setSelectedRows(new Set());

@@ -21,14 +21,14 @@ type RemoveAlertingProps = {
 };
 
 export default function RemoveAlerting({
-                                         selectedRows,
-                                         keyword,
-                                         isDefaultKeywords,
-                                         onConfirm,
-                                         setIsOpen,
-                                         isOpen,
-                                         multipleKeyword = false,
-                                       }: RemoveAlertingProps) {
+  selectedRows,
+  keyword,
+  isDefaultKeywords,
+  onConfirm,
+  setIsOpen,
+  isOpen,
+  multipleKeyword = false,
+}: RemoveAlertingProps) {
   const message = multipleKeyword
     ? `${selectedRows?.size || 0} selected keywords`
     : keyword;
@@ -43,7 +43,8 @@ export default function RemoveAlerting({
           </AlertDialogDescription>
           {isDefaultKeywords && (
             <AlertDialogDescription className="text-xs text-black-base">
-              Since this is a default keyword, deleting it will also remove its historical data.
+              Since this is a default keyword, deleting it will also remove its
+              historical data.
             </AlertDialogDescription>
           )}
         </AlertDialogHeader>
