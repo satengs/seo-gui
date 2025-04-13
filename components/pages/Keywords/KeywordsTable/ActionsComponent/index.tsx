@@ -264,6 +264,7 @@ const ActionsComponent: React.FC<IActionsComponent> = ({
           setIsOpen={setShowModal}
           onConfirm={onConfirmRemove}
           isOpen={showModal}
+          multipleKeyword={false}
         />
       ) : null}
 

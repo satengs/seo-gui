@@ -189,7 +189,7 @@ export default function KeywordsTable({
         )
       );
       let pageToFetch = currentPage;
-      if (keywordIds.length >= keywords.length && currentPage > 1) {
+      if (keywords && keywordIds.length >= keywords.length && currentPage > 1) {
         pageToFetch = currentPage - 1;
       }
 
@@ -661,6 +661,7 @@ export default function KeywordsTable({
             selectedRows={selectedRows}
             onConfirm={handleKeywordsDelete}
             setIsOpen={setIsOpen}
+            isDefaultKeywords={false}
             multipleKeyword
             isOpen={isOpen}
           />
