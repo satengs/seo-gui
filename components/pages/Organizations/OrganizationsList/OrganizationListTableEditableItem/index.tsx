@@ -1,14 +1,16 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { TableCell, TableRow } from '@/components/ui/table';
 import CustomInput from '@/components/shared/CustomInput';
 import CustomButton from '@/components/shared/CustomButton';
+import CustomSelect from '@/components/shared/CustomSelect';
 import { useToast } from '@/hooks/use-toast';
 import { Check, X } from 'lucide-react';
 import axiosClient from '@/lib/axiosClient';
-import { IOrganization, IOrganizationFormValues } from '@/types';
+import { capitalizeFirstLetter } from '@/lib/utils';
 import { organizationValidationSchema } from '@/components/pages/Organizations/OrganizationActionForm/organizationValidationSchema';
+import { IOrganization, IOrganizationFormValues, IUser } from '@/types';
 
 interface IOrganizationListEditableItemProps {
   item: IOrganization;
@@ -22,6 +24,7 @@ const OrganizationListEditableItem = ({
   onOrganizationEdit,
 }: IOrganizationListEditableItemProps) => {
   const { toast } = useToast();
+  const [users, setUsers] = useState<IUser[] | []>([]);
 
   const {
     handleSubmit,
@@ -31,6 +34,7 @@ const OrganizationListEditableItem = ({
   } = useForm({
     defaultValues: {
       name: '',
+      admin: '',
     },
     resolver: yupResolver(organizationValidationSchema),
   });
@@ -39,8 +43,12 @@ const OrganizationListEditableItem = ({
     if (item && defaultValues) {
       const keys = Object.keys(defaultValues);
       keys.forEach((key) => {
-        // @ts-ignore
-        setValue(key as keyof IOrganizationFormValues, item[key]);
+        if (key === 'admin') {
+          setValue('admin', item[key]._id);
+        } else {
+          // @ts-ignore
+          setValue(key as keyof IOrganizationFormValues, item[key]);
+        }
       });
     }
   }, [defaultValues, item, setValue]);
@@ -66,6 +74,31 @@ const OrganizationListEditableItem = ({
     [item._id, onOrganizationEdit, toast]
   );
 
+  useEffect(() => {
+    async function fetchUsers() {
+      try {
+        const resp = await axiosClient.get('/api/users');
+        setUsers(resp.data || []);
+      } catch (err) {
+        toast({
+          title: 'Failed',
+          description: 'Failed to fetch users.',
+        });
+      }
+    }
+
+    fetchUsers();
+  }, [toast]);
+
+  const usersSelectOptions = useMemo(() => {
+    if (users?.length) {
+      return users.map((user) => ({
+        value: user._id,
+        label: capitalizeFirstLetter(user.fullName),
+      }));
+    }
+  }, [users]);
+
   return (
     <TableRow>
       <TableCell className="w-[200px]">
@@ -77,6 +110,19 @@ const OrganizationListEditableItem = ({
           className="max-w-full"
           inputClassName={'border-none shadow-none'}
         />
+      </TableCell>
+      <TableCell className="w-[200px]">
+        {usersSelectOptions?.length ? (
+          <CustomSelect
+            options={usersSelectOptions}
+            control={control}
+            disabled={true}
+            placeholder={'Admin'}
+            name={'admin'}
+            error={errors.admin?.message}
+            className={`${errors.admin?.message ? 'pb-0' : 'pb-0'} w-48`}
+          />
+        ) : null}
       </TableCell>
 
       <TableCell className="w-[50px]">

@@ -9,8 +9,8 @@ export async function GET(req: NextRequest) {
     await dbConnect();
     const userPayloadSuper = (await getUserIdForSuper(req)) as IUserPayload;
     const organizationsBySuper = await Organization.find({
-      userId: userPayloadSuper.id,
-    }).populate('userId');
+      createdBy: userPayloadSuper.id,
+    }).populate('admin');
     return NextResponse.json(organizationsBySuper);
   } catch (error) {
     console.error('Failed to fetch organizations:', error);
@@ -27,8 +27,9 @@ export async function POST(req: NextRequest) {
     const reqBody = await req.json();
     const userPayloadSuper = (await getUserIdForSuper(req)) as IUserPayload;
     const existOrganization = await Organization.findOne({
-      userId: userPayloadSuper.id,
+      createdBy: userPayloadSuper.id,
       name: reqBody.name,
+      admin: reqBody.admin,
     });
     if (existOrganization) {
       return NextResponse.json(
@@ -38,10 +39,11 @@ export async function POST(req: NextRequest) {
     }
     const organization = new Organization({
       name: reqBody.name,
-      userId: userPayloadSuper.id,
+      createdBy: userPayloadSuper.id,
+      admin: reqBody.admin,
     });
     const newOrganization = await organization.save();
-    const populatedOrganization = await newOrganization.populate('userId');
+    const populatedOrganization = await newOrganization.populate('admin');
     return NextResponse.json(populatedOrganization);
   } catch (error) {
     console.error('Failed to create organization:', error);

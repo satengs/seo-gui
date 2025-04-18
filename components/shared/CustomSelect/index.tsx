@@ -11,11 +11,13 @@ import {
 } from '../../ui/select';
 import { mergeClassNames } from '@/utils';
 import { ISelectItem } from '@/types';
+import placeholder from 'lodash/fp/placeholder';
 
 interface ICustomSelectInput {
   name: string;
   control: any;
   label?: string;
+  placeholder?: string;
   options: ISelectItem[];
   defaultValue?: string;
   className?: string;
@@ -29,6 +31,7 @@ const CustomSelect = ({
   control,
   options,
   defaultValue,
+  placeholder,
   className,
   disabled,
   error,
@@ -63,11 +66,12 @@ const CustomSelect = ({
               disabled={disabled}
             >
               <SelectTrigger
+                placeholder={placeholder}
                 className="px-4 w-full py-2 font-medium text-gray-600 h-10 shadow-sm
             text-sm rounded-md dark:bg-white border shadow-gray-200
             placeholder-gray-500 focus:outline-none"
               >
-                <SelectValue placeholder="" />
+                <SelectValue placeholder={placeholder} />
               </SelectTrigger>
               <SelectContent>
                 {options.map((option) => (

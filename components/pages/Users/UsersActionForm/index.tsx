@@ -101,6 +101,7 @@ const UsersActionForm = ({ onUserAdd }: IUsersActionFormProps) => {
         <CustomSelect
           options={roleOptions}
           control={control}
+          placeholder={'Role'}
           name={'role'}
           error={errors.role?.message}
           className={`${errors.role?.message ? 'pb-0' : 'pb-0'} w-48`}

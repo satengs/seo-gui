@@ -236,6 +236,8 @@ export interface ISelectItem {
 export interface IOrganization {
   _id: string;
   name: string;
+  admin: IUser;
+  createdBy: IUser;
 }
 
 export interface IOrganizationFormValues {

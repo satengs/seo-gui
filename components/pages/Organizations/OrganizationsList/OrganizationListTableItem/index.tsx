@@ -18,6 +18,7 @@ const OrganizationListTableItem = ({
   return (
     <TableRow>
       <TableCell className="w-[200px]">{item.name}</TableCell>
+      <TableCell className="w-[200px]">{item.admin?.fullName}</TableCell>
       <TableCell className="w-[50px]">
         <div className="flex space-x-2">
           <CustomButton variant="text" onClick={() => toggleEditBtn(item)}>

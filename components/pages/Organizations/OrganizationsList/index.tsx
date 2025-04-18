@@ -70,6 +70,7 @@ const UserList = ({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[200px]"> Name</TableHead>
+                <TableHead className="w-[200px]"> Admin</TableHead>
                 <TableHead className="w-[50px]"> Actions</TableHead>
               </TableRow>
             </TableHeader>
