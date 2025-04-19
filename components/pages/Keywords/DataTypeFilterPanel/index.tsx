@@ -235,7 +235,7 @@ export default function DataTypeFilterPanel({
 
   const flatData = useMemo(() => {
     return filtered
-      .flatMap((row: any, index: number) => {
+      ?.flatMap((row: any, index: number) => {
         const dates = Object.keys(row.historicalData || {});
         return dates.flatMap(
           (date) => renderByType[type]?.(row, date, index) ?? []
@@ -244,7 +244,7 @@ export default function DataTypeFilterPanel({
       .filter(Boolean);
   }, [filtered, type]);
 
-  const paginatedRows = flatData.slice(
+  const paginatedRows = flatData?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -312,7 +312,7 @@ export default function DataTypeFilterPanel({
 
         <div className="border-t px-4 py-2 sticky bottom-0 bg-white z-10">
           <Pagination
-            totalCount={flatData.length}
+            totalCount={flatData?.length}
             currentPage={currentPage}
             onPageChange={handlePageChange}
             onItemPerPageChange={onItemPerPageChange}

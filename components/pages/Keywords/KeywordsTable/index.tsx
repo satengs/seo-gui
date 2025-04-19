@@ -195,12 +195,11 @@ export default function KeywordsTable({
         pageToFetch = currentPage - 1;
       }
 
-      const { data: updatedKeywords } = await axiosClient.get(
+      const response = await axiosClient.get(
         `/api/keywords?page=${pageToFetch}`
       );
 
-      onActionKeywordsChange(updatedKeywords);
-      setSelectedRows(new Set());
+      onActionKeywordsChange(response?.data || []);
       toast({
         title: 'Success',
         description: `Successfully deleted ${keywordIds.length} keywords`,
