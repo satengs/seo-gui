@@ -1,17 +1,16 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import MoreHistoricalButton from '@/components/pages/Keywords/JobAction/MoreHistoricalButton';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import axiosClient from '@/lib/axiosClient';
-import { useState, useCallback } from 'react';
 
 const JobAction: React.FC = () => {
   const { toast } = useToast();
   const [isChecking, setIsChecking] = useState(false);
-  const [isHistoricalFetching, setIsHistoricalFetching] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -93,7 +92,7 @@ const JobAction: React.FC = () => {
       setIsCancelled(false);
       setProgress(0);
     }
-  }, [toast]);
+  }, [processNextChunk, toast]);
 
   const handleStopChecking = useCallback(() => {
     setIsCancelled(true);
@@ -102,24 +101,6 @@ const JobAction: React.FC = () => {
       description: 'Stopping keyword check process...',
     });
   }, [toast]);
-
-  const handleGetMoreHistorical = useCallback(async () => {
-    try {
-      setIsHistoricalFetching(true);
-      await axiosClient.get(`/api/keywords/historical-more`);
-      toast({
-        title: 'Success',
-        description: 'Fetch more historical done',
-      });
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch more historical',
-      });
-    } finally {
-      setIsHistoricalFetching(false);
-    }
-  }, []);
 
   return (
     <Card className="py-3 my-3 flex items-center gap-4 border-0 shadow-none">
@@ -154,23 +135,7 @@ const JobAction: React.FC = () => {
           Stop
         </Button>
       )}
-
-      <Button
-        variant={'secondary'}
-        className="bg-orange-200 text-blue-17 min-w-[200px] relative hover:bg-orange-100"
-        onClick={handleGetMoreHistorical}
-        disabled={isHistoricalFetching}
-      >
-        {isHistoricalFetching ? (
-          <div
-            className={
-              'h-5 w-5 border-2 border-dashed border-blue-17 animate-spin rounded-full'
-            }
-          />
-        ) : (
-          'Get more historical'
-        )}
-      </Button>
+      <MoreHistoricalButton />
     </Card>
   );
 };

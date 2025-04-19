@@ -22,12 +22,12 @@ interface PaginationProps {
   siblingCount?: number;
 }
 
-const PER_PAGE_OPTIONS = [10, 20, 30, 50, 100];
+const PER_PAGE_OPTIONS = [10, 20, 30, 40];
 const DOTS = '...';
 
 function usePagination({
   totalCount,
-  itemsPerPage = 50,
+  itemsPerPage = 30,
   siblingCount = 1,
   currentPage = 1,
 }: {

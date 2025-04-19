@@ -1,5 +1,4 @@
 import { DateRange } from 'react-day-picker';
-import { Info } from 'lucide-react';
 
 export interface IAccount {
   account_email: string;
@@ -15,7 +14,7 @@ export interface IAccount {
   searches_per_month: number;
   this_hour_searches: number;
   this_month_usage: number;
-  lastSearch: IKeyword;
+  lastSearchDate: Date;
 }
 
 export interface DailyData {
