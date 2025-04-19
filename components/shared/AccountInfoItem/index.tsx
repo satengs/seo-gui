@@ -31,10 +31,10 @@ const AccountInfoItem: React.FC<IAccountInfoItem> = ({ account }) => {
   return (
     <Card className="py-2 border-0">
       <div className="flex items-center justify-between gap-4">
-        {account?.lastSearch ? (
+        {account?.lastSearchDate ? (
           <p className="text-sm font-medium text-muted-foreground border-x  px-4">
             Last searched at:{' '}
-            {format(account?.lastSearch?.updatedAt, 'yyyy-MM-dd HH:mm')}
+            {format(account?.lastSearchDate, 'yyyy-MM-dd HH:mm')}
           </p>
         ) : null}
 
