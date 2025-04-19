@@ -36,6 +36,7 @@ import { generateCsvFile } from '@/utils';
 import axiosClient from '@/lib/axiosClient';
 import featureIcons from '@/components/pages/Keywords/KeywordsTable/feature-icons';
 import { IKeyword, IKeywordPaginateParams } from '@/types';
+import { DeviceType } from '@/components/ui/device-type';
 
 interface KeywordsTableProps {
   keywords: IKeyword[] | null;
@@ -364,11 +365,7 @@ export default function KeywordsTable({
                             </span>
                           </TableCell>
                           <TableCell className="justify-items-center">
-                            {keyword.device === 'desktop' ? (
-                              <Computer className="h-4 w-4" />
-                            ) : (
-                              <Phone className="h-4 w-4" />
-                            )}
+                            <DeviceType type={keyword.device} />
                           </TableCell>
                           <TableCell className="justify-items-center text-xs">
                             {keyword.kgmid || '-'}

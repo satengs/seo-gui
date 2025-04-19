@@ -2,7 +2,6 @@ import mongoose, { Mongoose } from 'mongoose';
 import { seedRoles } from '@/lib/db/seeds/roles';
 
 const MONGODB_URI = process.env.MONGODB_URI;
-console.log('MONGODB_URI', MONGODB_URI)
 if (!MONGODB_URI) {
   throw new Error(
     'Please define the MONGODB_URI environment variable. Example: mongodb+srv://username:password@cluster.mongodb.net/database'
@@ -24,20 +23,20 @@ if (!cached) {
 
 async function dbConnect() {
   try {
-    if (cached.conn) {
-      // Test the cached connection
-      try {
-        if (cached.conn.connection.db) {
-          await cached.conn.connection.db.admin().ping();
-          console.log('Using cached database connection');
-          return cached.conn;
-        }
-      } catch (error) {
-        console.log('Cached connection failed, creating new connection');
-        cached.conn = null;
-        cached.promise = null;
-      }
-    }
+    // if (cached.conn) {
+    //   // Test the cached connection
+    //   try {
+    //     if (cached.conn.connection.db) {
+    //       await cached.conn.connection.db.admin().ping();
+    //       console.log('Using cached database connection');
+    //       return cached.conn;
+    //     }
+    //   } catch (error) {
+    //     console.log('Cached connection failed, creating new connection');
+    //     cached.conn = null;
+    //     cached.promise = null;
+    //   }
+    // }
 
     if (!cached.promise) {
       const opts = {

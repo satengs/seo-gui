@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { IKeyword, IHistoricalEntry } from '@/types';
 import { Parser } from '@json2csv/plainjs';
+import { DataType } from '../consts/dataTypes';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -161,18 +162,17 @@ export function shortenLocation(location: string): string {
   // Handle other countries
   return locationString;
 }
-export function filterKeywordsByType(
-  keywords: any[],
-  type: 'ai_overview' | 'related_questions' | 'reddit' | 'inline_videos' | 'knowledge_graph'
-) {
-  return keywords.filter((item) => {
+export function filterKeywordsByType(keywords: any[], type: DataType) {
+  return keywords?.filter((item) => {
     if (!item.historicalData) return false;
 
     const entries = Object.values(item.historicalData);
 
     switch (type) {
       case 'ai_overview':
-        return entries.some((entry: any) => entry?.keywordData?.data?.ai_overview);
+        return entries.some(
+          (entry: any) => entry?.keywordData?.data?.ai_overview
+        );
 
       case 'related_questions':
         return entries.some(
@@ -193,17 +193,17 @@ export function filterKeywordsByType(
         );
 
       case 'inline_videos':
-        return entries.some((entry: any) => Array.isArray(entry?.keywordData?.data?.inline_videos));
+        return entries.some((entry: any) =>
+          Array.isArray(entry?.keywordData?.data?.inline_videos)
+        );
 
       case 'knowledge_graph':
-        return entries.some((entry: any) => entry?.keywordData?.data?.knowledge_graph);
+        return entries.some(
+          (entry: any) => entry?.keywordData?.data?.knowledge_graph
+        );
 
       default:
         return false;
     }
   });
 }
-
-
-
-
