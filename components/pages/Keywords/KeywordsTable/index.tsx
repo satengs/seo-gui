@@ -180,6 +180,7 @@ export default function KeywordsTable({
   }, [toast]);
 
   const handleKeywordsDelete = async () => {
+
     try {
       const keywordIds = Array.from(selectedRows);
 
