@@ -56,12 +56,29 @@ export default function Sidebar() {
         {/*  <Image src={'/gifik.gif'} alt={'searching'} width={130} height={50} />*/}
         {/*)}*/}
         {!collapsed && (
-            <svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <polyline points="10,40 40,15 60,28 85,10 110,28" stroke="#34D399" strokeWidth="3" fill="none"/>
-              <circle cx="135" cy="18" r="8" stroke="#007BFF" strokeWidth="3"/>
-              <line x1="140" y1="22" x2="155" y2="33" stroke="#007BFF" strokeWidth="3"/>
-            </svg>
-
+          <svg
+            width="160"
+            height="40"
+            viewBox="0 0 160 40"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <polyline
+              points="10,40 40,15 60,28 85,10 110,28"
+              stroke="#34D399"
+              strokeWidth="3"
+              fill="none"
+            />
+            <circle cx="135" cy="18" r="8" stroke="#007BFF" strokeWidth="3" />
+            <line
+              x1="140"
+              y1="22"
+              x2="155"
+              y2="33"
+              stroke="#007BFF"
+              strokeWidth="3"
+            />
+          </svg>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
@@ -84,7 +101,9 @@ export default function Sidebar() {
             )}
           >
             <item.icon className="h-5 w-5 " />
-            {!collapsed && <span className='text-sm xl:text-base'>{item.title}</span>}
+            {!collapsed && (
+              <span className="text-sm xl:text-base">{item.title}</span>
+            )}
           </Link>
         ))}
       </nav>
