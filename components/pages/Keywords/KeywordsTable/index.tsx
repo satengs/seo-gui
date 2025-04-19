@@ -36,6 +36,7 @@ import { generateCsvFile } from '@/utils';
 import axiosClient from '@/lib/axiosClient';
 import featureIcons from '@/components/pages/Keywords/KeywordsTable/feature-icons';
 import { IKeyword, IKeywordPaginateParams } from '@/types';
+import RemoveAlerting from './ActionsComponent/RemoveAlerting/index';
 
 interface KeywordsTableProps {
   keywords: IKeyword[] | null;
@@ -69,6 +70,7 @@ export default function KeywordsTable({
   const [showTagsDialog, setShowTagsDialog] = useState<boolean>(false);
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const toggleRowExpansion = useCallback((id: string) => {
     setExpandedRows((prev) => {
@@ -175,7 +177,43 @@ export default function KeywordsTable({
         description: 'Something went wrong',
       });
     }
-  }, []);
+  }, [toast]);
+
+  const handleKeywordsDelete = async () => {
+
+    try {
+      const keywordIds = Array.from(selectedRows);
+
+      await Promise.all(
+        keywordIds.map((id) =>
+          axiosClient.delete(`/api/keywords?keyword=${id}&page=${currentPage}`)
+        )
+      );
+      let pageToFetch = currentPage;
+      if (keywords && keywordIds.length >= keywords.length && currentPage > 1) {
+        pageToFetch = currentPage - 1;
+      }
+
+      const { data: updatedKeywords } = await axiosClient.get(
+        `/api/keywords?page=${pageToFetch}`
+      );
+
+      onActionKeywordsChange(updatedKeywords);
+      setSelectedRows(new Set());
+      toast({
+        title: 'Success',
+        description: `Successfully deleted ${keywordIds.length} keywords`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete keywords',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsOpen(false);
+    }
+  };
 
   const onFilterByKeyword = useCallback(() => {
     onKeywordFilterChange({ searchTerm });
@@ -588,13 +626,20 @@ export default function KeywordsTable({
             </Table>
           </div>
           {selectedRows.size >= 1 && (
-            <div className="fixed top-1/2 right-0">
+            <div className="fixed right-0 top-1/2 flex flex-col gap-2 transform -translate-y-1/2">
               <Button
                 variant="secondary"
                 className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-red-800 h-auto py-3 px-4"
                 onClick={onModalOpen}
               >
                 View Data
+              </Button>
+              <Button
+                variant="secondary"
+                className="text-white bg-red-500 border-[1px] rounded-l-3xl rounded-r-none hover:bg-red-600 border-red-600 h-auto py-3 px-4"
+                onClick={() => setIsOpen(true)}
+              >
+                Delete Keywords
               </Button>
             </div>
           )}
@@ -615,6 +660,14 @@ export default function KeywordsTable({
               onSaveAction={onSingleKeywordChange} // Renamed from onSave
             />
           )}
+          <RemoveAlerting
+            selectedRows={selectedRows}
+            onConfirm={handleKeywordsDelete}
+            setIsOpen={setIsOpen}
+            isDefaultKeywords={false}
+            multipleKeyword
+            isOpen={isOpen}
+          />
         </CardContent>
       </Card>
     </div>

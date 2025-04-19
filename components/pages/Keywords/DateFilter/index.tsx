@@ -123,16 +123,14 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
   };
 
   return (
-    <div
-      className={
-        'flex items-center my-3'
-      }
-    >
+    <div className={'flex items-center my-3'}>
       {dateFilterOptions.map((filter) => (
         <div key={filter.id}>
           {filter.id !== 'custom' ? (
             <Button
-              className={'px-3 text-sm border border-input rounded-md shadow-md'}
+              className={
+                'px-3 text-sm border border-input rounded-md shadow-md'
+              }
               variant={getButtonStyleByFilter(filter.id)}
               onClick={() => handleFilterBtn(filter.id)}
             >
