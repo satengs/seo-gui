@@ -34,10 +34,15 @@ export async function PATCH(
     const id = (await params).id;
     const reqBody = await req.json();
     await getUserIdForSuper(req);
-    const updatedData = await Organization.findByIdAndUpdate(id, reqBody, {
-      new: true,
-    });
-    return NextResponse.json(updatedData);
+    const updatedOrganization = await Organization.findByIdAndUpdate(
+      id,
+      reqBody,
+      {
+        new: true,
+      }
+    );
+    const populatedOrganization = await updatedOrganization.populate('admin');
+    return NextResponse.json(populatedOrganization);
   } catch (error) {
     console.error('Failed to delete user:', error);
     return NextResponse.json(

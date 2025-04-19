@@ -116,7 +116,6 @@ const OrganizationListEditableItem = ({
           <CustomSelect
             options={usersSelectOptions}
             control={control}
-            disabled={true}
             placeholder={'Admin'}
             name={'admin'}
             error={errors.admin?.message}
