@@ -22,9 +22,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <title>Search Analytics</title>
-        <link rel="icon" type="image/ico" href="/favicon.ico" />
+        <link rel="shortcut icon" type="image/ico" href="/favicon.ico" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
-        <link rel="shortcut icon" href="/favicon.ico" />
         <link rel="apple-touch-icon" type="image/png" href="/apple-icon.png" />
       </head>
 

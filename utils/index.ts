@@ -88,6 +88,18 @@ export const getCsvKeywordMultiData = (keywords: IKeyword[]) => {
   return getConsistentData(data);
 };
 
+export const csvParser = (csvData: string, fileName: string) => {
+  const blob = new Blob([csvData], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
+};
+
 export const generateCsvFile = (keywordOrArr: IKeyword | IKeyword[]) => {
   let csvData;
   if (Array.isArray(keywordOrArr)) {
@@ -98,13 +110,6 @@ export const generateCsvFile = (keywordOrArr: IKeyword | IKeyword[]) => {
 
   const parser = new Parser({});
   const csvContent = parser.parse(csvData);
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'keyword-data.csv';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  window.URL.revokeObjectURL(url);
+  const result = csvParser(csvContent, 'keyword-data.csv');
+  return result;
 };

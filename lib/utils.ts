@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { IKeyword, IHistoricalEntry } from '@/types';
 import { Parser } from '@json2csv/plainjs';
+import { DataType } from '../consts/dataTypes';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -160,4 +161,49 @@ export function shortenLocation(location: string): string {
   }
   // Handle other countries
   return locationString;
+}
+export function filterKeywordsByType(keywords: any[], type: DataType) {
+  return keywords?.filter((item) => {
+    if (!item.historicalData) return false;
+
+    const entries = Object.values(item.historicalData);
+
+    switch (type) {
+      case 'ai_overview':
+        return entries.some(
+          (entry: any) => entry?.keywordData?.data?.ai_overview
+        );
+
+      case 'related_questions':
+        return entries.some(
+          (entry: any) =>
+            Array.isArray(entry?.keywordData?.data?.related_questions) ||
+            typeof entry?.keywordData?.data?.related_questions === 'object'
+        );
+
+      case 'reddit':
+        return entries.some(
+          (entry: any) =>
+            Array.isArray(entry?.keywordData?.data?.organic_results) &&
+            entry.keywordData.data.organic_results.some(
+              (r: any) =>
+                typeof r?.source === 'string' &&
+                /\breddit\b/i.test(r.source.toLowerCase())
+            )
+        );
+
+      case 'inline_videos':
+        return entries.some((entry: any) =>
+          Array.isArray(entry?.keywordData?.data?.inline_videos)
+        );
+
+      case 'knowledge_graph':
+        return entries.some(
+          (entry: any) => entry?.keywordData?.data?.knowledge_graph
+        );
+
+      default:
+        return false;
+    }
+  });
 }

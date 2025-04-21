@@ -37,6 +37,7 @@ import axiosClient from '@/lib/axiosClient';
 import featureIcons from '@/components/pages/Keywords/KeywordsTable/feature-icons';
 import { IKeyword, IKeywordPaginateParams } from '@/types';
 import RemoveAlerting from './ActionsComponent/RemoveAlerting/index';
+import { DeviceType } from '@/components/ui/device-type';
 
 interface KeywordsTableProps {
   keywords: IKeyword[] | null;
@@ -194,12 +195,11 @@ export default function KeywordsTable({
         pageToFetch = currentPage - 1;
       }
 
-      const { data: updatedKeywords } = await axiosClient.get(
+      const response = await axiosClient.get(
         `/api/keywords?page=${pageToFetch}`
       );
 
-      onActionKeywordsChange(updatedKeywords);
-      setSelectedRows(new Set());
+      onActionKeywordsChange(response?.data || []);
       toast({
         title: 'Success',
         description: `Successfully deleted ${keywordIds.length} keywords`,
@@ -358,6 +358,7 @@ export default function KeywordsTable({
                 {!fetchLoading ? (
                   filteredAndSortedData.map((keyword) => {
                     const dates = getHistoricalDates(keyword);
+
                     return (
                       <React.Fragment key={keyword._id}>
                         <TableRow className="hover:bg-muted/50 cursor-pointer">
@@ -401,11 +402,7 @@ export default function KeywordsTable({
                             </span>
                           </TableCell>
                           <TableCell className="justify-items-center">
-                            {keyword.device === 'desktop' ? (
-                              <Computer className="h-4 w-4" />
-                            ) : (
-                              <Phone className="h-4 w-4" />
-                            )}
+                            <DeviceType type={keyword.device} />
                           </TableCell>
                           <TableCell className="justify-items-center text-xs">
                             {keyword.kgmid || '-'}
