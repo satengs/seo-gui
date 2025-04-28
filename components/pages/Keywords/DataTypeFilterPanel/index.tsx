@@ -99,9 +99,10 @@ const renderByType: Record<
   (row: any, date: string, index: number) => React.ReactNode[]
 > = {
   ai_overview: (row, date, index) => {
-    const ref =
-      row.historicalData[date]?.keywordData?.data?.ai_overview?.references?.[0];
+    const entry = row.historicalData.find((e: any) => e.date === date);
+    const ref = entry?.keywordData?.ai_overview?.references?.[0];
     if (!ref) return [];
+
     return [
       <TableRow key={`${index}-${date}-ref`}>
         <TableCell>{row.term}</TableCell>
@@ -118,8 +119,10 @@ const renderByType: Record<
     ];
   },
   related_questions: (row, date, index) => {
+    const entry = row.historicalData.find((e: any) => e.date === date);
+
     const q =
-      row.historicalData[date]?.keywordData?.data?.related_questions?.[0];
+      entry.keywordData?.related_questions?.[0];
     if (!q) return [];
     return [
       <TableRow key={`${index}-${date}-question`}>
@@ -149,8 +152,10 @@ const renderByType: Record<
     ];
   },
   reddit: (row, date, index) => {
+    const entry = row.historicalData.find((e: any) => e.date === date);
+
     const results =
-      row.historicalData[date]?.keywordData?.data?.organic_results ?? [];
+      entry.keywordData?.organic_results ?? [];
     return results
       .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
       .map((result: any, i: number) => (
@@ -179,8 +184,10 @@ const renderByType: Record<
       ));
   },
   inline_videos: (row, date, index) => {
+    const entry = row.historicalData.find((e: any) => e.date === date);
+
     const video =
-      row.historicalData[date]?.keywordData?.data?.inline_videos?.[0];
+      entry?.keywordData?.inline_videos?.[0];
     if (!video) return [];
     return [
       <TableRow key={`${index}-${date}-video`}>
@@ -198,7 +205,9 @@ const renderByType: Record<
     ];
   },
   knowledge_graph: (row, date, index) => {
-    const g = row.historicalData[date]?.keywordData?.data?.knowledge_graph;
+    const entry = row.historicalData.find((e: any) => e.date === date);
+
+    const g = entry.keywordData?.knowledge_graph;
     if (!g) return [];
     return [
       <TableRow key={`${index}-${date}-graph`}>
@@ -231,18 +240,18 @@ export default function DataTypeFilterPanel({
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
 
   const filtered = filterKeywordsByType(data, type);
-  const typeInfo = dataTypes.find((dt) => dt.value === type);
 
+  const typeInfo = dataTypes.find((dt) => dt.value === type);
   const flatData = useMemo(() => {
-    return filtered
-      ?.flatMap((row: any, index: number) => {
-        const dates = Object.keys(row.historicalData || {});
-        return dates.flatMap(
-          (date) => renderByType[type]?.(row, date, index) ?? []
-        );
-      })
-      .filter(Boolean);
+    return filtered?.flatMap((row: any, index: number) => {
+      return (row.historicalData || []).map((entry: any) => {
+        const result = renderByType[type]?.(row, entry.date, index);
+        return result;
+      });
+    }).filter(Boolean);
   }, [filtered, type]);
+
+
 
   const paginatedRows = flatData?.slice(
     (currentPage - 1) * itemsPerPage,

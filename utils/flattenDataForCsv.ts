@@ -7,11 +7,14 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
   let rows: string[][] = [];
 
   const getHistoricalDates = (row: any) =>
-    Object.keys(row.historicalData || {});
+    (row.historicalData || []).map((item: any) => item.date);
 
-  const getKeywordData = (row: any, date: string, field: string) =>
-    row.historicalData[date]?.keywordData?.data?.[field];
+  const getKeywordData = (row: any, date: string, field: string) => {
+    const entry = (row.historicalData || []).find((item: any) => item.date === date);
+    let res =  entry?.keywordData?.[field];
+    return res
 
+  };
   const buildBaseRow = (row: any, date: string) => ({
     keyword: row.term,
     device: row.device,
@@ -60,6 +63,7 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
       };
 
       data.forEach((row) => {
+        console
         getHistoricalDates(row).forEach((date) => {
           const aiOverview = getKeywordData(row, date, 'ai_overview');
           const base = {

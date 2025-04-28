@@ -91,17 +91,21 @@ export default function KeywordsTable({
     return keywords.map((keyword) => ({
       ...keyword,
       historicalData:
-        keyword.historicalData instanceof Map
+        Array.isArray(keyword.historicalData)
           ? keyword.historicalData
-          : new Map(Object.entries(keyword.historicalData || {})),
+          : Object.entries(keyword.historicalData || {}).map(([key, value]) => ({
+            key,
+            value,
+          })),
     }));
   }, [keywords]);
 
+
   const getHistoricalDates = useCallback((keyword: IKeyword) => {
     const data = [];
-    for (const [key, value] of keyword.historicalData) {
+    for (const value of keyword.historicalData) {
       data.push({
-        date: key,
+        date: value.date,
         kgmid: value.kgmid,
         kgmTitle: value.kgmTitle,
         kgmWebsite: value.kgmWebsite,
@@ -114,6 +118,7 @@ export default function KeywordsTable({
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, []);
+
 
   const handleSort = useCallback(
     async (key: string) => {
@@ -181,7 +186,6 @@ export default function KeywordsTable({
   }, [toast]);
 
   const handleKeywordsDelete = async () => {
-
     try {
       const keywordIds = Array.from(selectedRows);
 

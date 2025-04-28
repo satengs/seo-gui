@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
+import Keyword from '@/lib/db/models/schemas/Keyword.ts';
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/types';
 

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAccountInfo } from '@/lib/serpApi';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
-import KeywordHistoricalMore from '@/lib/db/models/KeywordHistoricalMore';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistocalMore.ts';
 
 export async function GET() {
   try {
