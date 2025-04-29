@@ -111,7 +111,7 @@ export default function KeywordsTable({
         kgmWebsite: value.kgmWebsite,
         organicResultsCount: value.organicResultsCount,
         timestamp: value.timestamp,
-        kgmData: value.keywordData,
+        kgmData: value.keywordData.keywordData,
       });
     }
     return data.sort(
@@ -531,10 +531,10 @@ export default function KeywordsTable({
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody className="text-xs">
-                                      {dates.map((entry) => {
+                                      {dates.map((entry, i) => {
                                         return (
                                           <TableRow
-                                            key={entry.date}
+                                            key={entry.date + i}
                                             className="hover:bg-muted/30"
                                           >
                                             <TableCell className="py-2 font-medium">

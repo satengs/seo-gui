@@ -215,33 +215,6 @@ export default function KeywordsPage() {
     fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
   }, [fetchKeywords, searchTerm, sortBy, dateRange, itemsPerPage]);
 
-  // useEffect(() => {
-  //   async function loadHistoricalData() {
-  //     if (!keywords?.length) return;
-  //
-  //     try {
-  //       // Fetch all historical data in parallel
-  //       const updatedKeywords = await Promise.all(
-  //         keywords.map(async (keyword) => {
-  //           try {
-  //             const response = await fetchHistoricalData(keyword._id);
-  //             return { ...keyword, historicalData: response.data.historicalData };
-  //           } catch (error) {
-  //             console.error(`Failed to fetch historical data for keyword ${keyword._id}`, error);
-  //             return { ...keyword, historicalData: null }; // fallback
-  //           }
-  //         })
-  //       );
-  //
-  //       setKeywords(updatedKeywords); // 🚀 updated keywords with historicalData attached
-  //     } catch (err) {
-  //       console.error('Failed to load historical data', err);
-  //     }
-  //   }
-  //
-  //   loadHistoricalData();
-  // }, [keywords]);
-
   return (
     <div className="p-1.5 space-y-6">
       <Card className="px-6">

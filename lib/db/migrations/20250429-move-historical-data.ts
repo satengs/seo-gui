@@ -42,10 +42,8 @@ export const up = async () => {
 
   for (const doc of docs) {
     const { _id, historicalData } = doc;
-    console.log('doc')
 
     if (!historicalData || Object.keys(historicalData).length === 0) {
-      console.log('hello')
       await SearchAnalytics.updateOne({ _id }, { $unset: { historicalData: "" } });
       continue;
     }
@@ -66,7 +64,6 @@ export const up = async () => {
       })
     );
 
-      console.log('docsToInsert', docsToInsert)
     if (docsToInsert.length) {
       await HistoricalKeywordData.insertMany(docsToInsert);
       console.log(`✅ Migrated ${docsToInsert.length} entries for ID: ${_id}`);
@@ -83,7 +80,7 @@ export const down = async () => {
 
   const groupedMap = new Map<
     string,
-    Record<string, { keywordData: { data: KeywordData } }>
+    Record<string, { keywordData: HistoricalKeywordDataDoc  }>
     >();
 
   for (const doc of allDocs) {
@@ -95,7 +92,7 @@ export const down = async () => {
     }
 
     groupedMap.get(key)![date] = {
-      keywordData: { data: keywordData },
+      keywordData: keywordData ,
       organicResultsCount: doc.organicResultsCount,
       kgmid: doc.kgmid,
       kgmTitle: doc.kgmTitle,

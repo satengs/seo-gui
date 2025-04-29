@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/schemas/Keyword';
-import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData'; // <-- imported
+import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData';
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/types';
 
@@ -42,8 +42,7 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         });
         continue;
       }
-console.log('searchResults', searchResults)
-      // Save to historical collection
+
       await KeywordHistoricalData.create({
         id: keyword._id.toString(),
         date: todayKey,
@@ -58,7 +57,6 @@ console.log('searchResults', searchResults)
         keywordData: searchResults
       });
 
-      // Update main keyword document
       await Keyword.findByIdAndUpdate(
         keyword._id,
         {

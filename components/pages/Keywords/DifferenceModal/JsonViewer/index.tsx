@@ -108,9 +108,8 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
   const renderHistoricalData = useCallback(
     (date: string, data: any) => {
       const isExpanded = expandedHistoricalItems[date];
-
       return (
-        <div key={date} className="border-b border-gray-300 last:border-b-0">
+        <div key={date + data?._id} className="border-b border-gray-300 last:border-b-0">
           <div
             className="flex items-center gap-2 py-2 cursor-pointer hover:bg-cyan-200 px-2"
             onClick={(e) => {
