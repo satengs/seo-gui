@@ -44,12 +44,6 @@ const KeywordSchema = new mongoose.Schema(
         trim: true,
       },
     ],
-    // Historical data stored by date
-    historicalData: {
-      type: Map,
-      of: DailyData,
-      default: new Map(),
-    },
     createdAt: {
       type: Date,
       default: Date.now,

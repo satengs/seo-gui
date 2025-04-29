@@ -1,11 +1,15 @@
 import mongoose from 'mongoose';
 
 const KeywordHistoricalDataSchema = new mongoose.Schema({
-  id: { type: String, required: true },
+  id: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Keyword',
+    required: true,
+  },
   date: { type: String, required: true },
   keywordData: {
-    volume: { type: Number, default: null },
-    difficulty: { type: Number, default: null },
+    type: mongoose.Schema.Types.Mixed,
+    required: true,
   },
   organicResultsCount: { type: Number },
   kgmid: { type: String },
@@ -14,8 +18,8 @@ const KeywordHistoricalDataSchema = new mongoose.Schema({
   backlinksNeeded: { type: Number, default: null },
   difficulty: { type: Number, default: null },
   volume: { type: Number, default: null },
-  timestamp: { type: String },
-}, { collection: 'keywordHistoricalData' }); // <--- ADD THIS
+  timestamp: { type: Date, required: true },
+}, { collection: 'keywordHistoricalData' });
 
-
-export default mongoose.models.KeywordHistoricalData || mongoose.model('KeywordHistoricalData', KeywordHistoricalDataSchema);
+export default mongoose.models.KeywordHistoricalData ||
+mongoose.model('KeywordHistoricalData', KeywordHistoricalDataSchema);

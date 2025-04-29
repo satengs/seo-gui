@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/schemas/Keyword.ts';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData'; // <-- imported
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/types';
 
@@ -41,30 +42,27 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         });
         continue;
       }
-
-      // Create daily metrics data
-      const dailyData = {
-        organicResultsCount:
-          searchResults.search_information?.total_results || 0,
-        kgmid: searchResults?.knowledge_graph?.kgmid || '',
+console.log('searchResults', searchResults)
+      // Save to historical collection
+      await KeywordHistoricalData.create({
+        id: keyword._id.toString(),
+        date: todayKey,
+        organicResultsCount: searchResults.search_information?.total_results || 0,
+        kgmid: searchResults.knowledge_graph?.kgmid || '',
         kgmTitle: searchResults.knowledge_graph?.title || '',
         kgmWebsite: searchResults.knowledge_graph?.website || '',
-        difficulty: null,
-        volume: null,
-        term: keyword.term,
-        device: keyword.device,
-        location: keyword.location,
+        volume: searchResults.search_information?.volume || null,
+        difficulty: searchResults.search_information?.difficulty || null,
         backlinksNeeded: null,
         timestamp: new Date().toISOString(),
-        'keywordData.data': { ...searchResults },
-      };
+        keywordData: searchResults
+      });
 
-      // Update keyword with latest results while preserving historical data
+      // Update main keyword document
       await Keyword.findByIdAndUpdate(
         keyword._id,
         {
           $set: {
-            [`historicalData.${todayKey}`]: dailyData,
             kgmid: searchResults.knowledge_graph?.kgmid || '',
             kgmTitle: searchResults.knowledge_graph?.title || '',
             kgmWebsite: searchResults.knowledge_graph?.website || '',
@@ -79,7 +77,6 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
       results.push({
         keyword: keyword.term,
         success: true,
-        dailyData,
       });
     } catch (error) {
       console.error(`Failed to check keyword ${keyword.term}:`, error);

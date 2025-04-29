@@ -52,7 +52,7 @@ export async function GET(req: Request) {
         $lookup: {
           from: 'keywordHistoricalData',
           localField: '_id',
-          foreignField: 'id',
+          foreignField: 'keywordId',
           as: 'historicalData',
         },
       },

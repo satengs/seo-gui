@@ -1,14 +1,8 @@
 import mongoose from 'mongoose';
 
-interface KeywordData {
-  volume: number | null;
-  difficulty: number | null;
-}
 
 interface ExtendedHistoricalEntry {
-  keywordData: {
-    data: KeywordData;
-  };
+  keywordData: HistoricalKeywordDataDoc
   organicResultsCount?: number;
   kgmid?: string;
   kgmTitle?: string;
@@ -28,7 +22,7 @@ interface SearchAnalyticsDoc {
 interface HistoricalKeywordDataDoc {
   id: string;
   date: string;
-  keywordData: KeywordData;
+  keywordData: HistoricalKeywordDataDoc;
   organicResultsCount?: number;
   kgmid?: string;
   kgmTitle?: string;
@@ -48,8 +42,10 @@ export const up = async () => {
 
   for (const doc of docs) {
     const { _id, historicalData } = doc;
+    console.log('doc')
 
     if (!historicalData || Object.keys(historicalData).length === 0) {
+      console.log('hello')
       await SearchAnalytics.updateOne({ _id }, { $unset: { historicalData: "" } });
       continue;
     }
@@ -58,7 +54,7 @@ export const up = async () => {
       ([date, value]) => ({
         id: _id,
         date,
-        keywordData: value.keywordData.data,
+        keywordData: value.keywordData,
         organicResultsCount: value.organicResultsCount,
         kgmid: value.kgmid,
         kgmTitle: value.kgmTitle,
@@ -70,7 +66,7 @@ export const up = async () => {
       })
     );
 
-
+      console.log('docsToInsert', docsToInsert)
     if (docsToInsert.length) {
       await HistoricalKeywordData.insertMany(docsToInsert);
       console.log(`✅ Migrated ${docsToInsert.length} entries for ID: ${_id}`);
