@@ -90,11 +90,14 @@ const DateFilter = ({ onDateFilterChange }: IDateFilterProps) => {
 
       const newRange =
         startDate && endDate ? { from: startDate, to: endDate } : undefined;
-      setSelectedRange(newRange);
+      if (selectedRange) {
+        setSelectedRange(undefined);
+      }
+      // setSelectedRange(newRange);
       onDateFilterChange(newRange?.from, newRange?.to);
       setShowCalendar(false);
     },
-    [onDateFilterChange]
+    [onDateFilterChange, selectedRange]
   );
 
   const getButtonStyleByFilter = (filter: string) => {
