@@ -85,7 +85,7 @@ function MoreHistoricalButton() {
           className="px-4 py-2 rounded-md bg-red-500 text-white"
           onClick={handleCancelHistorical}
         >
-          Cancel
+          Stop
         </button>
       )}
     </>
