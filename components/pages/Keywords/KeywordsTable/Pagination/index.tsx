@@ -102,7 +102,7 @@ export default function Pagination({
   });
 
   const totalPages = Math.ceil(totalCount / itemsPerPage);
-  const start = (currentPage - 1) * itemsPerPage + 1;
+  const start = totalPages === 0 ? '0' : (currentPage - 1) * itemsPerPage + 1;
   const end = Math.min(currentPage * itemsPerPage, totalCount);
 
   const handlePageChange = (pageNumber: number) => {
@@ -193,7 +193,7 @@ export default function Pagination({
         </span>
         <span className="text-muted-foreground/50">•</span>
         <span>
-          Page {currentPage} of {totalPages}
+          Page {totalPages === 0 ? '0' : currentPage} of {totalPages}
         </span>
       </div>
     </div>

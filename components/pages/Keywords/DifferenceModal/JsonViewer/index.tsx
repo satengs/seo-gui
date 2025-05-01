@@ -159,7 +159,8 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
                       <div className="flex-1">
                         <div className="flex items-center gap-2">
                           {icon}
-                          {key}:{!isObject && renderValue(value)}
+                          <span className={'text-purple-600'}>{key}</span>:
+                          {!isObject && renderValue(value)}
                         </div>
                         {isObject && expandedKeys[key] && (
                           <div className="mt-2 pl-4 border-l-2 border-muted border-gray-500">

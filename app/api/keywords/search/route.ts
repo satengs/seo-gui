@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const data = await request.json();
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || 1;
-    const size = searchParams.get('size') || 10;
+    const size = searchParams.get('size') || 30;
     const keywordsArr = data?.term?.split('\n');
     for (let i = 0; i < keywordsArr?.length; i++) {
       if (data?.includeDefaultLocation && !data?.location) {

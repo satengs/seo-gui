@@ -24,7 +24,7 @@ import DataTypeFilter from '@/components/pages/Keywords/DataTypeFilter';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
-  const [asDefault, setAsDefault] = useState<boolean>(false);
+  const [asDefault, setAsDefault] = useState<boolean>(true);
   const [totalCount, setTotalCount] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
