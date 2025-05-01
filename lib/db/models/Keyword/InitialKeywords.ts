@@ -595,6 +595,7 @@ export async function getKeywordData(
       backlinksNeeded: null,
       keywordData: { data: { ...searchResults } },
       timestamp: new Date().toISOString(),
+      historicalData: {},
     };
 
     return {
