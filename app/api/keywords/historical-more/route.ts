@@ -5,9 +5,12 @@ import Keyword from '@/lib/db/models/schemas/Keyword';
 import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistocalMore.ts';
 import { searchKeyword } from '@/lib/serpApi';
 
-const CHUNK_SIZE = 5; // Process 5 keywords at a time
+const CHUNK_SIZE = 10; // Process 5 keywords at a time
 let isProcessing = false;
 let shouldStop = false;
+let processedPercent = 0;
+let processedCount = 0;
+let processedTotal = 0;
 
 async function processAllKeywords() {
   if (isProcessing) {
@@ -23,7 +26,9 @@ async function processAllKeywords() {
     const totalKeywords = await Keyword.countDocuments({
       isDefaultKeywords: true,
     });
-    let processedCount = 0;
+    processedTotal = totalKeywords;
+    processedCount = 0;
+    processedPercent = 0;
 
     while (processedCount < totalKeywords && !shouldStop) {
       const keywords: IKeyword[] = await Keyword.find({
@@ -70,8 +75,12 @@ async function processAllKeywords() {
       }
 
       processedCount += keywords.length;
+      processedPercent =
+        totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     }
 
+    processedPercent =
+      totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     return {
       success: true,
       processedCount,
@@ -105,6 +114,9 @@ export async function GET(req: Request) {
       return NextResponse.json({
         isProcessing,
         shouldStop,
+        processedPercent,
+        processedCount,
+        processedTotal,
       });
     }
 
