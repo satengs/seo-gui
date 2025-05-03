@@ -61,10 +61,10 @@ export default function KeywordsPage() {
           queryString += `&searchTerm=${searchTerm}`;
         }
         if (sortBy?.sortKey?.length) {
-          queryString += `&sortKey=${sortBy?.sortKey}&sortDirection=${sortBy?.sortDirection}`;
+          queryString += `&sortKey=${sortBy.sortKey}&sortDirection=${sortBy.sortDirection}`;
         }
         if (dateRange?.from && dateRange?.to) {
-          queryString += `&dateFrom=${dateRange?.from}&dateTo=${dateRange?.to}`;
+          queryString += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
         }
 
         const response = await axiosClient.get(queryString);

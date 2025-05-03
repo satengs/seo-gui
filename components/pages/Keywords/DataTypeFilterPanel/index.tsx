@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Sheet,
@@ -23,6 +23,8 @@ import { flattenDataForCsv } from '@/utils/flattenDataForCsv';
 import { DeviceType } from '@/components/ui/device-type';
 import { dataTypes, DataType } from '@/consts/dataTypes';
 import Pagination from '../KeywordsTable/Pagination';
+import axiosClient from '@/lib/axiosClient';
+import { useToast } from '@/hooks/use-toast';
 
 interface DataTypeFilterPanelProps {
   isOpen: boolean;
@@ -121,8 +123,7 @@ const renderByType: Record<
   related_questions: (row, date, index) => {
     const entry = row.historicalData.find((e: any) => e.date === date);
 
-    const q =
-      entry.keywordData?.related_questions?.[0];
+    const q = entry.keywordData?.related_questions?.[0];
     if (!q) return [];
     return [
       <TableRow key={`${index}-${date}-question`}>
@@ -154,8 +155,7 @@ const renderByType: Record<
   reddit: (row, date, index) => {
     const entry = row.historicalData.find((e: any) => e.date === date);
 
-    const results =
-      entry.keywordData?.organic_results ?? [];
+    const results = entry.keywordData?.organic_results ?? [];
     return results
       .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
       .map((result: any, i: number) => (
@@ -186,8 +186,7 @@ const renderByType: Record<
   inline_videos: (row, date, index) => {
     const entry = row.historicalData.find((e: any) => e.date === date);
 
-    const video =
-      entry?.keywordData?.inline_videos?.[0];
+    const video = entry?.keywordData?.inline_videos?.[0];
     if (!video) return [];
     return [
       <TableRow key={`${index}-${date}-video`}>
@@ -238,20 +237,21 @@ export default function DataTypeFilterPanel({
 }: DataTypeFilterPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
+  const { toast } = useToast();
 
   const filtered = filterKeywordsByType(data, type);
 
   const typeInfo = dataTypes.find((dt) => dt.value === type);
   const flatData = useMemo(() => {
-    return filtered?.flatMap((row: any, index: number) => {
-      return (row.historicalData || []).map((entry: any) => {
-        const result = renderByType[type]?.(row, entry.date, index);
-        return result;
-      });
-    }).filter(Boolean);
+    return filtered
+      ?.flatMap((row: any, index: number) => {
+        return (row.historicalData || []).map((entry: any) => {
+          const result = renderByType[type]?.(row, entry.date, index);
+          return result;
+        });
+      })
+      .filter(Boolean);
   }, [filtered, type]);
-
-
 
   const paginatedRows = flatData?.slice(
     (currentPage - 1) * itemsPerPage,
@@ -269,7 +269,17 @@ export default function DataTypeFilterPanel({
     setCurrentPage(1); // Reset page to 1 when per page changes
   }, []);
 
-  const downloadAsCSV = () => flattenDataForCsv(filtered, type);
+  const downloadAsCSV = useCallback(async () => {
+    try {
+      const resp = await axiosClient.get(`/api/keywords?fullList=${true}`);
+      flattenDataForCsv(resp?.data || [], type);
+    } catch (err) {
+      toast({
+        title: 'Failed to export csv',
+        description: 'Something went wrong',
+      });
+    }
+  }, [toast]);
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>

@@ -1,21 +1,21 @@
 import { csvParser } from './index';
+import { IKeyword } from '@/types';
 
-type DataRow = any;
-
-export function flattenDataForCsv(data: DataRow[], type: string) {
+export function flattenDataForCsv(data: IKeyword[], type: string) {
   let headers: string[] = ['Keyword', 'Device', 'Location', 'Date'];
   let rows: string[][] = [];
 
-  const getHistoricalDates = (row: any) =>
+  const getHistoricalDates = (row: IKeyword) =>
     (row.historicalData || []).map((item: any) => item.date);
 
-  const getKeywordData = (row: any, date: string, field: string) => {
-    const entry = (row.historicalData || []).find((item: any) => item.date === date);
-    let res =  entry?.keywordData?.[field];
-    return res
-
+  const getKeywordData = (row: IKeyword, date: string, field: string) => {
+    const entry = (row.historicalData || []).find(
+      (item: any) => item.date === date
+    );
+    return entry?.keywordData?.[field];
   };
-  const buildBaseRow = (row: any, date: string) => ({
+
+  const buildBaseRow = (row: IKeyword, date: string) => ({
     keyword: row.term,
     device: row.device,
     location: row.location,
@@ -63,8 +63,7 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
       };
 
       data.forEach((row) => {
-        console
-        getHistoricalDates(row).forEach((date) => {
+        getHistoricalDates(row).forEach((date: string) => {
           const aiOverview = getKeywordData(row, date, 'ai_overview');
           const base = {
             ...buildBaseRow(row, date),
@@ -114,9 +113,8 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
       ];
 
       data.forEach((row) => {
-        getHistoricalDates(row).forEach((date) => {
-          const redditResults =
-            getKeywordData(row, date, 'organic_results') || [];
+        getHistoricalDates(row).forEach((date: string) => {
+          const redditResults = getKeywordData(row, date, 'organic_results') || [];
 
           redditResults
             .filter(
@@ -168,7 +166,7 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
       headers = [...headers, 'Title', 'Thumbnail', 'Link', 'Duration'];
 
       data.forEach((row) => {
-        getHistoricalDates(row).forEach((date) => {
+        getHistoricalDates(row).forEach((date: string) => {
           const videos = getKeywordData(row, date, 'inline_videos') || [];
           videos.forEach((video: any) => {
             rows.push([
@@ -200,7 +198,7 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
       ];
 
       data.forEach((row) => {
-        getHistoricalDates(row).forEach((date) => {
+        getHistoricalDates(row).forEach((date: string) => {
           const graph = getKeywordData(row, date, 'knowledge_graph') || {};
           rows.push([
             row.term,
@@ -232,9 +230,8 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
       ];
 
       data.forEach((row) => {
-        getHistoricalDates(row).forEach((date) => {
-          const questions =
-            getKeywordData(row, date, 'related_questions') || [];
+        getHistoricalDates(row).forEach((date: string) => {
+          const questions = getKeywordData(row, date, 'related_questions') || [];
           questions.forEach((q: any) => {
             const listItems = (q.list || [])
               .map((item: any) => `• ${item}`)
@@ -257,7 +254,39 @@ export function flattenDataForCsv(data: DataRow[], type: string) {
     },
   };
 
-  if (handlers[type]) handlers[type]();
+  if (handlers[type]) {
+    handlers[type]();
+  } else {
+    // Default handler for all data types
+    headers = [
+      ...headers,
+      'KGMID',
+      'KGM Title',
+      'KGM Website',
+      'Organic Results Count',
+      'Tags',
+      'Created At',
+      'Updated At',
+    ];
+
+    data.forEach((row) => {
+      getHistoricalDates(row).forEach((date: string) => {
+        rows.push([
+          row.term,
+          row.device,
+          row.location,
+          date,
+          row.kgmid || '',
+          row.kgmTitle || '',
+          row.kgmWebsite || '',
+          row.organicResultsCount?.toString() || '0',
+          (row.tags || []).join(', '),
+          new Date(row.createdAt).toISOString(),
+          new Date(row.updatedAt).toISOString(),
+        ]);
+      });
+    });
+  }
 
   const csvContent = [
     headers.join(','),

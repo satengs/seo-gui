@@ -6,20 +6,20 @@ import { paginateEntities, paginateEntitiesByFilter } from '@/lib/db/helpers';
 import { IKeyword, IPaginatedKeywords } from '@/types';
 import { SIZE } from '@/consts';
 
-
 export async function GET(req: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(req.url);
-
     const fullList = searchParams.get('fullList');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const size = parseInt(searchParams.get('size') || SIZE.toString(), 10);
     const searchTerm = searchParams.get('searchTerm') || '';
-    const sortKey = searchParams.get('sortKey') || 'created';
-    const sortDirection = searchParams.get('sortDirection') === 'desc' ? -1 : 1;
+    const sortKey = searchParams.get('sortKey') || '';
+    const sortDirection = searchParams.get('sortDirection') || 'asc';
     const dateRangeFrom = searchParams.get('dateFrom');
     const dateRangeTo = searchParams.get('dateTo');
+
+    // Log to debug date range values
 
     // Seed initial keywords if empty
     const count = await Keyword.countDocuments();
@@ -28,50 +28,33 @@ export async function GET(req: Request) {
     }
 
     if (fullList) {
-      const keywords = await Keyword.find().sort({ created: -1 });
+      const keywords = await Keyword.aggregate([
+        {
+          $lookup: {
+            from: 'keywordHistoricalData',
+            localField: '_id',
+            foreignField: 'id',
+            as: 'historicalData'
+          }
+        },
+        {
+          $sort: { createdAt: -1 }
+        }
+      ]);
       return NextResponse.json(keywords);
     }
 
-    // Build match conditions
-    const matchConditions: any = {};
+    let _keywords: IPaginatedKeywords;
+    _keywords = await paginateEntitiesByFilter(
+      page as number,
+      size as number,
+      Keyword,
+      searchTerm,
+      { sortKey, sortDirection },
+      { from: dateRangeFrom, to: dateRangeTo }
+    );
 
-    if (searchTerm) {
-      matchConditions.term = { $regex: searchTerm, $options: 'i' };
-    }
-
-    if (dateRangeFrom || dateRangeTo) {
-      matchConditions.created = {};
-      if (dateRangeFrom) matchConditions.created.$gte = new Date(dateRangeFrom);
-      if (dateRangeTo) matchConditions.created.$lte = new Date(dateRangeTo);
-    }
-
-    // Aggregation pipeline
-    const pipeline = [
-      { $match: matchConditions },
-      {
-        $lookup: {
-          from: 'keywordHistoricalData',
-          localField: '_id',
-          foreignField: 'id',
-          as: 'historicalData',
-        },
-      },
-      { $sort: { [sortKey]: sortDirection } },
-      { $skip: (page - 1) * size },
-      { $limit: size },
-    ];
-
-    const keywords = await Keyword.aggregate(pipeline);
-
-    // Get total count for pagination
-    const total = await Keyword.countDocuments(matchConditions);
-
-    return NextResponse.json({
-      currentPage: page,
-      entitiesData: keywords,
-      totalCount: total,
-      totalPages: Math.ceil(total / size),
-    });
+    return NextResponse.json(_keywords);
   } catch (error) {
     console.error('Failed to fetch keywords:', error);
     return NextResponse.json(
@@ -108,8 +91,6 @@ export async function POST(request: Request) {
         size as number,
         Keyword
       );
-      console.log('_keywords', keywords)
-
       return NextResponse.json(keywords);
     }
   } catch (error) {

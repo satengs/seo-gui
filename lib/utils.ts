@@ -164,14 +164,13 @@ export function shortenLocation(location: string): string {
 }
 export function filterKeywordsByType(keywords: any[], type: DataType) {
   return keywords?.filter((item) => {
-    if (!item.historicalData || !Array.isArray(item.historicalData)) return false;
+    if (!item.historicalData || !Array.isArray(item.historicalData))
+      return false;
 
     const entries = item.historicalData;
     switch (type) {
       case 'ai_overview':
-        return entries.some(
-          (entry: any) => entry?.keywordData?.ai_overview
-        );
+        return entries.some((entry: any) => entry?.keywordData?.ai_overview);
 
       case 'related_questions':
         return entries.some(

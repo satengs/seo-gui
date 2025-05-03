@@ -1,16 +1,16 @@
 import mongoose from 'mongoose';
 import dbConnect from './index';
 
-
 const runMigration = async (filename: string, direction: 'up' | 'down') => {
-
   try {
-    await dbConnect()
+    await dbConnect();
 
     const migration = await import(`./migrations/${filename}`);
 
     if (typeof migration[direction] !== 'function') {
-      throw new Error(`❌ The migration '${filename}' does not have a '${direction}' function.`);
+      throw new Error(
+        `❌ The migration '${filename}' does not have a '${direction}' function.`
+      );
     }
 
     await migration[direction]();
@@ -26,7 +26,7 @@ const runMigration = async (filename: string, direction: 'up' | 'down') => {
 const [filename, direction] = process.argv.slice(2);
 
 if (!filename || !['up', 'down'].includes(direction)) {
-  console.error("❌ Usage: tsx migrate.ts <filename> <up|down>");
+  console.error('❌ Usage: tsx migrate.ts <filename> <up|down>');
   process.exit(1);
 }
 

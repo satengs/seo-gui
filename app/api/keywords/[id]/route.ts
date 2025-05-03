@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/schemas/Keyword.ts';
+import Keyword from '@/lib/db/models/schemas/Keyword';
 
 export async function PATCH(
   request: NextRequest,

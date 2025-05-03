@@ -9,10 +9,7 @@ const CHUNK_SIZE = 10;
 const PROCESSING_STATUS = new Map();
 
 const extractTotalResults = (searchResults: SearchKeywordResponse): number => {
-  if (searchResults.organic_results?.length) {
-    return searchResults.organic_results.length;
-  }
-  return 0;
+  return searchResults.organic_results?.length || 0;
 };
 
 async function processKeywordChunk(keywords: any[], startIndex: number) {
@@ -43,26 +40,30 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         continue;
       }
 
-      await KeywordHistoricalData.create({
-        id: keyword._id.toString(),
+      // Check if historical data for today already exists
+      const existingEntry = await KeywordHistoricalData.findOne({
+        id: keyword._id,
         date: todayKey,
-        organicResultsCount: searchResults.search_information?.total_results || 0,
-        kgmid: searchResults.knowledge_graph?.kgmid || '',
-        kgmTitle: searchResults.knowledge_graph?.title || '',
-        kgmWebsite: searchResults.knowledge_graph?.website || '',
-        volume: searchResults.search_information?.volume || null,
-        difficulty: searchResults.search_information?.difficulty || null,
-        backlinksNeeded: null,
-        timestamp: new Date().toISOString(),
-        keywordData: searchResults
       });
 
-      if (!keyword.historicalData || typeof keyword.historicalData !== 'object') {
-        await Keyword.findByIdAndUpdate(keyword._id, {
-          $set: { historicalData: {} }
+      if (!existingEntry) {
+        await KeywordHistoricalData.create({
+          id: keyword._id,
+          date: todayKey,
+          organicResultsCount:
+            searchResults.search_information?.total_results || 0,
+          kgmid: searchResults.knowledge_graph?.kgmid || '',
+          kgmTitle: searchResults.knowledge_graph?.title || '',
+          kgmWebsite: searchResults.knowledge_graph?.website || '',
+          volume: searchResults.search_information?.volume || null,
+          difficulty: searchResults.search_information?.difficulty || null,
+          backlinksNeeded: null,
+          timestamp: new Date().toISOString(),
+          keywordData: searchResults,
         });
       }
-      // Update keyword with latest results while preserving historical data
+
+      // Update latest values in Keyword document
       await Keyword.findByIdAndUpdate(
         keyword._id,
         {
@@ -78,10 +79,7 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         { new: true }
       );
 
-      results.push({
-        keyword: keyword.term,
-        success: true,
-      });
+      results.push({ keyword: keyword.term, success: true });
     } catch (error) {
       console.error(`Failed to check keyword ${keyword.term}:`, error);
       results.push({
@@ -121,6 +119,7 @@ export async function POST(request: Request) {
       keywords,
       startIndex
     );
+
     const nextIndex = startIndex + CHUNK_SIZE;
     const hasMore = nextIndex < keywords.length;
 

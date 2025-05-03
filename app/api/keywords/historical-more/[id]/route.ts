@@ -1,7 +1,7 @@
 import dbConnect from '@/lib/db';
 import { IOrganicResultsHistoricalData } from '@/types';
 import { NextResponse } from 'next/server';
-import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistoricalMore';
+import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistoricalData';
 
 export async function GET(
   req: Request,

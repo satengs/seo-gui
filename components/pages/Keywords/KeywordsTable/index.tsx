@@ -90,16 +90,14 @@ export default function KeywordsTable({
 
     return keywords.map((keyword) => ({
       ...keyword,
-      historicalData:
-        Array.isArray(keyword.historicalData)
-          ? keyword.historicalData
-          : Object.entries(keyword.historicalData || {}).map(([key, value]) => ({
+      historicalData: Array.isArray(keyword.historicalData)
+        ? keyword.historicalData
+        : Object.entries(keyword.historicalData || {}).map(([key, value]) => ({
             key,
             value,
           })),
     }));
   }, [keywords]);
-
 
   const getHistoricalDates = useCallback((keyword: IKeyword) => {
     const data = [];
@@ -111,14 +109,13 @@ export default function KeywordsTable({
         kgmWebsite: value.kgmWebsite,
         organicResultsCount: value.organicResultsCount,
         timestamp: value.timestamp,
-        kgmData: value.keywordData.keywordData,
+        kgmData: value.keywordData,
       });
     }
     return data.sort(
       (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
   }, []);
-
 
   const handleSort = useCallback(
     async (key: string) => {
@@ -362,7 +359,6 @@ export default function KeywordsTable({
                 {!fetchLoading ? (
                   filteredAndSortedData.map((keyword) => {
                     const dates = getHistoricalDates(keyword);
-
                     return (
                       <React.Fragment key={keyword._id}>
                         <TableRow className="hover:bg-muted/50 cursor-pointer">

@@ -10,7 +10,7 @@ export const DynamicData = new mongoose.Schema({
   },
 });
 
- export const DailyData = new mongoose.Schema(
+export const DailyData = new mongoose.Schema(
   {
     organicResultsCount: {
       type: Number,
@@ -41,4 +41,3 @@ export const DynamicData = new mongoose.Schema({
   },
   { _id: false }
 ); // Disable _id for subdocuments
-
