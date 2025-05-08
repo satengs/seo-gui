@@ -18,6 +18,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import { useCallback } from 'react';
+import { ILocation } from '@/types';
 
 export type Option = {
   label: string;
@@ -28,9 +30,11 @@ export type Option = {
 };
 
 type MultiSelectProps = {
-  options: Option[];
+  options: (Option & ILocation)[];
   selected: string[];
   onChange: (values: string[]) => void;
+  onValueChange: (values: string) => void;
+  onOptionSelect: (value: Option[]) => void;
   /** Placeholder for the main trigger button */
   placeholder?: string;
   /** Placeholder for the search input */
@@ -44,7 +48,7 @@ type MultiSelectProps = {
   /** Whether the component is disabled */
   disabled?: boolean;
   /** Function to render custom pill content */
-  renderPill?: (option: Option) => React.ReactNode;
+  renderPill?: (option: string) => React.ReactNode;
   /** Function to render custom option content */
   renderOption?: (option: Option) => React.ReactNode;
   /** Group options by the group property */
@@ -55,6 +59,8 @@ export function MultiSelect({
   options,
   selected,
   onChange,
+  onValueChange,
+  onOptionSelect,
   placeholder = 'Select options',
   searchPlaceholder = 'Search options...',
   emptyMessage = 'No options found.',
@@ -96,6 +102,7 @@ export function MultiSelect({
       if (disabled) return;
       const option = options.find((o) => o.value === value);
       if (!option || option.disabled) return;
+      onOptionSelect(option);
 
       const newSelected = selected.includes(value)
         ? selected.filter((item) => item !== value)
@@ -105,7 +112,7 @@ export function MultiSelect({
 
       onChange(newSelected);
     },
-    [disabled, isMaxSelected, onChange, options, selected]
+    [disabled, isMaxSelected, onChange, onOptionSelect, options, selected]
   );
 
   // Handle removal of a selected item
@@ -138,6 +145,16 @@ export function MultiSelect({
     );
   }, [options, search]);
 
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearch(value);
+      if (onValueChange) {
+        onValueChange(value);
+      }
+    },
+    [onValueChange]
+  );
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -154,43 +171,44 @@ export function MultiSelect({
           disabled={disabled}
         >
           <div className="flex flex-wrap gap-1">
-            {selectedOptions.length === 0 && (
+            {selected.length === 0 && (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
-            {selectedOptions.map((option) => (
+            {/*{selectedOptions.map((option) => (*/}
+            {/*  <Badge*/}
+            {/*    key={option.value}*/}
+            {/*    variant="secondary"*/}
+            {/*    className="flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-secondary-foreground"*/}
+            {/*  >*/}
+            {/*    {renderPill ? renderPill(option) : option.label}*/}
+            {/*    <span*/}
+            {/*      role="button"*/}
+            {/*      className="h-4 w-4 p-0 hover:bg-secondary-foreground/20 rounded-full cursor-pointer"*/}
+            {/*      onClick={(e) => handleRemove(e, option.value)}*/}
+            {/*      // disabled={disabled}*/}
+            {/*    >*/}
+            {/*      <X className="h-3 w-3" />*/}
+            {/*      <span className="sr-only">Remove {option.label}</span>*/}
+            {/*    </span>*/}
+            {/*  </Badge>*/}
+            {/*))}*/}
+            {selected.map((option) => (
               <Badge
-                key={option.value}
+                key={option}
                 variant="secondary"
                 className="flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-secondary-foreground"
               >
-                {renderPill ? renderPill(option) : option.label}
+                {renderPill ? renderPill(option) : option}
                 <span
                   role="button"
                   className="h-4 w-4 p-0 hover:bg-secondary-foreground/20 rounded-full cursor-pointer"
-                  onClick={(e) => handleRemove(e, option.value)}
+                  onClick={(e) => handleRemove(e, option)}
                   // disabled={disabled}
                 >
                   <X className="h-3 w-3" />
-                  <span className="sr-only">Remove {option.label}</span>
+                  <span className="sr-only">Remove {option}</span>
                 </span>
               </Badge>
-              // <Badge
-              //   key={option.value}
-              //   variant="secondary"
-              //   className="flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-secondary-foreground"
-              // >
-              //   {renderPill ? renderPill(option) : option.label}
-              //   <Button
-              //     variant="ghost"
-              //     size="sm"
-              //     className="h-4 w-4 p-0 hover:bg-secondary-foreground/20 rounded-full"
-              //     onClick={(e) => handleRemove(e, option.value)}
-              //     disabled={disabled}
-              //   >
-              //     <X className="h-3 w-3" />
-              //     <span className="sr-only">Remove {option.label}</span>
-              //   </Button>
-              // </Badge>
             ))}
           </div>
           <div className="flex items-center self-start ml-1">
@@ -199,7 +217,6 @@ export function MultiSelect({
                 role="button"
                 className="h-4 w-4 p-0 rounded-full mr-1 hover:bg-secondary/80 cursor-pointer"
                 onClick={handleClear}
-                disabled={disabled} // `span` doesn't accept `disabled`, so we check the condition in `onClick`
               >
                 <X className="h-3 w-3" />
                 <span className="sr-only">Clear all</span>
@@ -223,7 +240,8 @@ export function MultiSelect({
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
-            onValueChange={setSearch}
+            onValueChange={handleSearch}
+            value={search}
             className="h-9"
           />
           <CommandList>

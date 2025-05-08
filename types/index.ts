@@ -183,3 +183,22 @@ export interface ILoginFormValues {
 export interface IRegisterFormValues extends ILoginFormValues {
   fullName: string;
 }
+
+export interface INewLocationFormValues {
+  location: string;
+  longitude: number;
+  latitude: number;
+}
+
+export interface ILocation {
+  id: string;
+  canonical_name: string;
+  country_code: string;
+  google_id: number;
+  google_parent_id: number | null;
+  gps: number[];
+  keys: string[];
+  name: string;
+  reach: number;
+  target_type: string;
+}
