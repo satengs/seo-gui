@@ -192,6 +192,7 @@ export interface INewLocationFormValues {
 
 export interface ILocation {
   id: string;
+  _id: string;
   canonical_name: string;
   country_code: string;
   google_id: number;
@@ -201,4 +202,11 @@ export interface ILocation {
   name: string;
   reach: number;
   target_type: string;
+}
+
+export interface INewLocation {
+  _id: string;
+  location: string;
+  longitude: number;
+  latitude: number;
 }

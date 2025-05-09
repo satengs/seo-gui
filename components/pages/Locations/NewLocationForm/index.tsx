@@ -8,17 +8,23 @@ import { newLocationValidationSchema } from './newLocationValidationSchema';
 import { INewLocationFormValues } from '@/types';
 import CustomInput from '@/components/shared/CustomInput';
 import CustomButton from '@/components/shared/CustomButton';
-import RememberMeBox from '@/components/pages/Auth/SignIn/RememberMeBox';
 import LocationMultiSelect from '@/components/shared/LocationMultiSelect';
 
-const NewLocationForm = () => {
+interface INewLocationFormProps {
+  onNewLocation: (date: any) => void;
+}
+
+const NewLocationForm = ({ onNewLocation }: INewLocationFormProps) => {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [resetFields, setResetFields] = useState<boolean>(false);
   const {
     handleSubmit,
     getValues,
+    reset,
     setValue,
+    watch,
     control,
     formState: { errors },
   } = useForm({
@@ -30,14 +36,16 @@ const NewLocationForm = () => {
     resolver: yupResolver(newLocationValidationSchema),
   });
 
-  const formValues = getValues();
-
-  console.log('form values: ', formValues);
+  const formValues = watch();
 
   const onSubmit = async (formData: INewLocationFormValues) => {
-    console.log('form data: ', formData);
-    setIsLoading(true);
     try {
+      setIsLoading(true);
+      const response = await axiosClient.post('/api/locations', formData);
+      onNewLocation(response?.data || []);
+
+      reset();
+      setResetFields(true);
       toast({
         title: 'Success',
         description: 'New location was added successfully',
@@ -57,12 +65,23 @@ const NewLocationForm = () => {
   return (
     <div>
       <form
-        className={'flex flex-col gap-6'}
+        className={'flex gap-6'}
         onSubmit={handleSubmit(onSubmit)}
         data-testid={'login-form'}
       >
-        <LocationMultiSelect name={'location'} setValue={setValue} />
-        {}
+        <LocationMultiSelect
+          name={'location'}
+          setValue={setValue}
+          className={'h-10'}
+          // error={errors.location?.message}
+          resetSelected={resetFields}
+        />
+        {formValues?.longitude ? (
+          <CustomInput name={'longitude'} control={control} disabled={true} />
+        ) : null}
+        {formValues?.latitude ? (
+          <CustomInput name={'latitude'} control={control} disabled={true} />
+        ) : null}
         <CustomButton isLoading={isLoading} variant={'primary'} type={'submit'}>
           Add
         </CustomButton>

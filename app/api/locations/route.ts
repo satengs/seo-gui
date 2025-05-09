@@ -6,14 +6,15 @@ import { seedInitialKeywords } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities, paginateEntitiesByFilter } from '@/lib/db/helpers';
 import { IKeyword, IPaginatedKeywords } from '@/types';
 import { SIZE } from '@/consts';
+import User from '@/lib/db/models/User';
 
 export async function GET(req: Request) {
   try {
     await dbConnect();
     const { searchParams } = new URL(req.url);
     // const fullList = searchParams.get('fullList');
-    // const page = searchParams.get('page') || 1;
-    // const size = searchParams.get('size') || SIZE;
+    const page = searchParams.get('page') || 1;
+    const size = searchParams.get('size') || SIZE;
     // const searchTerm = searchParams.get('searchTerm') || '';
     // const sortKey = searchParams.get('sortKey') || '';
     // const sortDirection = searchParams.get('sortDirection') || 'asc';
@@ -31,8 +32,9 @@ export async function GET(req: Request) {
     //     { sortKey, sortDirection },
     //     { from: dateRangeFrom, to: dateRangeTo }
     // );
+    const locations = await paginateEntities(+page, +size, Location);
 
-    return NextResponse.json({ message: true });
+    return NextResponse.json(locations);
   } catch (error) {
     console.error('Failed to fetch locations:', error);
     return NextResponse.json(
@@ -47,6 +49,7 @@ export async function POST(request: Request) {
   try {
     await dbConnect();
     const data = await request.json();
+    console.log('data: ', data);
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || SIZE;
@@ -69,7 +72,16 @@ export async function POST(request: Request) {
     //         size as number,
     //         Keyword
     //     );
-    return NextResponse.json({ message: true });
+
+    const newLocation = new Location({
+      location: data.location,
+      longitude: data.longitude,
+      latitude: data.latitude,
+    });
+    await newLocation.save();
+
+    const locations = await paginateEntities(+page, +size, Location);
+    return NextResponse.json(locations);
     // }
   } catch (error) {
     console.error('Failed to create location:', error);
@@ -123,14 +135,14 @@ export async function DELETE(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || SIZE;
-    // const keyword = searchParams.get('keyword') || '';
-    // await Keyword.deleteOne({ _id: keyword });
-    // const keywords = await paginateEntities(
-    //     page as number,
-    //     size as number,
-    //     Keyword
-    // );
-    return NextResponse.json({ message: true });
+    const location = searchParams.get('location') || '';
+    await Location.deleteOne({ _id: location });
+    const locations = await paginateEntities(
+      page as number,
+      size as number,
+      Location
+    );
+    return NextResponse.json(locations);
   } catch (error) {
     console.error('Failed to remove location:', error);
 

@@ -74,7 +74,6 @@ export function MultiSelect({
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState('');
 
-  // Group options if needed
   const groupedOptions = React.useMemo(() => {
     if (!groupBy) return { undefined: options };
 
@@ -86,17 +85,14 @@ export function MultiSelect({
     }, {});
   }, [options, groupBy]);
 
-  // Get selected option objects
-  const selectedOptions = React.useMemo(() => {
-    return options.filter((option) => selected.includes(option.value));
-  }, [options, selected]);
+  // const selectedOptions = React.useMemo(() => {
+  //   return options.filter((option) => selected.includes(option.value));
+  // }, [options, selected]);
 
-  // Check if max selected is reached
   const isMaxSelected = React.useMemo(() => {
     return maxSelected !== undefined && selected.length >= maxSelected;
   }, [maxSelected, selected]);
 
-  // Handle selection of an option
   const handleSelect = React.useCallback(
     (value: string) => {
       if (disabled) return;
@@ -115,7 +111,6 @@ export function MultiSelect({
     [disabled, isMaxSelected, onChange, onOptionSelect, options, selected]
   );
 
-  // Handle removal of a selected item
   const handleRemove = React.useCallback(
     (e: React.MouseEvent, value: string) => {
       e.preventDefault();
@@ -126,7 +121,6 @@ export function MultiSelect({
     [disabled, onChange, selected]
   );
 
-  // Handle clearing all selected items
   const handleClear = React.useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -137,7 +131,6 @@ export function MultiSelect({
     [disabled, onChange]
   );
 
-  // Filter options based on search
   const filteredOptions = React.useMemo(() => {
     if (!search) return options;
     return options.filter((option) =>

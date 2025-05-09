@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { MultiSelect, Option } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import axiosClient from '@/lib/axiosClient';
@@ -7,10 +7,19 @@ import { ILocation } from '@/types';
 
 interface ILocationMultiSelect {
   name: string;
+  error: string;
+  className: string;
+  resetSelected: boolean;
   setValue: (name: string, value: number | string) => void;
 }
 
-const LocationMultiSelect = ({ name, setValue }: ILocationMultiSelect) => {
+const LocationMultiSelect = ({
+  name,
+  error,
+  resetSelected,
+  setValue,
+  className,
+}: ILocationMultiSelect) => {
   const { toast } = useToast();
   const [selected, setSelected] = useState<string[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<ILocation[]>([]);
@@ -71,6 +80,12 @@ const LocationMultiSelect = ({ name, setValue }: ILocationMultiSelect) => {
     [name, setValue]
   );
 
+  useEffect(() => {
+    if (resetSelected) {
+      setSelected([]);
+    }
+  }, [resetSelected]);
+
   const onOptionSelect = useCallback(
     (data: ILocation) => {
       let _selectedOptions = [...selectedOptions];
@@ -97,9 +112,10 @@ const LocationMultiSelect = ({ name, setValue }: ILocationMultiSelect) => {
   );
 
   return (
-    <>
+    <div className={'flex flex-col gap-2 align-center w-full'}>
       <MultiSelect
         options={locations}
+        className={className}
         onValueChange={onLocationSearchChange}
         onOptionSelect={onOptionSelect}
         selected={selected}
@@ -107,7 +123,10 @@ const LocationMultiSelect = ({ name, setValue }: ILocationMultiSelect) => {
         onSearchValueChange={onLocationSearchChange}
         placeholder="Select languages..."
       />
-    </>
+      <p className="text-sm font-medium text-red-800 min-h-[10px]">
+        {error || ''}
+      </p>
+    </div>
   );
 };
 
