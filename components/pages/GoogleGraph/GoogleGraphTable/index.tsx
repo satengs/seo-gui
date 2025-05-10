@@ -24,6 +24,7 @@ import JsonViewer from '@/components/pages/Keywords/DifferenceModal/JsonViewer';
 import Modal from '@/components/shared/Modal';
 import { generateCsvFile } from '@/utils';
 import axios from 'axios';
+import { csvParser } from '../../../../utils/index';
 
 interface GoogleGraphTableProps {
   data: any[];
@@ -171,25 +172,32 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
 
   const selectedRowsData = data.filter((row) => selectedRows.has(row._id));
 
-  const downloadAsCSV = useCallback((data: any[]) => {
-    generateCsvFile(data);
-  }, []);
-
-  // Helper to stringify the 'data' field for CSV export
-  const prepareForCsv = (arr: any[]) =>
-    arr.map((row) => ({
-      ...row,
-      data: typeof row.data === 'object' ? JSON.stringify(row.data) : row.data,
-    }));
-
-  // Helper to remove the 'historicalData' field from each row and from any objects in the data array
-  const removeHistoricalDataField = (arr: any[]) =>
-    arr.map(({ historicalData, data, ...rest }) => ({
-      ...rest,
-      data: Array.isArray(data)
-        ? data.map(({ historicalData, ...entity }) => entity)
-        : data,
-    }));
+  // Local CSV export function for selected fields
+  const exportToCsv = (rows: any[], filename = 'google-graph-data.csv') => {
+    if (!rows.length) return;
+    const fields = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
+    const csvRows = [fields.join(',')];
+    rows.forEach(row => {
+      const values = fields.map(field => {
+        let value = row[field];
+        if (field === 'createdAt') {
+          value = new Date(value).toLocaleString();
+        }
+        if (field === 'data') {
+          value = typeof value === 'object' ? JSON.stringify(value) : value;
+        }
+        // Escape quotes and commas
+        if (typeof value === 'string') {
+          value = '"' + value.replace(/"/g, '""') + '"';
+        }
+        return value;
+      });
+      csvRows.push(values.join(','));
+    });
+    const csvContent = csvRows.join('\n');
+    const result = csvParser(csvContent, filename);
+    return result;
+  };
 
   const handleExportSelected = async () => {
     const selected = data.filter((row) => selectedRows.has(row._id));
@@ -197,7 +205,6 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
       toast({ title: 'No rows selected', variant: 'destructive' });
       return;
     }
-
     // Fetch history for each selected keywordId
     const allHistory = (
       await Promise.all(
@@ -217,13 +224,11 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         })
       )
     ).flat();
-
     if (allHistory.length === 0) {
       toast({ title: 'No historical data found for selected', variant: 'destructive' });
       return;
     }
-
-    generateCsvFile(removeHistoricalDataField(prepareForCsv(allHistory)));
+    exportToCsv(allHistory);
   };
 
   const handleExportAllHistorical = async () => {
@@ -235,7 +240,7 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         toast({ title: 'No historical data found', variant: 'destructive' });
         return;
       }
-      generateCsvFile(removeHistoricalDataField(prepareForCsv(json.data)));
+      exportToCsv(json.data);
     } catch (e) {
       console.error('Error exporting historical data:', e);
       toast({ title: 'Error', description: 'Failed to export historical data', variant: 'destructive' });

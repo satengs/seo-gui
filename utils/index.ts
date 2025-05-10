@@ -55,23 +55,11 @@ export const getKeywordHistoricalCols = (data: IHistoricalMapEntry) => {
   return { historicalData: {} };
 };
 
-export function mapToObject(map: Map<any, any>) {
-  const obj: Record<string, any> = {};
-  for (const [key, value] of map.entries()) {
-    obj[key] = value;
-  }
-  return obj;
-}
-
 export const getCsvKeywordData = (keyword: any) => {
   const simpleTypeCos = getSimplyTypeRows(keyword);
   const keywordData = getKeywordDataCols(keyword?.keywordData?.data);
-  let historicalData = keyword.historicalData;
-  if (historicalData instanceof Map) {
-    historicalData = mapToObject(historicalData);
-  }
-  historicalData = JSON.stringify(historicalData);
-  return { ...simpleTypeCos, ...keywordData, historicalData };
+  const historicalData = getKeywordHistoricalCols(keyword.historicalData);
+  return { ...simpleTypeCos, ...keywordData, ...historicalData };
 };
 
 export const getConsistentData = (data: IKeyword[]) => {
