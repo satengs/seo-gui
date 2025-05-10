@@ -24,7 +24,7 @@ import JsonViewer from '@/components/pages/Keywords/DifferenceModal/JsonViewer';
 import Modal from '@/components/shared/Modal';
 import { generateCsvFile } from '@/utils';
 import axios from 'axios';
-import { csvParser } from '../../../../utils/index';
+import { csvParser } from '@/utils';
 
 interface GoogleGraphTableProps {
   data: any[];
@@ -35,6 +35,8 @@ interface GoogleGraphTableProps {
   pageSize: number;
   onPageChange: (data: { page?: number }) => void;
 }
+
+const CSV_FIELDS = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
 
 const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   data: initialData = [],
@@ -103,10 +105,10 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
     return filteredAndSortedData.slice(start, start + itemsPerPage);
   }, [filteredAndSortedData, currentPage, itemsPerPage]);
 
-  const handleItemPerPageChange = (value: number) => {
+  const handleItemPerPageChange = useCallback((value: number) => {
     setItemsPerPage(value);
     onPageChange({ page: 1 });
-  };
+  }, [onPageChange]);
 
   const handleSort = useCallback((key: string) => {
     setSortConfig(prev => {
@@ -148,9 +150,9 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
       setLoadingHistory(false);
     };
     fetchHistoricalData();
-  }, [showModal]);
+  }, [showModal, selectedRows, data]);
 
-  const handleSelectRow = (id: string, checked: boolean) => {
+  const handleSelectRow = useCallback((id: string, checked: boolean) => {
     setSelectedRows((prev) => {
       const newSet = new Set(prev);
       if (checked) {
@@ -160,92 +162,70 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
       }
       return newSet;
     });
-  };
+  }, []);
 
-  const handleSelectAll = (checked: boolean) => {
+  const handleSelectAll = useCallback((checked: boolean) => {
     if (checked) {
       setSelectedRows(new Set(paginatedRows.map((row) => row._id)));
     } else {
       setSelectedRows(new Set());
     }
-  };
+  }, [paginatedRows]);
 
   const selectedRowsData = data.filter((row) => selectedRows.has(row._id));
 
-  // Local CSV export function for selected fields
-  const exportToCsv = (rows: any[], filename = 'google-graph-data.csv') => {
+  // Local CSV export for selected fields
+  const exportToCsv = useCallback((rows: any[], filename = 'google-graph-data.csv') => {
     if (!rows.length) return;
-    const fields = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
-    const csvRows = [fields.join(',')];
-    rows.forEach(row => {
-      const values = fields.map(field => {
+    const csvRows = [CSV_FIELDS.join(',')];
+    for (const row of rows) {
+      const values = CSV_FIELDS.map(field => {
         let value = row[field];
-        if (field === 'createdAt') {
-          value = new Date(value).toLocaleString();
-        }
-        if (field === 'data') {
-          value = typeof value === 'object' ? JSON.stringify(value) : value;
-        }
-        // Escape quotes and commas
-        if (typeof value === 'string') {
-          value = '"' + value.replace(/"/g, '""') + '"';
-        }
+        if (field === 'createdAt') value = new Date(value).toLocaleString();
+        if (field === 'data') value = typeof value === 'object' ? JSON.stringify(value) : value;
+        if (typeof value === 'string') value = '"' + value.replace(/"/g, '""') + '"';
         return value;
       });
       csvRows.push(values.join(','));
-    });
-    const csvContent = csvRows.join('\n');
-    const result = csvParser(csvContent, filename);
-    return result;
-  };
+    }
+    csvParser(csvRows.join('\n'), filename);
+  }, []);
 
-  const handleExportSelected = async () => {
-    const selected = data.filter((row) => selectedRows.has(row._id));
-    if (selected.length === 0) {
+  const handleExportSelected = useCallback(async () => {
+    const selected = data.filter(row => selectedRows.has(row._id));
+    if (!selected.length) {
       toast({ title: 'No rows selected', variant: 'destructive' });
       return;
     }
-    // Fetch history for each selected keywordId
-    const allHistory = (
-      await Promise.all(
-        selected.map(async (row) => {
-          try {
-            const { data: json } = await axios.get('/api/google-graph', {
-              params: {
-                keywordId: row.keywordId,
-                limit: 100
-              }
-            });
-            return Array.isArray(json.data) ? json.data : [];
-          } catch (error) {
-            console.error('Error fetching data for keyword:', row.keywordId, error);
-            return [];
-          }
-        })
-      )
-    ).flat();
-    if (allHistory.length === 0) {
+    const allHistory = (await Promise.all(selected.map(async row => {
+      try {
+        const { data: json } = await axios.get('/api/google-graph', {
+          params: { keywordId: row.keywordId, limit: 100 }
+        });
+        return Array.isArray(json.data) ? json.data : [];
+      } catch {
+        return [];
+      }
+    }))).flat();
+    if (!allHistory.length) {
       toast({ title: 'No historical data found for selected', variant: 'destructive' });
       return;
     }
     exportToCsv(allHistory);
-  };
+  }, [data, selectedRows, exportToCsv, toast]);
 
-  const handleExportAllHistorical = async () => {
+  const handleExportAllHistorical = useCallback(async () => {
     try {
-      const { data: json } = await axios.get('/api/google-graph', {
-        params: { limit: 1000 }
-      });
-      if (!json.data || !Array.isArray(json.data) || json.data.length === 0) {
+      const { data: json } = await axios.get('/api/google-graph', { params: { limit: 1000 } });
+      if (!json.data?.length) {
         toast({ title: 'No historical data found', variant: 'destructive' });
         return;
       }
       exportToCsv(json.data);
     } catch (e) {
-      console.error('Error exporting historical data:', e);
       toast({ title: 'Error', description: 'Failed to export historical data', variant: 'destructive' });
     }
-  };
+  }, [exportToCsv, toast]);
 
   return (
     <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">

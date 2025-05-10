@@ -5,7 +5,6 @@ import axios from 'axios';
 import GoogleGraphTable from '@/components/pages/GoogleGraph/GoogleGraphTable';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 
@@ -36,7 +35,6 @@ export default function GoogleGraphPage() {
           setTotalPages(json.pagination.totalPages);
         }
       } catch (err) {
-        console.error('Error fetching data:', err);
         setError('Failed to fetch Google Graph data.');
       } finally {
         setFetchLoading(false);
@@ -63,13 +61,11 @@ export default function GoogleGraphPage() {
           });
           successCount++;
         } catch (err) {
-          console.error(`Failed to save for keyword ${keyword.term}:`, err);
           failCount++;
         }
       }
       toast({ title: 'Batch Save Complete', description: `Success: ${successCount}, Failed: ${failCount}` });
     } catch (error) {
-      console.error('Error in batch save:', error);
       toast({ title: 'Error', description: 'Failed to save for all keywords', variant: 'destructive' });
     } finally {
       setIsChecking(false);
