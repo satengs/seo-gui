@@ -23,6 +23,7 @@ import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 import JsonViewer from '@/components/pages/Keywords/DifferenceModal/JsonViewer';
 import Modal from '@/components/shared/Modal';
 import { generateCsvFile } from '@/utils';
+import axios from 'axios';
 
 interface GoogleGraphTableProps {
   data: any[];
@@ -30,6 +31,7 @@ interface GoogleGraphTableProps {
   totalCount: number;
   totalPages: number;
   fetchLoading: boolean;
+  pageSize: number;
   onPageChange: (data: { page?: number }) => void;
 }
 
@@ -54,9 +56,14 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   useEffect(() => {
     // Fetch latest keyword data from the new endpoint
     const fetchLatest = async () => {
-      const res = await fetch('/api/google-graph/latest');
-      const json = await res.json();
-      setData(json.data || []);
+      try {
+        const { data: json } = await axios.get('/api/google-graph', {
+          params: { latest: true }
+        });
+        setData(json.data || []);
+      } catch (error) {
+        console.error('Error fetching latest data:', error);
+      }
     };
     fetchLatest();
   }, []);
@@ -123,10 +130,15 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
           const row = data.find((r) => r._id === rowId);
           if (!row) return;
           try {
-            const res = await fetch(`/api/google-graph/history/${row.keywordId}`);
-            const json = await res.json();
+            const { data: json } = await axios.get('/api/google-graph', {
+              params: {
+                keywordId: row.keywordId,
+                limit: 100
+              }
+            });
             newHistoricalData[row._id] = json.data;
           } catch (e) {
+            console.error('Error fetching historical data:', e);
             newHistoricalData[row._id] = [];
           }
         })
@@ -135,7 +147,6 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
       setLoadingHistory(false);
     };
     fetchHistoricalData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showModal]);
 
   const handleSelectRow = (id: string, checked: boolean) => {
@@ -180,16 +191,53 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         : data,
     }));
 
+  const handleExportSelected = async () => {
+    const selected = data.filter((row) => selectedRows.has(row._id));
+    if (selected.length === 0) {
+      toast({ title: 'No rows selected', variant: 'destructive' });
+      return;
+    }
+
+    // Fetch history for each selected keywordId
+    const allHistory = (
+      await Promise.all(
+        selected.map(async (row) => {
+          try {
+            const { data: json } = await axios.get('/api/google-graph', {
+              params: {
+                keywordId: row.keywordId,
+                limit: 100
+              }
+            });
+            return Array.isArray(json.data) ? json.data : [];
+          } catch (error) {
+            console.error('Error fetching data for keyword:', row.keywordId, error);
+            return [];
+          }
+        })
+      )
+    ).flat();
+
+    if (allHistory.length === 0) {
+      toast({ title: 'No historical data found for selected', variant: 'destructive' });
+      return;
+    }
+
+    generateCsvFile(removeHistoricalDataField(prepareForCsv(allHistory)));
+  };
+
   const handleExportAllHistorical = async () => {
     try {
-      const res = await fetch('/api/google-graph/historical');
-      const json = await res.json();
+      const { data: json } = await axios.get('/api/google-graph', {
+        params: { limit: 1000 }
+      });
       if (!json.data || !Array.isArray(json.data) || json.data.length === 0) {
         toast({ title: 'No historical data found', variant: 'destructive' });
         return;
       }
       generateCsvFile(removeHistoricalDataField(prepareForCsv(json.data)));
     } catch (e) {
+      console.error('Error exporting historical data:', e);
       toast({ title: 'Error', description: 'Failed to export historical data', variant: 'destructive' });
     }
   };
@@ -208,28 +256,7 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={async () => {
-                    const selected = data.filter((row) => selectedRows.has(row._id));
-                    if (selected.length === 0) {
-                      toast({ title: 'No rows selected', variant: 'destructive' });
-                      return;
-                    }
-                    // Fetch history for each selected keywordId
-                    const allHistory = (
-                      await Promise.all(
-                        selected.map(async (row) => {
-                          const res = await fetch(`/api/google-graph/history/${row.keywordId}`);
-                          const json = await res.json();
-                          return Array.isArray(json.data) ? json.data : [];
-                        })
-                      )
-                    ).flat();
-                    if (allHistory.length === 0) {
-                      toast({ title: 'No historical data found for selected', variant: 'destructive' });
-                      return;
-                    }
-                    generateCsvFile(removeHistoricalDataField(prepareForCsv(allHistory)));
-                  }}
+                  onClick={handleExportSelected}
                 >
                   <Download className="h-4 w-4 mr-2" />
                   Export Selected ({selectedRows.size})

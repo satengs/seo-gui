@@ -1,162 +1,206 @@
 import { NextRequest, NextResponse } from 'next/server';
-import axios from 'axios';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
+import GoogleGraphData from '@/lib/db/models/GoogleGraphEntity';
+import { GoogleGraphApiService } from '@/lib/utils/googleGraphApi';
 
-interface DetailedDescription {
-  articleBody: string;
-  url: string;
-  license: string;
-}
-
-interface Image {
-  contentUrl: string;
-  url: string;
-  license: string;
-}
-
-interface KnowledgeGraphResult {
-  '@id': string;
-  '@type': string[];
-  name: string;
-  description: string;
-  detailedDescription: DetailedDescription;
-  image: Image;
-  url: string;
-  resultScore: number;
-}
-
-interface EntitySearchResult {
-  '@id': string;
-  result: KnowledgeGraphResult;
-  resultScore: number;
-}
-
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const keyword = searchParams.get('keyword');
+    const keywordId = searchParams.get('keywordId');
+    const query = searchParams.get('query');
     const page = parseInt(searchParams.get('page') || '1');
-    const size = parseInt(searchParams.get('size') || '30');
-    const searchTerm = searchParams.get('searchTerm') || '';
-    const sortKey = searchParams.get('sortKey') || '';
-    const sortDirection = searchParams.get('sortDirection') || 'asc';
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const sortBy = searchParams.get('sortBy') || 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') || 'desc';
+    const latest = searchParams.get('latest') === 'true';
 
-    if (!keyword) {
+    console.log('[Google Graph API] Request params:', {
+      keywordId,
+      query,
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      latest
+    });
+
+    await dbConnect();
+
+    // If latest flag is set, return latest data for each keyword
+    if (latest) {
+      try {
+        const latestData = await GoogleGraphData.aggregate([
+          { $sort: { createdAt: -1 } },
+          {
+            $group: {
+              _id: '$keywordId',
+              keywordId: { $first: '$keywordId' },
+              term: { $first: '$term' },
+              createdAt: { $first: '$createdAt' },
+            }
+          },
+          { $sort: { createdAt: -1 } }
+        ]);
+        console.log('[Google Graph API] Latest data count:', latestData.length);
+        return NextResponse.json({ data: latestData });
+      } catch (error) {
+        console.error('[Google Graph API] Error fetching latest data:', error);
+        throw error;
+      }
+    }
+
+    // Build query
+    const queryFilter: any = {};
+    if (keywordId) {
+      queryFilter.keywordId = keywordId;
+    }
+
+    // Build sort options
+    const sortOptions: any = {};
+    sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+    console.log('[Google Graph API] Query filter:', queryFilter);
+    console.log('[Google Graph API] Sort options:', sortOptions);
+
+    // Execute query with pagination
+    const docs = await GoogleGraphData.find(queryFilter)
+      .sort(sortOptions)
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    // Get total count for pagination
+    const totalCount = await GoogleGraphData.countDocuments(queryFilter);
+
+    console.log('[Google Graph API] Query results:', {
+      docsCount: docs.length,
+      totalCount,
+      page,
+      limit
+    });
+
+    return NextResponse.json({
+      data: docs,
+      pagination: {
+        total: totalCount,
+        page,
+        limit,
+        totalPages: Math.ceil(totalCount / limit)
+      }
+    });
+  } catch (error) {
+    console.error('[Google Graph API] Error:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to fetch Google Graph data.',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    await dbConnect();
+    const body = await request.json();
+    const { keywordId, term, data, timestamp } = body;
+
+    console.log('[Google Graph API] Save request:', {
+      keywordId,
+      term,
+      dataLength: data?.length,
+      timestamp
+    });
+
+    // Always ensure data is an array (never undefined)
+    const entitiesData = Array.isArray(data) ? data : [];
+
+    if (!keywordId || !term) {
+      console.error('[Google Graph API] Missing required fields:', { keywordId, term });
       return NextResponse.json(
-        { error: 'Keyword parameter is required' },
+        { error: 'Missing required fields: keywordId and term are required' },
         { status: 400 }
       );
     }
 
-    // Connect to the database
-    await dbConnect();
+    // Prevent duplicate for same keywordId and date (ignoring time, use UTC)
+    const date = new Date(timestamp || new Date());
+    const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
+    const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
 
-    // Find the keyword in the database
-    const keywordDoc = await Keyword.findOne({ term: keyword });
-    if (!keywordDoc) {
-      return NextResponse.json(
-        { error: 'Keyword not found' },
-        { status: 404 }
-      );
+    console.log('[Google Graph API] Checking for duplicates:', {
+      keywordId,
+      start,
+      end
+    });
+
+    const existing = await GoogleGraphData.findOne({
+      keywordId,
+      createdAt: { $gte: start, $lte: end }
+    });
+
+    if (existing) {
+      console.log('[Google Graph API] Found existing document:', existing._id);
+      return NextResponse.json({
+        message: 'A document for this keyword and date already exists.',
+        id: existing._id
+      }, { status: 200 });
     }
 
-    // Check if API key is available
-    if (!process.env.GOOGLE_API_KEY) {
-      console.error('Google API key is not configured');
-      return NextResponse.json(
-        { error: 'Google API key is not configured' },
-        { status: 500 }
-      );
-    }
-
-
-    // Make the API request to Google Knowledge Graph using the keyword directly
-    const response = await axios.get(
-      `https://kgsearch.googleapis.com/v1/entities:search`,
-      {
-        params: {
-          query: keyword,
-          key: process.env.GOOGLE_API_KEY,
-          limit: 10,
-          indent: true,
-        },
+    // If no data provided, fetch from Google Graph API
+    let finalData = entitiesData;
+    if (entitiesData.length === 0) {
+      try {
+        console.log('[Google Graph API] Fetching data from Google Graph API for term:', term);
+        const googleGraphService = GoogleGraphApiService.getInstance();
+        const result = await googleGraphService.processBatch([term]);
+        const response = result.get(term);
+        if (response && !response.error) {
+          finalData = response.entitiesData;
+          console.log('[Google Graph API] Successfully fetched data, entities count:', finalData.length);
+        } else {
+          console.error('[Google Graph API] Error in Google Graph API response:', response?.error);
+          throw new Error(response?.error || 'Failed to fetch data from Google Graph API');
+        }
+      } catch (error) {
+        console.error('[Google Graph API] Error fetching from Google Graph API:', error);
+        throw error;
       }
-    );
-
-
-    if (!response.data.itemListElement) {
-      console.error('Unexpected API response format:', response.data);
-      return NextResponse.json(
-        { error: 'Unexpected response format from Google Knowledge Graph API' },
-        { status: 500 }
-      );
     }
 
-    if (response.data.itemListElement.length === 0) {
-      return NextResponse.json(
-        { error: 'No Knowledge Graph results found for this keyword' },
-        { status: 404 }
-      );
-    }
+    const documentToSave = {
+      keywordId,
+      term,
+      createdAt: timestamp || new Date(),
+      data: finalData,
+    };
 
-    // Transform the response data
-    const entitiesData = response.data.itemListElement.map((item: EntitySearchResult) => ({
-      _id: item['@id'],
-      name: item.result.name,
-      type: item.result['@type'].join(', '),
-      description: item.result.description,
-      detailedDescription: item.result.detailedDescription?.articleBody || '',
-      image: item.result.image?.contentUrl || '',
-      website: item.result.url || '',
-      score: item.resultScore,
-    }));
+    console.log('[Google Graph API] Saving document:', {
+      keywordId,
+      term,
+      dataLength: finalData.length
+    });
 
-    // Apply search filter if searchTerm is provided
-    const filteredData = searchTerm
-      ? entitiesData.filter((item: any) =>
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.description.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      : entitiesData;
+    const savedData = await GoogleGraphData.create(documentToSave);
 
-    // Apply sorting if sortKey is provided
-    const sortedData = sortKey
-      ? [...filteredData].sort((a: any, b: any) => {
-          const aValue = a[sortKey];
-          const bValue = b[sortKey];
-          if (sortDirection === 'asc') {
-            return aValue > bValue ? 1 : -1;
-          } else {
-            return aValue < bValue ? 1 : -1;
-          }
-        })
-      : filteredData;
+    console.log('[Google Graph API] Document saved successfully:', savedData._id);
 
     return NextResponse.json({
-      entitiesData: sortedData,
-      totalCount: sortedData.length,
-      totalPages: 1,
-      currentPage: page,
+      message: 'Google Graph API response saved successfully.',
+      id: savedData._id,
+      savedData: {
+        keywordId: savedData.keywordId,
+        term: savedData.term,
+        dataLength: savedData.data?.length || 0,
+      },
     });
   } catch (error) {
-    console.error('Error in Google Graph API:', error);
-    if (axios.isAxiosError(error)) {
-      console.error('Axios error details:', {
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-        data: error.response?.data,
-      });
-      return NextResponse.json(
-        {
-          error: 'Failed to fetch Knowledge Graph data',
-          details: error.response?.data?.error?.message || error.message
-        },
-        { status: error.response?.status || 500 }
-      );
-    }
+    console.error('[Google Graph API] Error saving data:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch Knowledge Graph data' },
+      {
+        error: 'Failed to save Google Graph API response.',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }
