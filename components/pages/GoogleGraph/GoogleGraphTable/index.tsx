@@ -71,7 +71,6 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
     fetchLatest();
   }, []);
 
-  // Filtering and sorting logic
   const filteredAndSortedData = useMemo(() => {
     let filtered = data;
     if (searchTerm) {
