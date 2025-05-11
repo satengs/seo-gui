@@ -1,7 +1,7 @@
 import mongoose, { Mongoose } from 'mongoose';
 import { seedRoles } from '@/lib/db/seeds/roles';
 
-const MONGODB_URI = 'mongodb+srv://gevorgyansatenik83:HID92n88Y3IQUdYO@cluster0.e7mvn.mongodb.net/search-analytics'
+const MONGODB_URI = process.env.MONGODB_URI;
 if (!MONGODB_URI) {
   throw new Error(
     'Please define the MONGODB_URI environment variable. Example: mongodb+srv://username:password@cluster.mongodb.net/database'
