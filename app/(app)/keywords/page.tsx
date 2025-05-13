@@ -21,6 +21,7 @@ import { SIZE } from '@/consts';
 import { IKeyword, IKeywordPaginateParams, ISortConfig } from '@/types';
 import { DataType } from '@/consts/dataTypes';
 import DataTypeFilter from '@/components/pages/Keywords/DataTypeFilter';
+import KeywordGroupingActions from '@/components/pages/Keywords/KeywordGroupingActions';
 
 export default function KeywordsPage() {
   const [keywords, setKeywords] = useState<IKeyword[] | null>(null);
@@ -266,6 +267,7 @@ export default function KeywordsPage() {
                 defaultChecked={includeDefaultLocations}
               />
             </div>
+            <KeywordGroupingActions />
           </div>
           <div className="flex-0.5">
             <DeviceSelect onValue={onDeviceSelect} defaultValue="mobile" />
