@@ -476,7 +476,7 @@ export default function KeywordsTable({
                                     if (!feature) return field;
 
                                     const IconComponent = feature.icon;
-
+console.log('iconCOmp', IconComponent)
                                     return (
                                       <div
                                         key={field}
