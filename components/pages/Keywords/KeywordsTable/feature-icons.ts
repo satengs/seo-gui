@@ -35,7 +35,8 @@ import {
   Twitter,
   TriangleAlertIcon,
   MessageSquareWarning,
-  Globe
+  Globe,
+  Megaphone
 } from 'lucide-react';
 import { IFeaturedIcon } from '@/types';
 
@@ -334,6 +335,13 @@ const featureIcons: Record<string, IFeaturedIcon> = {
     bgClass: 'bg-red-100 dark:bg-red-900',
     textClass: 'text-red-800 dark:text-red-200',
     borderClass: 'border-red-200 dark:border-red-800',
+  },
+  local_ads: {
+    icon: Megaphone,
+    label: 'Local Ads',
+    bgClass: 'bg-amber-100 dark:bg-amber-900',
+    textClass: 'text-amber-800 dark:text-amber-200',
+    borderClass: 'border-amber-200 dark:border-amber-800',
   }
 };
 
