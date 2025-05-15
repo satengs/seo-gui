@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { ILocation, INewLocation } from '@/types';
+import { INewLocation } from '@/types';
 import {
   Table,
   TableBody,
@@ -9,8 +8,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { ArrowUpDown } from 'lucide-react';
-import { shortenLocation } from '@/lib/utils';
 import LocationItemActions from './LocationItemActions';
 
 interface ILocationsTableProps {

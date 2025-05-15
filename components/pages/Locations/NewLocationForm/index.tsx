@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useToast } from '@/hooks/use-toast';
@@ -16,18 +15,9 @@ interface INewLocationFormProps {
 
 const NewLocationForm = ({ onNewLocation }: INewLocationFormProps) => {
   const { toast } = useToast();
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [resetFields, setResetFields] = useState<boolean>(false);
-  const {
-    handleSubmit,
-    getValues,
-    reset,
-    setValue,
-    watch,
-    control,
-    formState: { errors },
-  } = useForm({
+  const { handleSubmit, reset, setValue, watch, control } = useForm({
     defaultValues: {
       location: '',
       longitude: 0,
@@ -73,7 +63,6 @@ const NewLocationForm = ({ onNewLocation }: INewLocationFormProps) => {
           name={'location'}
           setValue={setValue}
           className={'h-10'}
-          // error={errors.location?.message}
           resetSelected={resetFields}
         />
         {formValues?.longitude ? (

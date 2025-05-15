@@ -20,7 +20,7 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
   const [removeModalLoading, setRemoveModalLoading] = useState<boolean>(false);
-  const changeKeyword = async (location: INewLocation) => {
+  const changeLocation = async (location: INewLocation) => {
     try {
       const patchData = {
         // term: keyword.term,
@@ -43,7 +43,7 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
     }
   };
 
-  const deleteKeyword = useCallback(async (location: INewLocation) => {
+  const deleteLocation = useCallback(async (location: INewLocation) => {
     try {
       setRemoveModalLoading(true);
       const response = await axiosClient.delete(
@@ -68,7 +68,7 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
         break;
       }
       case 'change-location': {
-        await changeKeyword(location);
+        await changeLocation(location);
         break;
       }
       default:
@@ -81,9 +81,9 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
   const onOpenModal = useCallback(() => setShowModal(true), []);
 
   const onConfirmRemove = useCallback(async () => {
-    await deleteKeyword(location);
+    await deleteLocation(location);
     onCloseModal();
-  }, [deleteKeyword, location, onCloseModal]);
+  }, [deleteLocation, location, onCloseModal]);
 
   return (
     <>

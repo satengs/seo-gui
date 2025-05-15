@@ -1,6 +1,6 @@
 'use client';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { MultiSelect, Option } from '@/components/ui/multi-select';
+import React, { useCallback, useEffect, useState } from 'react';
+import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import axiosClient from '@/lib/axiosClient';
 import { ILocation } from '@/types';
@@ -121,7 +121,7 @@ const LocationMultiSelect = ({
         selected={selected}
         onChange={onChange}
         onSearchValueChange={onLocationSearchChange}
-        placeholder="Select languages..."
+        placeholder="Add locations..."
       />
       <p className="text-sm font-medium text-red-800 min-h-[10px]">
         {error || ''}
