@@ -31,6 +31,7 @@ export default function KeywordsPage() {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
   const [searchText, setSearchText] = useState<string>('');
+  const [isGroupSearch, setIsGroupSearch] = useState<boolean>(false);
   const [includeDefaultLocations, setIncludeDefaultLocations] =
     useState<boolean>(false);
   const [device, setDevice] = useState<string>('mobile');
@@ -211,10 +212,24 @@ export default function KeywordsPage() {
     setAsDefault((prevState) => !prevState);
   }, []);
 
+  const onGroupActionChange = useCallback((value: boolean) => {
+    setIsGroupSearch(value);
+  }, []);
+
   useEffect(() => {
     setCurrentPage(1);
-    fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
-  }, [fetchKeywords, searchTerm, sortBy, dateRange, itemsPerPage]);
+    if (isGroupSearch) {
+    } else {
+      fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
+    }
+  }, [
+    fetchKeywords,
+    searchTerm,
+    sortBy,
+    dateRange,
+    itemsPerPage,
+    isGroupSearch,
+  ]);
 
   return (
     <div className="p-1.5 space-y-6">

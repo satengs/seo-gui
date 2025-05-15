@@ -14,15 +14,23 @@ export async function GET(req: Request) {
     const size = searchParams.get('size') || SIZE;
     const groupBy = searchParams.get('groupBy') || '';
     console.log('groupBy: ', groupBy);
-    const result = await Keyword.aggregate([
-      {
-        $group: {
-          _id: '$term',
-          // count: { $sum: 1 },
-          docs: { $push: '$$ROOT' },
-        },
-      },
-    ]);
+    // const result = await Keyword.aggregate([
+    //   {
+    //     $group: {
+    //       // _id: '$term',
+    //       _id: `$${groupBy}`,
+    //       // count: { $sum: 1 },
+    //       docs: { $push: '$$ROOT' },
+    //     },
+    //   },
+    //   {
+    //     $skip: 0,
+    //   },
+    //   {
+    //     $limit: 10,
+    //   },
+    // ]);
+    const result = await Keyword.distinct(groupBy);
     return NextResponse.json(result);
   } catch (error) {
     console.error('Failed to fetch keywords groups:', error);

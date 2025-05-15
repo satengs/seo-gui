@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || 30;
     const keywordsArr = data?.term?.split('\n');
+    console.log('kk: ', keywordsArr);
     for (let i = 0; i < keywordsArr?.length; i++) {
       if (data?.includeDefaultLocation && !data?.location) {
         for (let l = 0; l < locationList.length; l++) {
