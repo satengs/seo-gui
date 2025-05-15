@@ -100,7 +100,6 @@ export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
-    console.log('action: ', action);
 
     if (action === 'start') {
       processAllKeywords().catch(console.error);

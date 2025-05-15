@@ -18,7 +18,7 @@ const CustomProgressBar: React.FC<ProgressBarProps> = ({
     <div className="w-full">
       <div className="flex justify-between mb-2">
         <span className="text-sm font-medium text-muted-foreground">
-          {completed.toLocaleString()} / {total.toLocaleString()}
+          {completed.toLocaleString()} / {total.toLocaleString()} searches
         </span>
       </div>
 
