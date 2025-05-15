@@ -47,7 +47,7 @@ const LocationMultiSelect = ({
     let _options = [];
     if (data?.length) {
       _options = data?.map((loc: any) => {
-        return { ...loc, label: loc.name, value: loc.name };
+        return { ...loc, label: loc.canonical_name, value: loc.canonical_name };
       });
     } else {
       _options = [];
@@ -74,8 +74,9 @@ const LocationMultiSelect = ({
 
   const onChange = useCallback(
     (values: string[]) => {
+      console.log('value: ', values);
       setSelected(values);
-      setValue(name, values.join(','));
+      setValue(name, values);
     },
     [name, setValue]
   );

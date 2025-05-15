@@ -20,28 +20,6 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
   const [removeModalLoading, setRemoveModalLoading] = useState<boolean>(false);
-  const changeLocation = async (location: INewLocation) => {
-    try {
-      const patchData = {
-        // term: keyword.term,
-        // keywordData: keyword,
-        // updatedData: {
-        //   isDefaultKeywords: false,
-        // },
-      };
-      const response = await axiosClient.patch(
-        `/api/locations?page=${currentPage || 1}`,
-        patchData
-      );
-      onLocationChange(response?.data || []);
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove keyword from defaults',
-        variant: 'destructive',
-      });
-    }
-  };
 
   const deleteLocation = useCallback(async (location: INewLocation) => {
     try {
@@ -101,17 +79,6 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
             </Button>
           </div>
         ) : null}
-        <div className={'relative group'}>
-          <Button
-            variant={'secondary'}
-            className={
-              'border-[0.5px] h-auto p-1 bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-800 border-[0.5px]'
-            }
-            onClick={() => handleActionBtn(location, 'change-location')}
-          >
-            <Edit className={`h-4 w-4 ttext-lime-800 dark:text-lime-200`} />
-          </Button>
-        </div>
       </section>
       {showModal ? (
         <RemoveAlerting

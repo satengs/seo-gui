@@ -78,7 +78,7 @@ export default function LocationsPage() {
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <PageInfoItem
-          title={'Total Locations'}
+          title={'Default Locations Count'}
           icon={<Pin className="text-primary" />}
           statistic={'15'}
         />
