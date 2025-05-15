@@ -54,7 +54,6 @@ export default function GoogleGraphPage() {
         params: { fullList: true },
       });
 
-      // Check if any keyword has data for today
       const today = new Date().toISOString().split('T')[0];
       let hasExistingData = false;
 
@@ -90,6 +89,7 @@ export default function GoogleGraphPage() {
         description: 'Failed to check existing data',
         variant: 'destructive',
       });
+    } finally {
       setIsChecking(false);
     }
   };
@@ -101,6 +101,7 @@ export default function GoogleGraphPage() {
       const { data: keywords } = await axios.get('/api/keywords', {
         params: { fullList: true },
       });
+
       let successCount = 0;
       let failCount = 0;
       for (const keyword of keywords) {
