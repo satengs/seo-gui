@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import GoogleGraphData from '@/lib/db/models/GoogleGraphEntity';
+import GoogleGraphData from '@/lib/db/models/GoogleGraph';
 import { GoogleGraphApiService } from '@/lib/utils/googleGraphApi';
 
 export async function GET(request: NextRequest) {
@@ -14,36 +14,39 @@ export async function GET(request: NextRequest) {
     const sortOrder = searchParams.get('sortOrder') || 'desc';
     const latest = searchParams.get('latest') === 'true';
 
-    console.log('[Google Graph API] Request params:', {
-      keywordId,
-      query,
-      page,
-      limit,
-      sortBy,
-      sortOrder,
-      latest
-    });
-
     await dbConnect();
 
-    // If latest flag is set, return latest data for each keyword
     if (latest) {
       try {
-        const latestData = await GoogleGraphData.aggregate([
-          { $sort: { createdAt: -1 } },
-          {
-            $group: {
-              _id: '$keywordId',
-              keywordId: { $first: '$keywordId' },
-              term: { $first: '$term' },
-              createdAt: { $first: '$createdAt' },
-            }
-          },
-          { $sort: { createdAt: -1 } }
-        ]);
-        return NextResponse.json({ data: latestData });
+        const latestData = await GoogleGraphData.find()
+          .sort({ createdAt: -1 })
+          .limit(1000)
+          .lean();
+
+        const groupedData = latestData.reduce((acc: any, curr: any) => {
+          if (
+            !acc[curr.keywordId] ||
+            new Date(curr.createdAt) > new Date(acc[curr.keywordId].createdAt)
+          ) {
+            acc[curr.keywordId] = curr;
+          }
+          return acc;
+        }, {});
+
+        const sortedData = Object.values(groupedData).sort(
+          (a: any, b: any) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        return NextResponse.json({ data: sortedData });
       } catch (error) {
-        throw error;
+        return NextResponse.json(
+          {
+            error: 'Failed to fetch latest data',
+            details: error instanceof Error ? error.message : 'Unknown error',
+          },
+          { status: 500 }
+        );
       }
     }
 
@@ -54,7 +57,6 @@ export async function GET(request: NextRequest) {
 
     const sortOptions: any = {};
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
-
 
     const docs = await GoogleGraphData.find(queryFilter)
       .sort(sortOptions)
@@ -69,14 +71,14 @@ export async function GET(request: NextRequest) {
         total: totalCount,
         page,
         limit,
-        totalPages: Math.ceil(totalCount / limit)
-      }
+        totalPages: Math.ceil(totalCount / limit),
+      },
     });
   } catch (error) {
     return NextResponse.json(
       {
-        error: 'Failed to fetch Google Graph data.',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: 'Internal Server Error',
+        details: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     );
@@ -99,19 +101,42 @@ export async function POST(request: NextRequest) {
     }
 
     const date = new Date(timestamp || new Date());
-    const start = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 0, 0, 0, 0));
-    const end = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), 23, 59, 59, 999));
+    const start = new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        0,
+        0,
+        0,
+        0
+      )
+    );
+    const end = new Date(
+      Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        23,
+        59,
+        59,
+        999
+      )
+    );
 
     const existing = await GoogleGraphData.findOne({
       keywordId,
-      createdAt: { $gte: start, $lte: end }
+      createdAt: { $gte: start, $lte: end },
     });
 
     if (existing) {
-      return NextResponse.json({
-        message: 'A document for this keyword and date already exists.',
-        id: existing._id
-      }, { status: 200 });
+      return NextResponse.json(
+        {
+          message: 'A document for this keyword and date already exists.',
+          id: existing._id,
+        },
+        { status: 200 }
+      );
     }
 
     let finalData = entitiesData;
@@ -123,7 +148,9 @@ export async function POST(request: NextRequest) {
         if (response && !response.error) {
           finalData = response.entitiesData;
         } else {
-          throw new Error(response?.error || 'Failed to fetch data from Google Graph API');
+          throw new Error(
+            response?.error || 'Failed to fetch data from Google Graph API'
+          );
         }
       } catch (error) {
         throw error;
@@ -137,7 +164,6 @@ export async function POST(request: NextRequest) {
       data: finalData,
     };
     const savedData = await GoogleGraphData.create(documentToSave);
-
 
     return NextResponse.json({
       message: 'Google Graph API response saved successfully.',

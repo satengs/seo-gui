@@ -59,9 +59,12 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         'keywordData.data': { ...searchResults },
       };
 
-      if (!keyword.historicalData || typeof keyword.historicalData !== 'object') {
+      if (
+        !keyword.historicalData ||
+        typeof keyword.historicalData !== 'object'
+      ) {
         await Keyword.findByIdAndUpdate(keyword._id, {
-          $set: { historicalData: {} }
+          $set: { historicalData: {} },
         });
       }
       // Update keyword with latest results while preserving historical data
