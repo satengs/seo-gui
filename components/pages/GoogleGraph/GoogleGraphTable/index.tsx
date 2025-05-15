@@ -11,6 +11,7 @@ import TableHeaderComponent from '@/components/pages/GoogleGraph/GoogleGraphTabl
 import SearchBar from '@/components/pages/GoogleGraph/GoogleGraphTable/SearchBar';
 import DataTable from '@/components/pages/GoogleGraph/GoogleGraphTable/DataTable';
 import DataViewModal from '@/components/pages/GoogleGraph/GoogleGraphTable/DataViewModal';
+import { AlertCircle } from 'lucide-react';
 
 interface GoogleGraphTableProps {
   data: any[];
@@ -22,6 +23,13 @@ interface GoogleGraphTableProps {
   onPageChange: (data: { page?: number }) => void;
 }
 
+interface Keyword {
+  _id: string;
+  term: string;
+  location: string;
+  device: string;
+}
+
 const CSV_FIELDS = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
 
 const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
@@ -30,12 +38,11 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   onPageChange,
 }) => {
   const [data, setData] = useState<any[]>(initialData);
+  const [keywords, setKeywords] = useState<any[]>([]);
   const [rowData, setRowData] = useState<Record<string, any[]>>({});
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
-  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>(
-    {}
-  );
+  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [searchInput, setSearchInput] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -48,23 +55,50 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Combined data fetching effect
   useEffect(() => {
-    const fetchLatest = async () => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (!isMounted) return;
+      
       setLoading(true);
       setError(null);
       try {
+        // First try to fetch graph data
         const response = await axios.get('/api/google-graph', {
           params: { latest: true },
         });
 
-        if (response.data && Array.isArray(response.data.data)) {
+        if (!isMounted) return;
+
+        if (response.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
           setData(response.data.data);
-        } else {
-          setData([]);
-          console.warn('Received invalid data format:', response.data);
+          setLoading(false);
+          return;
         }
+
+        // If no graph data, fetch keywords
+        const { data: keywordsData } = await axios.get('/api/keywords', {
+          params: { fullList: true },
+        });
+
+        if (!isMounted) return;
+        
+        const transformedKeywords = keywordsData.map((keyword: Keyword) => ({
+          _id: keyword._id,
+          keywordId: keyword._id,
+          term: keyword.term,
+          createdAt: new Date(),
+          data: [],
+          location: keyword.location,
+          device: keyword.device,
+          status: 'No Graph Data'
+        }));
+        setData(transformedKeywords);
       } catch (error: any) {
-        console.error('Error fetching latest data:', error);
+        if (!isMounted) return;
+
         const errorMessage =
           error.response?.data?.error ||
           error.message ||
@@ -72,19 +106,24 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         setError(errorMessage);
         setData([]);
 
-        // Show toast notification for error
         toast({
           title: 'Error',
           description: errorMessage,
           variant: 'destructive',
         });
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    fetchLatest();
-  }, [toast]);
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array since we only want to fetch once on mount
 
   // Fetch row data
   useEffect(() => {
@@ -306,14 +345,25 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
             onSearch={handleSearch}
           />
 
-          <DataTable
-            data={paginatedRows}
-            selectedRows={selectedRows}
-            rowData={rowData}
-            onSort={handleSort}
-            onSelectRow={handleSelectRow}
-            onSelectAll={handleSelectAll}
-          />
+          {loading ? (
+            <div className="flex justify-center items-center p-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center p-8 text-red-500">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              <span>{error}</span>
+            </div>
+          ) : (
+            <DataTable
+              data={paginatedRows}
+              selectedRows={selectedRows}
+              rowData={rowData}
+              onSort={handleSort}
+              onSelectRow={handleSelectRow}
+              onSelectAll={handleSelectAll}
+            />
+          )}
 
           <Pagination
             totalCount={filteredAndSortedData.length}
