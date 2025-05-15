@@ -199,6 +199,10 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
         return entries.some(
           (entry: any) => entry?.keywordData?.knowledge_graph
         );
+      case 'discussions_and_forums':
+        return entries.some(
+          (entry: any) => entry?.keywordData?.discussions_and_forums
+        );
 
       default:
         return false;

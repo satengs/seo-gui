@@ -91,7 +91,19 @@ const columnsMap: Record<DataType, { key: string; label: string }[]> = {
     { key: 'date_founded', label: 'Date Founded' },
     { key: 'president', label: 'President' },
   ],
+  discussions_and_forums: [
+    { key: 'term', label: 'Keyword' },
+    { key: 'device', label: 'Device' },
+    { key: 'location', label: 'Location' },
+    { key: 'date', label: 'Date' },
+    { key: 'source', label: 'Source' },
+    { key: 'title', label: 'Title' },
+    { key: 'link', label: 'Link' },
+    { key: 'forum_date', label: 'Forum date' },
+    { key: 'forum_answers', label: 'Forum Answers' },
+    ]
 };
+
 
 // Flatten data for each data type
 function flattenRows(data: any[], type: DataType) {
@@ -202,6 +214,39 @@ function flattenRows(data: any[], type: DataType) {
           }];
         });
       });
+    case 'discussions_and_forums':
+      return data.flatMap((row: any) => {
+        if (!row || !row.historicalData) return [];
+
+        const dates = Object.keys(row.historicalData);
+        return dates.flatMap(date => {
+          const entry = row.historicalData[date];
+          const g = entry?.keywordData?.discussions_and_forums;
+
+          if (!g) return [];
+
+          return g.map((ans, i) => {
+            const snippet = ans.snippet?.trim().replace(/\s+/g, " ") || "";
+            const answerLink = ans.link || "";
+            const extensions = (ans.extensions || []).join(", ");
+
+            return {
+              term: row.term || "-",
+              device: row.device || "-",
+              location: row.location || "-",
+              date,
+              source: ans.source || '-',
+              title: ans.title || '-',
+              link: answerLink || '-',
+              forum_date: ans.date || '-',
+              forum_answers: `snippet: ${snippet} \n 
+link: ${answerLink} \n extensions: ${extensions} \n`
+            };
+          });
+        });
+      });
+
+
     default:
       return [];
   }

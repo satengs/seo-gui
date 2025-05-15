@@ -4,6 +4,7 @@ import {
   Video,
   HelpCircle,
   MessageSquare,
+  StickyNote
 } from 'lucide-react';
 
 export const dataTypes = [
@@ -31,6 +32,11 @@ export const dataTypes = [
     value: 'reddit',
     label: 'Reddit',
     icon: MessageSquare,
+  },
+  {
+    value: 'discussions_and_forums',
+    label: 'Discussions and forums',
+    icon: StickyNote,
   },
 ] as const;
 

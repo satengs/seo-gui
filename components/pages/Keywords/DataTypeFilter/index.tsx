@@ -22,9 +22,14 @@ export default function DataTypeFilter({
 
   const handleValueChange = (newValue: string) => {
     if (dataTypes.some((dt) => dt.value === newValue)) {
-      setOpenPanel(newValue as DataType);
-      onValueChange(newValue as DataType);
+      setLoading(true);
+      setTimeout(() => {
+        setOpenPanel(newValue as DataType);
+        setLoading(false);
+      }, 0);
     }
+
+    onValueChange(newValue as DataType);
   };
 
   return (
@@ -52,7 +57,13 @@ export default function DataTypeFilter({
         })}
       </ToggleGroup>
 
-      {openPanel !== null && openPanel !== 'All' && (
+      {loading && (
+        <div className="mt-4 flex items-center justify-center text-sm text-muted-foreground">
+          <Spinner className="mr-2 h-4 w-4 animate-spin" /> Loading...
+        </div>
+      )}
+
+      {!loading && openPanel !== null && openPanel !== 'All' && (
         <DataTypeFilterPanel
           isOpen={true}
           onClose={() => setOpenPanel(null)}
