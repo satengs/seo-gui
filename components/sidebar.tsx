@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { BarChart3, KeyRound, Menu, MapPin } from 'lucide-react';
+import { BarChart3, KeyRound, Menu, Network } from 'lucide-react';
 // import Image from 'next/image';
 
 const menuItems = [
@@ -27,6 +28,11 @@ const menuItems = [
     title: 'Keywords',
     icon: KeyRound,
     href: '/keywords',
+  },
+  {
+    title: 'Google Graph',
+    icon: Network,
+    href: '/google-graph',
   },
   {
     title: 'Locations',
