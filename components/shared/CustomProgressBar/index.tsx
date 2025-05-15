@@ -1,28 +1,31 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 
-interface ProgressBarProps {
+interface IProgressBarProps {
   total: number;
   remaining: number;
+  containerClassName: string;
 }
 
-const CustomProgressBar: React.FC<ProgressBarProps> = ({
+const CustomProgressBar = ({
   total,
   remaining,
-}) => {
+  containerClassName = '',
+}: IProgressBarProps) => {
   const completed = total - remaining;
   const completedPercentage = (completed / total) * 100;
   const remainingPercentage = (remaining / total) * 100;
-
   return (
-    <div className="w-full">
+    <div className="tracking-wide">
       <div className="flex justify-between mb-2">
         <span className="text-sm font-medium text-muted-foreground">
           {completed.toLocaleString()} / {total.toLocaleString()} searches
         </span>
       </div>
 
-      <div className="h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner">
+      <div
+        className={`h-3 bg-gray-200 rounded-full overflow-hidden shadow-inner  ${containerClassName}`}
+      >
         <div className="flex h-full">
           <motion.div
             initial={{ width: 0 }}
@@ -41,5 +44,4 @@ const CustomProgressBar: React.FC<ProgressBarProps> = ({
     </div>
   );
 };
-
 export default CustomProgressBar;

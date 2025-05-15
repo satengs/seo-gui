@@ -22,16 +22,9 @@ const AccountInfoItem: React.FC<IAccountInfoItem> = ({ account }) => {
         <CustomProgressBar
           total={account?.searches_per_month}
           remaining={account?.plan_searches_left}
+          containerClassName={'w-44'}
         />
-        {/*<p className="text-sm font-medium text-muted-foreground">*/}
-        {/*  {account?.plan_searches_left} / {account?.searches_per_month} searches*/}
-        {/*</p>*/}
-
-        {/*<Button variant={'ghost'} className={'px-0'} onClick={handleLogOut}>*/}
-        {/*  <LogOut width={20} height={20} />*/}
-        {/*</Button>*/}
-
-        <div className="h-10 w-20 rounded-full bg-primary/10 flex items-center justify-center">
+        <div className="h-10 max-w-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
           <span>{account?.account_email?.charAt(0).toUpperCase()}</span>
         </div>
       </div>

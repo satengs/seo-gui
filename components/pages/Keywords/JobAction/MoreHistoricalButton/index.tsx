@@ -3,14 +3,14 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
-export const STATUS_CHECK_INTERVAL = 45000;
+export const STATUS_CHECK_INTERVAL = 30000;
 
 const MoreHistoricalButton: React.FC = () => {
   const { toast } = useToast();
   const [isHistoricalFetching, setIsHistoricalFetching] = useState(false);
   const [processedPercent, setProcessedPercent] = useState<number>(0);
   const [totalProcessed, setTotalProcessed] = useState<number>(0);
-  const [currentChunk, setCurrentChunk] = useState<number>(0);
+  const [, setCurrentChunk] = useState<number>(0);
 
   const updateToast = useCallback(
     (processedCount: number, processedTotal: number) => {
@@ -126,4 +126,4 @@ const MoreHistoricalButton: React.FC = () => {
   );
 };
 
-export default MoreHistoricalButton;
+export default React.memo(MoreHistoricalButton);
