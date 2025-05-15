@@ -13,7 +13,7 @@ import { IKeyword } from '@/types';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
 import { generateCsvFile } from '@/utils';
-import RemoveAlerting from './RemoveAlerting/index';
+import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 
 interface IActionsComponent {
   keyword: any;
