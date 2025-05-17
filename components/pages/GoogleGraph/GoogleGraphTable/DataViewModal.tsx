@@ -27,13 +27,10 @@ const DataViewModal: React.FC<DataViewModalProps> = ({
             _id: row._id,
             keywordId: row.keywordId,
             term: row.term,
-            historicalData: historicalData[row._id]?.reduce(
-              (acc, item) => {
-                acc[new Date(item.createdAt).toLocaleDateString()] = item.data;
-                return acc;
-              },
-              {}
-            ),
+            historicalData: historicalData[row._id]?.reduce((acc, item) => {
+              acc[new Date(item.createdAt).toLocaleDateString()] = item.data;
+              return acc;
+            }, {}),
             createdAt: new Date(row.createdAt).toLocaleString(),
           };
 
@@ -61,4 +58,4 @@ const DataViewModal: React.FC<DataViewModalProps> = ({
   );
 };
 
-export default DataViewModal; 
+export default DataViewModal;
