@@ -13,7 +13,7 @@ interface TransformedEntity {
   detailedDescription?: {
     articleBody?: string;
     url?: string;
-    hello?: string
+    hello?: string;
   };
   image?: string;
   website?: string;
@@ -43,11 +43,13 @@ export class GoogleGraphApiService {
     const transformed = {
       _id: entity['@id'] || '',
       name: entity.name || '',
-      type: Array.isArray(entity['@type']) ? entity['@type'].join(', ') : entity['@type'] || '',
+      type: Array.isArray(entity['@type'])
+        ? entity['@type'].join(', ')
+        : entity['@type'] || '',
       description: entity.description || '',
       detailedDescription: {
         articleBody: entity.detailedDescription?.articleBody || '',
-        url: entity.detailedDescription?.url || ''
+        url: entity.detailedDescription?.url || '',
       },
       image: entity.image?.contentUrl || '',
       website: entity.url || '',
@@ -71,22 +73,19 @@ export class GoogleGraphApiService {
 
       const response = await axios.get(url, {
         params,
-        timeout: 10000
+        timeout: 10000,
       });
 
       if (!response.data) {
         throw new Error('No data in response');
       }
 
-
       const entitiesData = (response.data.itemListElement || [])
         .map((item: any) => item.result)
         .filter(Boolean)
         .map(this.transformEntity.bind(this));
 
-
       return { entitiesData };
-
     } catch (error) {
       if (axios.isAxiosError(error)) {
         console.error('[Google Graph API Service] Axios error details:', {
@@ -102,18 +101,20 @@ export class GoogleGraphApiService {
 
       return {
         entitiesData: [],
-        error: error instanceof Error ? error.message : 'Unknown error'
+        error: error instanceof Error ? error.message : 'Unknown error',
       };
     }
   }
 
-  public async processBatch(queries: string[]): Promise<Map<string, GoogleGraphResponse>> {
+  public async processBatch(
+    queries: string[]
+  ): Promise<Map<string, GoogleGraphResponse>> {
     const results = new Map<string, GoogleGraphResponse>();
     const batches = this.chunkArray(queries, this.batchSize);
 
     for (const batch of batches) {
       try {
-        const batchPromises = batch.map(query => this.makeApiRequest(query));
+        const batchPromises = batch.map((query) => this.makeApiRequest(query));
         const batchResults = await Promise.all(batchPromises);
 
         batch.forEach((query, index) => {
@@ -121,7 +122,7 @@ export class GoogleGraphApiService {
         });
 
         if (batches.length > 1) {
-          await new Promise(resolve => setTimeout(resolve, this.retryDelay));
+          await new Promise((resolve) => setTimeout(resolve, this.retryDelay));
         }
       } catch (error) {
         console.error(

@@ -48,33 +48,39 @@ const DataTable: React.FC<DataTableProps> = ({
               />
             </TableHead>
             <TableHead className="w-[300px]">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => onSort('term')}
                 disabled={loading}
               >
                 Keyword
-                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.key === 'term' ? 'text-primary' : ''}`} />
+                <ArrowUpDown
+                  className={`ml-2 h-4 w-4 ${sortConfig.key === 'term' ? 'text-primary' : ''}`}
+                />
               </Button>
             </TableHead>
             <TableHead>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => onSort('createdAt')}
                 disabled={loading}
               >
                 Updated At
-                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.key === 'createdAt' ? 'text-primary' : ''}`} />
+                <ArrowUpDown
+                  className={`ml-2 h-4 w-4 ${sortConfig.key === 'createdAt' ? 'text-primary' : ''}`}
+                />
               </Button>
             </TableHead>
             <TableHead>
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 onClick={() => onSort('itemsCount')}
                 disabled={loading}
               >
                 Items Count
-                <ArrowUpDown className={`ml-2 h-4 w-4 ${sortConfig.key === 'itemsCount' ? 'text-primary' : ''}`} />
+                <ArrowUpDown
+                  className={`ml-2 h-4 w-4 ${sortConfig.key === 'itemsCount' ? 'text-primary' : ''}`}
+                />
               </Button>
             </TableHead>
           </TableRow>
@@ -93,24 +99,26 @@ const DataTable: React.FC<DataTableProps> = ({
                   <TableCell>
                     <Checkbox
                       checked={selectedRows.has(row._id)}
-                      onCheckedChange={(checked) => onSelectRow(row._id, checked as boolean)}
+                      onCheckedChange={(checked) =>
+                        onSelectRow(row._id, checked as boolean)
+                      }
                       disabled={loading}
                     />
                   </TableCell>
                   <TableCell className="font-medium">{row.term}</TableCell>
-                  <TableCell>
+                  <TableCell className="text-center">
                     {new Date(row.createdAt).toLocaleDateString()}
                   </TableCell>
-                  <TableCell>{rowData[row._id]?.length || 0}</TableCell>
+                  <TableCell className="text-center">
+                    {rowData[row._id]?.length || 0}
+                  </TableCell>
                 </TableRow>
               ))
             )
           ) : (
             <TableRow>
               <TableCell colSpan={4}>
-                <p className="py-3 font-medium">
-                  Loading data . . .
-                </p>
+                <p className="py-3 font-medium">Loading data . . .</p>
               </TableCell>
             </TableRow>
           )}

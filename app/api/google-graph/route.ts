@@ -26,17 +26,17 @@ export async function GET(request: NextRequest) {
     } else {
       const latestEntries = await GoogleGraphData.aggregate([
         {
-          $sort: { createdAt: -1 }
+          $sort: { createdAt: -1 },
         },
         {
           $group: {
             _id: '$keywordId',
-            latestId: { $first: '$_id' }
-          }
-        }
+            latestId: { $first: '$_id' },
+          },
+        },
       ]).exec();
 
-      const latestIds = latestEntries.map(entry => entry.latestId);
+      const latestIds = latestEntries.map((entry) => entry.latestId);
       query._id = { $in: latestIds };
     }
 
@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     if (startDate && endDate) {
       query.createdAt = {
         $gte: new Date(startDate),
-        $lte: new Date(endDate)
+        $lte: new Date(endDate),
       };
     }
 
@@ -77,8 +77,8 @@ export async function GET(request: NextRequest) {
         total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
     return NextResponse.json(
@@ -164,14 +164,11 @@ export async function POST(request: NextRequest) {
           $set: {
             data: finalData,
             term: term,
-            createdAt: timestamp || new Date()
-          }
+            createdAt: timestamp || new Date(),
+          },
         },
         { new: true, runValidators: true }
       );
-
-      // Verify the data after update
-      const verifiedData = await GoogleGraphData.findById(existing._id);
     } else if (!existing) {
       const documentToSave = {
         keywordId,
@@ -193,13 +190,15 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      message: update ? 'Google Graph API response updated successfully.' : 'Google Graph API response saved successfully.',
+      message: update
+        ? 'Google Graph API response updated successfully.'
+        : 'Google Graph API response saved successfully.',
       id: savedData._id,
       savedData: {
         keywordId: savedData.keywordId,
         term: savedData.term,
         dataLength: savedData.data?.length || 0,
-        sampleData: savedData.data?.[0] || null
+        sampleData: savedData.data?.[0] || null,
       },
     });
   } catch (error) {

@@ -32,7 +32,6 @@ interface GoogleGraphTableProps {
   onSearch: () => void;
 }
 
-
 const CSV_FIELDS = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
 
 const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
@@ -47,14 +46,16 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   sortConfig,
   searchTerm,
   onSearchChange,
-  onSearch
+  onSearch,
 }) => {
   const [data, setData] = useState<any[]>(initialData);
   const [keywords, setKeywords] = useState<any[]>([]);
   const [rowData, setRowData] = useState<Record<string, any[]>>({});
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
-  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
+  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>(
+    {}
+  );
   const [loadingHistory, setLoadingHistory] = useState(false);
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
@@ -177,31 +178,34 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
       toast({
         title: 'No rows selected',
         description: 'Please select at least one row to export',
-        variant: 'destructive'
+        variant: 'destructive',
       });
       return;
     }
 
     try {
-      const selectedData = data.filter(row => selectedRows.has(row._id));
+      const selectedData = data.filter((row) => selectedRows.has(row._id));
       if (selectedData.length === 0) {
         toast({
           title: 'Export failed',
           description: 'No data found for selected rows',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         return;
       }
-      exportToCsv(selectedData, `google-graph-selected-${new Date().toISOString()}.csv`);
+      exportToCsv(
+        selectedData,
+        `google-graph-selected-${new Date().toISOString()}.csv`
+      );
       toast({
         title: 'Export successful',
-        description: `Exported ${selectedData.length} rows to CSV`
+        description: `Exported ${selectedData.length} rows to CSV`,
       });
     } catch (error) {
       toast({
         title: 'Export failed',
         description: 'Failed to export selected data',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   }, [data, selectedRows, exportToCsv, toast]);
@@ -209,24 +213,27 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   const handleExportAllHistorical = useCallback(async () => {
     try {
       const { data: json } = await axios.get('/api/google-graph', {
-        params: { limit: 1000 }
+        params: { limit: 1000 },
       });
 
       if (!json.data?.length) {
         toast({
           title: 'No data available',
           description: 'There is no data to export',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         return;
       }
 
-      exportToCsv(json.data, `google-graph-all-${new Date().toISOString()}.csv`);
+      exportToCsv(
+        json.data,
+        `google-graph-all-${new Date().toISOString()}.csv`
+      );
     } catch (error) {
       toast({
         title: 'Export failed',
         description: 'Failed to export all data',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   }, [exportToCsv, toast]);

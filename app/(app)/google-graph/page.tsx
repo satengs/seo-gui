@@ -31,11 +31,12 @@ export default function GoogleGraphPage() {
     direction: 'asc' | 'desc';
   }>({
     key: 'createdAt',
-    direction: 'desc'
+    direction: 'desc',
   });
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeSearchTerm, setActiveSearchTerm] = useState<string>('');
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
 
   const fetchKeywords = useCallback(async () => {
     try {
@@ -56,7 +57,7 @@ export default function GoogleGraphPage() {
         console.error('Axios error details:', {
           status: error.response?.status,
           data: error.response?.data,
-          message: error.message
+          message: error.message,
         });
       }
       toast({
@@ -71,42 +72,45 @@ export default function GoogleGraphPage() {
     fetchKeywords();
   }, [fetchKeywords]);
 
-  const fetchData = useCallback(async (page: number = 1, size: number = pageSize) => {
-    setFetchLoading(true);
-    setError(null);
-    try {
-      const params: any = {
-        page,
-        limit: size,
-        sortBy: sortConfig.key,
-        sortDirection: sortConfig.direction,
-      };
+  const fetchData = useCallback(
+    async (page: number = 1, size: number = pageSize) => {
+      setFetchLoading(true);
+      setError(null);
+      try {
+        const params: any = {
+          page,
+          limit: size,
+          sortBy: sortConfig.key,
+          sortDirection: sortConfig.direction,
+        };
 
-      if (activeSearchTerm) {
-        params.searchTerm = activeSearchTerm;
-      }
+        if (activeSearchTerm) {
+          params.searchTerm = activeSearchTerm;
+        }
 
-      const { data: json } = await axios.get('/api/google-graph', { params });
+        const { data: json } = await axios.get('/api/google-graph', { params });
 
-      if (json.error) {
-        setError(json.error);
+        if (json.error) {
+          setError(json.error);
+          setData([]);
+          setTotalPages(0);
+          setTotalCount(0);
+        } else {
+          setData(json.data || []);
+          setTotalPages(json.pagination?.totalPages || 0);
+          setTotalCount(json.pagination?.total || 0);
+        }
+      } catch (err) {
+        setError('Failed to fetch Google Graph data.');
         setData([]);
         setTotalPages(0);
         setTotalCount(0);
-      } else {
-        setData(json.data || []);
-        setTotalPages(json.pagination?.totalPages || 0);
-        setTotalCount(json.pagination?.total || 0);
+      } finally {
+        setFetchLoading(false);
       }
-    } catch (err) {
-      setError('Failed to fetch Google Graph data.');
-      setData([]);
-      setTotalPages(0);
-      setTotalCount(0);
-    } finally {
-      setFetchLoading(false);
-    }
-  }, [pageSize, sortConfig, activeSearchTerm]);
+    },
+    [pageSize, sortConfig, activeSearchTerm]
+  );
 
   const handleSearch = useCallback(() => {
     setCurrentPage(1);
@@ -173,14 +177,18 @@ export default function GoogleGraphPage() {
         }
 
         try {
-          const result = await axios.post('/api/google-graph', {
-            keywordId: keyword._id,
-            term: keyword.term,
-            timestamp: new Date(),
-            update: true
-          }, {
-            signal: controller.signal
-          });
+          const result = await axios.post(
+            '/api/google-graph',
+            {
+              keywordId: keyword._id,
+              term: keyword.term,
+              timestamp: new Date(),
+              update: true,
+            },
+            {
+              signal: controller.signal,
+            }
+          );
           results.push(result.data);
         } catch (error) {
           if (axios.isCancel(error)) {
@@ -188,14 +196,19 @@ export default function GoogleGraphPage() {
           }
           results.push({
             keyword: keyword.term,
-            error: error instanceof Error ? error.message : 'Failed to process keyword'
+            error:
+              error instanceof Error
+                ? error.message
+                : 'Failed to process keyword',
           });
         }
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
       const processedKeywords = startIndex + chunk.length;
-      const progressPercentage = Math.round((processedKeywords / keywords.length) * 100);
+      const progressPercentage = Math.round(
+        (processedKeywords / keywords.length) * 100
+      );
       setProgress(progressPercentage);
 
       if (processedKeywords < keywords.length && !isCancelled) {
@@ -254,16 +267,32 @@ export default function GoogleGraphPage() {
   const checkExistingData = async () => {
     try {
       const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+      const startOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        0,
+        0,
+        0,
+        0
+      );
+      const endOfDay = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate(),
+        23,
+        59,
+        59,
+        999
+      );
 
       const response = await axiosClient.get('/api/google-graph', {
         params: {
           page: 1,
           limit: 1,
           startDate: startOfDay.toISOString(),
-          endDate: endOfDay.toISOString()
-        }
+          endDate: endOfDay.toISOString(),
+        },
       });
 
       const hasData = response.data.data && response.data.data.length > 0;
@@ -274,18 +303,23 @@ export default function GoogleGraphPage() {
     }
   };
 
-  const handleSort = useCallback((key: string) => {
-    let direction = 'asc';
-    setSortConfig((prev) => {
-      direction = prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc';
-      return {
-        key,
-        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
-      };
-    });
-    setFetchLoading(true);
-    fetchData(currentPage, pageSize);
-  }, [currentPage, pageSize, fetchData]);
+  const handleSort = useCallback(
+    (key: string) => {
+      let direction = 'asc';
+      setSortConfig((prev) => {
+        direction =
+          prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc';
+        return {
+          key,
+          direction:
+            prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      });
+      setFetchLoading(true);
+      fetchData(currentPage, pageSize);
+    },
+    [currentPage, pageSize, fetchData]
+  );
 
   return (
     <div className="container mx-auto px-4 py-8">
