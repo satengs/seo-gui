@@ -36,7 +36,7 @@ import { generateCsvFile } from '@/utils';
 import axiosClient from '@/lib/axiosClient';
 import featureIcons from '@/components/pages/Keywords/KeywordsTable/feature-icons';
 import { IKeyword, IKeywordPaginateParams } from '@/types';
-import RemoveAlerting from './ActionsComponent/RemoveAlerting/index';
+import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 import { DeviceType } from '@/components/ui/device-type';
 
 interface KeywordsTableProps {

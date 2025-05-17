@@ -31,6 +31,7 @@ export const getSimplyTypeRows = (keyword: IKeyword) => {
 };
 
 export const getKeywordDataCols = (keyword: IKeyword) => {
+  if (!keyword || typeof keyword !== 'object') return {};
   let data = {};
   const keys = Object.keys(keyword);
   keys.map((k) => {
