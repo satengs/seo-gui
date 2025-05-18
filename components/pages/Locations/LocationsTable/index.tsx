@@ -1,5 +1,4 @@
-import React, { useMemo } from 'react';
-import { INewLocation } from '@/types';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Table,
   TableBody,
@@ -9,12 +8,16 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import LocationItemActions from './LocationItemActions';
+import { Button } from '@/components/ui/button';
+import { ArrowUpDown } from 'lucide-react';
+import { ILocation } from '@/types';
 
 interface ILocationsTableProps {
-  locations: INewLocation[];
+  locations: ILocation[];
   fetchLoading: boolean;
   currentPage: number;
   onLocationChange: (date: any) => void;
+  onLocationFilterChange: (date: any) => void;
 }
 
 const LocationsTable = ({
@@ -22,12 +25,22 @@ const LocationsTable = ({
   fetchLoading,
   currentPage,
   onLocationChange,
+  onLocationFilterChange,
 }: ILocationsTableProps) => {
+  const [_, setSortConfig] = useState({
+    key: '',
+    direction: 'asc',
+  });
+
   const locationTableCols = useMemo(
     () => [
       {
         id: 'location',
         label: 'Location',
+      },
+      {
+        id: 'countryCode',
+        label: 'Country Code',
       },
       {
         id: 'longitude',
@@ -44,13 +57,44 @@ const LocationsTable = ({
     ],
     []
   );
+
+  const handleSort = useCallback(
+    async (key: string) => {
+      let direction = 'asc';
+      setSortConfig((prev) => {
+        direction =
+          prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc';
+        return {
+          key,
+          direction:
+            prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      });
+      onLocationFilterChange({
+        sortBy: { key, direction },
+      });
+    },
+    [onLocationFilterChange]
+  );
+
   return (
     <div className="relative overflow-x-auto rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
             {locationTableCols.map((col) => (
-              <TableHead key={col.id}>{col.label}</TableHead>
+              <React.Fragment key={col.id}>
+                {col.id === 'actions' ? (
+                  <TableHead key={col.id}>{col.label}</TableHead>
+                ) : (
+                  <TableHead key={col.id}>
+                    <Button variant="ghost" onClick={() => handleSort(col.id)}>
+                      {col.label}
+                      <ArrowUpDown className="ml-2 h-4 w-4" />
+                    </Button>
+                  </TableHead>
+                )}
+              </React.Fragment>
             ))}
           </TableRow>
         </TableHeader>
@@ -63,7 +107,9 @@ const LocationsTable = ({
                     <React.Fragment key={`${col.id}-${item._id}`}>
                       {col.id !== 'actions' ? (
                         <TableCell className="justify-items-center text-xs font-medium py-4">
-                          <span title={item.location}>{item[col.id]}</span>
+                          <span title={item.location}>
+                            {item?.[`${col.id}`] || ''}
+                          </span>
                         </TableCell>
                       ) : (
                         <TableCell>
@@ -94,36 +140,6 @@ const LocationsTable = ({
           )}
         </TableBody>
       </Table>
-      {/*<table className="w-full text-sm text-left">*/}
-      {/*  <thead className="text-xs uppercase bg-muted">*/}
-      {/*    <tr>*/}
-      {/*      <th className="px-6 py-3">Location</th>*/}
-      {/*      <th className="px-6 py-3">Longitude</th>*/}
-      {/*      <th className="px-6 py-3">Latitude</th>*/}
-      {/*      <th className="px-6 py-3">Actions</th>*/}
-      {/*    </tr>*/}
-      {/*  </thead>*/}
-      {/*  <tbody>*/}
-      {/*    {locations.map((item) => (*/}
-      {/*      <tr key={item._id} className="border-b">*/}
-      {/*        <td className="px-6 py-4">{item.location}</td>*/}
-      {/*        <td className="px-6 py-4">{item.longitude}</td>*/}
-      {/*        <td className="px-6 py-4">{item.latitude}</td>*/}
-      {/*        {*/}
-      {/*          */}
-      {/*        }*/}
-      {/*        <td className="px-6 py-4">2.8</td>*/}
-      {/*        <td className="px-6 py-4">*/}
-      {/*          <Button variant="ghost" size="sm">*/}
-      {/*            View Details*/}
-      {/*          </Button>*/}
-      {/*        </td>*/}
-      {/*      </tr>*/}
-      {/*    ))}*/}
-
-      {/*    /!* Add more rows as needed *!/*/}
-      {/*  </tbody>*/}
-      {/*</table>*/}
     </div>
   );
 };

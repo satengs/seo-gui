@@ -18,8 +18,11 @@ const locationSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-    //Country code
-    //shorten name  (like tags)
+    countryCode: {
+      type: String,
+      required: true,
+      trim: true,
+    },
   },
   { timestamps: true }
 );

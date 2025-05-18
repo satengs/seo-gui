@@ -19,39 +19,30 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { useCallback } from 'react';
-import { ILocation } from '@/types';
+import { IOptionLocation } from '@/types';
 
 export type Option = {
   label: string;
   value: string;
   disabled?: boolean;
-  /** Optional group for categorizing options */
   group?: string;
+  id?: string;
 };
 
 type MultiSelectProps = {
-  options: (Option & ILocation)[];
+  options: IOptionLocation[];
   selected: string[];
   onChange: (values: string[]) => void;
   onValueChange: (values: string) => void;
-  onOptionSelect: (value: Option[]) => void;
-  /** Placeholder for the main trigger button */
+  onOptionSelect: (value: IOptionLocation) => void;
   placeholder?: string;
-  /** Placeholder for the search input */
   searchPlaceholder?: string;
-  /** Message to show when no options match the search */
   emptyMessage?: string;
-  /** Custom class for the trigger button */
   className?: string;
-  /** Max number of items that can be selected */
   maxSelected?: number;
-  /** Whether the component is disabled */
   disabled?: boolean;
-  /** Function to render custom pill content */
   renderPill?: (option: string) => React.ReactNode;
-  /** Function to render custom option content */
   renderOption?: (option: Option) => React.ReactNode;
-  /** Group options by the group property */
   groupBy?: boolean;
 };
 
@@ -96,7 +87,9 @@ export function MultiSelect({
   const handleSelect = React.useCallback(
     (value: string) => {
       if (disabled) return;
-      const option = options.find((o) => o.value === value);
+      const option: IOptionLocation | undefined = options.find(
+        (o) => o.value === value
+      );
       if (!option || option.disabled) return;
       onOptionSelect(option);
 
@@ -105,7 +98,6 @@ export function MultiSelect({
         : isMaxSelected
           ? selected
           : [...selected, value];
-
       onChange(newSelected);
     },
     [disabled, isMaxSelected, onChange, onOptionSelect, options, selected]
@@ -117,8 +109,13 @@ export function MultiSelect({
       e.stopPropagation();
       if (disabled) return;
       onChange(selected.filter((item) => item !== value));
+      const option: IOptionLocation | undefined = options.find(
+        (o) => o.value === value
+      );
+      if (!option || option.disabled) return;
+      onOptionSelect(option);
     },
-    [disabled, onChange, selected]
+    [disabled, onChange, onOptionSelect, options, selected]
   );
 
   const handleClear = React.useCallback(
@@ -156,7 +153,7 @@ export function MultiSelect({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            'min-h-10 h-auto w-full justify-between p-2',
+            'h-16 overflow-y-auto w-full justify-between p-2',
             disabled && 'opacity-50 cursor-not-allowed',
             className
           )}
@@ -167,24 +164,6 @@ export function MultiSelect({
             {selected.length === 0 && (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
-            {/*{selectedOptions.map((option) => (*/}
-            {/*  <Badge*/}
-            {/*    key={option.value}*/}
-            {/*    variant="secondary"*/}
-            {/*    className="flex items-center gap-1 px-2 py-1 rounded-md bg-secondary text-secondary-foreground"*/}
-            {/*  >*/}
-            {/*    {renderPill ? renderPill(option) : option.label}*/}
-            {/*    <span*/}
-            {/*      role="button"*/}
-            {/*      className="h-4 w-4 p-0 hover:bg-secondary-foreground/20 rounded-full cursor-pointer"*/}
-            {/*      onClick={(e) => handleRemove(e, option.value)}*/}
-            {/*      // disabled={disabled}*/}
-            {/*    >*/}
-            {/*      <X className="h-3 w-3" />*/}
-            {/*      <span className="sr-only">Remove {option.label}</span>*/}
-            {/*    </span>*/}
-            {/*  </Badge>*/}
-            {/*))}*/}
             {selected.map((option) => (
               <Badge
                 key={option}
@@ -214,16 +193,6 @@ export function MultiSelect({
                 <X className="h-3 w-3" />
                 <span className="sr-only">Clear all</span>
               </span>
-              // <Button
-              //   variant="ghost"
-              //   size="sm"
-              //   onClick={handleClear}
-              //   className="h-4 w-4 p-0 rounded-full mr-1 hover:bg-secondary/80"
-              //   disabled={disabled}
-              // >
-              //   <X className="h-3 w-3" />
-              //   <span className="sr-only">Clear all</span>
-              // </Button>
             )}
             <ChevronsUpDown className="h-4 w-4 opacity-50 shrink-0" />
           </div>
@@ -247,7 +216,7 @@ export function MultiSelect({
                   <CommandGroup heading={group} className="capitalize">
                     {items
                       .filter(
-                        (option) =>
+                        (option: IOptionLocation) =>
                           option.label
                             .toLowerCase()
                             .includes(search.toLowerCase()) ||
@@ -255,7 +224,7 @@ export function MultiSelect({
                             .toLowerCase()
                             .includes(search.toLowerCase())
                       )
-                      .map((option) => (
+                      .map((option: IOptionLocation) => (
                         <CommandItem
                           key={option.value}
                           value={option.value}
@@ -284,10 +253,10 @@ export function MultiSelect({
                 )}
                 {!groupBy &&
                   items
-                    .filter((option) =>
+                    .filter((option: IOptionLocation) =>
                       option.label.toLowerCase().includes(search.toLowerCase())
                     )
-                    .map((option) => (
+                    .map((option: IOptionLocation) => (
                       <CommandItem
                         key={option.value}
                         value={option.value}

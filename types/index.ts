@@ -59,6 +59,13 @@ export interface IPaginatedKeywords {
   currentPage: number;
 }
 
+export interface IPaginateData<T> {
+  entitiesData: T[];
+  totalCount: any;
+  totalPages: number;
+  currentPage: number;
+}
+
 export interface IHistoricalKeyword {
   date: Date;
   kgmid: string;
@@ -185,12 +192,13 @@ export interface IRegisterFormValues extends ILoginFormValues {
 }
 
 export interface INewLocationFormValues {
-  location: string;
+  location: string[];
   longitude: number;
   latitude: number;
+  countryCode?: string;
 }
 
-export interface ILocation {
+export interface ISerpLocation {
   id: string;
   _id: string;
   canonical_name: string;
@@ -204,9 +212,18 @@ export interface ILocation {
   target_type: string;
 }
 
-export interface INewLocation {
+export interface ILocation {
   _id: string;
   location: string;
   longitude: number;
   latitude: number;
+  gos?: [];
+  [key: string]: any;
+  label: string;
+  value: string;
+}
+
+export interface IOptionLocation extends ILocation {
+  value: string;
+  label: string;
 }

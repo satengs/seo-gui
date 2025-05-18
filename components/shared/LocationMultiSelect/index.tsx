@@ -3,26 +3,28 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { MultiSelect } from '@/components/ui/multi-select';
 import { useToast } from '@/hooks/use-toast';
 import axiosClient from '@/lib/axiosClient';
-import { ILocation } from '@/types';
+import { ILocation, IOptionLocation } from '@/types';
 
 interface ILocationMultiSelect {
   name: string;
-  error: string;
+  error: string | undefined;
   className: string;
   resetSelected: boolean;
-  setValue: (name: string, value: number | string) => void;
+  setValue: any;
+  onOptionsChange: (data: any) => void;
 }
 
 const LocationMultiSelect = ({
   name,
   error,
   resetSelected,
+  onOptionsChange,
   setValue,
   className,
 }: ILocationMultiSelect) => {
   const { toast } = useToast();
   const [selected, setSelected] = useState<string[]>([]);
-  const [selectedOptions, setSelectedOptions] = useState<ILocation[]>([]);
+  const [selectedOptions, setSelectedOptions] = useState<IOptionLocation[]>([]);
   const [locations, setLocations] = useState<ILocation[]>([]);
 
   const fetchLocations = useCallback(
@@ -74,7 +76,6 @@ const LocationMultiSelect = ({
 
   const onChange = useCallback(
     (values: string[]) => {
-      console.log('value: ', values);
       setSelected(values);
       setValue(name, values);
     },
@@ -88,7 +89,7 @@ const LocationMultiSelect = ({
   }, [resetSelected]);
 
   const onOptionSelect = useCallback(
-    (data: ILocation) => {
+    (data: IOptionLocation) => {
       let _selectedOptions = [...selectedOptions];
       const existItemIndex = _selectedOptions.findIndex(
         (item) => item.id === data.id
@@ -107,9 +108,10 @@ const LocationMultiSelect = ({
         setValue('longitude', longitude);
         setValue('latitude', latitude);
       }
+      onOptionsChange(_selectedOptions);
       setSelectedOptions(_selectedOptions);
     },
-    [selectedOptions, setValue]
+    [onOptionsChange, selectedOptions, setValue]
   );
 
   return (
@@ -121,7 +123,6 @@ const LocationMultiSelect = ({
         onOptionSelect={onOptionSelect}
         selected={selected}
         onChange={onChange}
-        onSearchValueChange={onLocationSearchChange}
         placeholder="Add locations..."
       />
       <p className="text-sm font-medium text-red-800 min-h-[10px]">

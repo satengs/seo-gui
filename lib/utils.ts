@@ -137,7 +137,7 @@ export const capitalizeFirstLetter = (value: string) => {
 export function shortenLocation(location: string): string {
   if (!location) return '';
 
-  const parts = location.split(', ').map((part) => part.toLowerCase().trim());
+  const parts = location.split(',').map((part) => part.toLowerCase().trim());
 
   let name1 =
     CITY_ABBREVIATIONS[parts[0]] ||

@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Trash, Edit } from 'lucide-react';
+import { Trash } from 'lucide-react';
 import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 import axiosClient from '@/lib/axiosClient';
-import { INewLocation } from '@/types';
+import { ILocation } from '@/types';
 
 interface IActionsComponent {
   location: any;
@@ -21,38 +21,26 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
   const [showModal, setShowModal] = useState<boolean>(false);
   const [removeModalLoading, setRemoveModalLoading] = useState<boolean>(false);
 
-  const deleteLocation = useCallback(async (location: INewLocation) => {
-    try {
-      setRemoveModalLoading(true);
-      const response = await axiosClient.delete(
-        `/api/locations?location=${location._id}&page=${currentPage || 1}`
-      );
-      onLocationChange(response?.data || []);
-    } catch (err) {
-      toast({
-        title: 'Error',
-        description: 'Failed to remove keyword',
-        variant: 'destructive',
-      });
-    } finally {
-      setRemoveModalLoading(false);
-    }
-  }, []);
-
-  const handleActionBtn = async (location: INewLocation, action: string) => {
-    switch (action) {
-      case 'remove-location': {
-        onOpenModal();
-        break;
+  const deleteLocation = useCallback(
+    async (location: ILocation) => {
+      try {
+        setRemoveModalLoading(true);
+        const response = await axiosClient.delete(
+          `/api/locations?location=${location._id}&page=${currentPage || 1}`
+        );
+        onLocationChange(response?.data || []);
+      } catch (err) {
+        toast({
+          title: 'Error',
+          description: 'Failed to remove keyword',
+          variant: 'destructive',
+        });
+      } finally {
+        setRemoveModalLoading(false);
       }
-      case 'change-location': {
-        await changeLocation(location);
-        break;
-      }
-      default:
-        break;
-    }
-  };
+    },
+    [currentPage, onLocationChange, toast]
+  );
 
   const onCloseModal = useCallback(() => setShowModal(false), []);
 
@@ -73,7 +61,7 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
               className={
                 'border-[0.5px] h-auto p-1 bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 border-red-200 dark:border-red-800'
               }
-              onClick={() => handleActionBtn(location, 'remove-location')}
+              onClick={onOpenModal}
             >
               <Trash className={`h-4 w-4 text-red-800 dark:text-red-200`} />
             </Button>

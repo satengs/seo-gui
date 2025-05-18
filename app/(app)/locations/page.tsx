@@ -1,5 +1,5 @@
 'use client';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,10 +8,10 @@ import PageInfoItem from '@/components/shared/PageInfoItem';
 import NewLocationForm from '@/components/pages/Locations/NewLocationForm';
 import LocationsTable from '@/components/pages/Locations/LocationsTable';
 import axiosClient from '@/lib/axiosClient';
-import { mockKeywords } from '@/lib/mockData';
-import { ILocation } from '@/types';
+import { IKeywordPaginateParams, ILocation, ISortConfig } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
+import { SIZE } from '@/consts';
 
 export default function LocationsPage() {
   const { toast } = useToast();
@@ -20,20 +20,32 @@ export default function LocationsPage() {
   const [fetchLoading, setFetchLoading] = useState<boolean>(false);
   const [locations, setLocations] = useState<ILocation[]>([]);
   const [totalCount, setTotalCount] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(1);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
+  const [searchKey, setSearchKey] = useState<string>('');
+  const [sortBy, setSortBy] = useState<ISortConfig>();
   const onAddBtnClick = useCallback(() => {
     setShowNewLocationForm((prevState) => !prevState);
   }, []);
 
   const fetchLocations = useCallback(
-    async (page: number, size: number) => {
+    async (
+      page: number,
+      size: number = SIZE,
+      searchKey: string = '',
+      sortBy: ISortConfig = { sortKey: '', sortDirection: 'asc' }
+    ) => {
       try {
         setFetchLoading(true);
         let queryString = `/api/locations?page=${page}`;
         if (size) {
           queryString += `&size=${size}`;
+        }
+        if (searchKey) {
+          queryString += `&searchKey=${searchKey}`;
+        }
+        if (sortBy?.sortKey?.length) {
+          queryString += `&sortKey=${sortBy?.sortKey}&sortDirection=${sortBy?.sortDirection}`;
         }
         const response = await axiosClient.get(queryString);
         if (response?.data?.entitiesData) {
@@ -42,11 +54,9 @@ export default function LocationsPage() {
         }
       } catch (err) {
         setLocations([]);
-        setTotalCount(mockKeywords.length);
-        setTotalPages(1);
         toast({
-          title: 'Using Demo Data',
-          description: 'Connected to demo environment',
+          title: 'Failed to fetch locations',
+          description: '',
         });
       } finally {
         setFetchLoading(false);
@@ -58,13 +68,44 @@ export default function LocationsPage() {
   const onLocationChange = useCallback((data: any) => {
     setLocations(data?.entitiesData);
     setTotalCount(data?.totalCount);
-    setTotalPages(data?.totalPages);
   }, []);
+
+  const onLocationPageChange = useCallback(
+    async ({ page = 1 }: IKeywordPaginateParams) => {
+      await fetchLocations(page, itemsPerPage);
+      setCurrentPage(page);
+    },
+    [fetchLocations, itemsPerPage]
+  );
+
+  const onItemPerPageChange = useCallback(
+    (value: number) => setItemsPerPage(value),
+    []
+  );
+
+  const onLocationFilterChange = useCallback(async (obj?: any) => {
+    if (obj?.searchTerm || obj.searchTerm === '') {
+      setSearchKey(obj?.searchTerm);
+    }
+    if (obj?.sortBy) {
+      setSortBy({
+        sortKey: obj?.sortBy.key,
+        sortDirection: obj?.sortBy.direction,
+      });
+    }
+  }, []);
+
+  const handleSearchKeyChange = useCallback(
+    (e: ChangeEvent<HTMLInputElement>) => {
+      setSearchKey(e.target.value);
+    },
+    []
+  );
 
   useEffect(() => {
     setCurrentPage(1);
-    fetchLocations(1, itemsPerPage);
-  }, [itemsPerPage]);
+    fetchLocations(1, itemsPerPage, searchKey, sortBy);
+  }, [fetchLocations, itemsPerPage, searchKey, sortBy]);
 
   return (
     <div className="p-6 space-y-6">
@@ -94,6 +135,8 @@ export default function LocationsPage() {
               placeholder="Search locations..."
               className="w-full"
               type="search"
+              onChange={handleSearchKeyChange}
+              value={searchKey}
             />
           </div>
           <Button variant="outline">
@@ -106,12 +149,13 @@ export default function LocationsPage() {
           fetchLoading={fetchLoading}
           currentPage={currentPage}
           onLocationChange={onLocationChange}
+          onLocationFilterChange={onLocationFilterChange}
         />
         <Pagination
           totalCount={totalCount}
           currentPage={currentPage}
-          // onPageChange={onKeywordsPaginate}
-          // onItemPerPageChange={onItemPerPageChange}
+          onPageChange={onLocationPageChange}
+          onItemPerPageChange={onItemPerPageChange}
           itemsPerPage={itemsPerPage}
         />
       </Card>
