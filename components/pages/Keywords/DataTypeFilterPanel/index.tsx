@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Sheet,
@@ -23,8 +23,9 @@ import { flattenDataForCsv } from '@/utils/flattenDataForCsv';
 import { DeviceType } from '@/components/ui/device-type';
 import { dataTypes, DataType } from '@/consts/dataTypes';
 import Pagination from '../KeywordsTable/Pagination';
-import axiosClient from '@/lib/axiosClient';
+import axiosClient from '@/lib/axiosClient/index';
 import { useToast } from '@/hooks/use-toast';
+import { generateCsvFile } from '@/utils';
 
 interface DataTypeFilterPanelProps {
   isOpen: boolean;
@@ -33,224 +34,234 @@ interface DataTypeFilterPanelProps {
   data: any;
 }
 
-const columnsMap: Record<DataType, { key: string; label: string }[]> = {
-  ai_overview: [
-    { key: 'term', label: 'Keyword' },
-    { key: 'device', label: 'Device' },
-    { key: 'location', label: 'Location' },
-    { key: 'date', label: 'Date' },
-    { key: 'source', label: 'Source' },
-    { key: 'snippet', label: 'Snippet' },
-    { key: 'referenceTitle', label: 'Reference Title' },
-    { key: 'referenceLink', label: 'Reference Link' },
-  ],
-  related_questions: [
-    { key: 'term', label: 'Keyword' },
-    { key: 'device', label: 'Device' },
-    { key: 'location', label: 'Location' },
-    { key: 'date', label: 'Date' },
-    { key: 'question', label: 'Question' },
-    { key: 'snippet', label: 'Snippet' },
-    { key: 'title', label: 'Title' },
-    { key: 'link', label: 'Link' },
-    { key: 'listItems', label: 'List Items' },
-    { key: 'displayedLink', label: 'Displayed Link' },
-  ],
-  reddit: [
-    { key: 'term', label: 'Keyword' },
-    { key: 'device', label: 'Device' },
-    { key: 'location', label: 'Location' },
-    { key: 'date', label: 'Date' },
-    { key: 'title', label: 'Title' },
-    { key: 'snippet', label: 'Snippet' },
-    { key: 'link', label: 'Link' },
-    { key: 'source', label: 'Source' },
-    { key: 'siteLinks', label: 'Site links' },
-  ],
-  inline_videos: [
-    { key: 'term', label: 'Keyword' },
-    { key: 'device', label: 'Device' },
-    { key: 'location', label: 'Location' },
-    { key: 'date', label: 'Date' },
-    { key: 'title', label: 'Title' },
-    { key: 'thumbnail', label: 'Thumbnail' },
-    { key: 'link', label: 'Link' },
-    { key: 'duration', label: 'Duration' },
-  ],
-  knowledge_graph: [
-    { key: 'term', label: 'Keyword' },
-    { key: 'device', label: 'Device' },
-    { key: 'location', label: 'Location' },
-    { key: 'date', label: 'Date' },
-    { key: 'title', label: 'Title' },
-    { key: 'entity_type', label: 'Type' },
-    { key: 'kgmid', label: 'KGMID' },
-    { key: 'knowledge_graph_search_link', label: 'Knowledge Graph Link' },
-    { key: 'website', label: 'Website' },
-    { key: 'customer_service', label: 'Customer Service' },
-    { key: 'date_founded', label: 'Date Founded' },
-    { key: 'president', label: 'President' },
-  ],
-  discussions_and_forums: [
-    { key: 'term', label: 'Keyword' },
-    { key: 'device', label: 'Device' },
-    { key: 'location', label: 'Location' },
-    { key: 'date', label: 'Date' },
-    { key: 'source', label: 'Source' },
-    { key: 'title', label: 'Title' },
-    { key: 'link', label: 'Link' },
-    { key: 'forum_date', label: 'Forum date' },
-    { key: 'forum_answers', label: 'Forum Answers' },
-    ]
+const columnMap: Record<DataType, React.ReactNode> = {
+  ai_overview: (
+    <>
+      <TableHead>Source</TableHead>
+      <TableHead>Snippet</TableHead>
+      <TableHead>Reference Title</TableHead>
+      <TableHead>Reference Link</TableHead>
+    </>
+  ),
+  related_questions: (
+    <>
+      <TableHead>Question</TableHead>
+      <TableHead>Snippet</TableHead>
+      <TableHead>Title</TableHead>
+      <TableHead>Link</TableHead>
+      <TableHead>List Items</TableHead>
+      <TableHead>Displayed Link</TableHead>
+    </>
+  ),
+  reddit: (
+    <>
+      <TableHead>Title</TableHead>
+      <TableHead>Snippet</TableHead>
+      <TableHead>Link</TableHead>
+      <TableHead>Source</TableHead>
+      <TableHead>Site links</TableHead>
+    </>
+  ),
+  inline_videos: (
+    <>
+      <TableHead>Title</TableHead>
+      <TableHead>Thumbnail</TableHead>
+      <TableHead>Link</TableHead>
+      <TableHead>Duration</TableHead>
+    </>
+  ),
+  knowledge_graph: (
+    <>
+      <TableHead>Title</TableHead>
+      <TableHead>Type</TableHead>
+      <TableHead>KGMID</TableHead>
+      <TableHead>Knowledge Graph Link</TableHead>
+      <TableHead>Website</TableHead>
+      <TableHead>Customer Service</TableHead>
+      <TableHead>Date Founded</TableHead>
+      <TableHead>President</TableHead>
+    </>
+  ),
+  discussions_and_forums: (
+    <>
+      <TableHead>Title</TableHead>
+      <TableHead>Source</TableHead>
+      <TableHead>Link</TableHead>
+      <TableHead>Forum date</TableHead>
+      <TableHead>Answers</TableHead>
+    </>
+  ),
 };
 
+const renderCellLink = (url?: string, text = 'View') =>
+  url ? (
+    <Link
+      href={url}
+      target="_blank"
+      className="flex items-center hover:text-primary"
+    >
+      {text} <ExternalLink className="ml-1 h-3 w-3" />
+    </Link>
+  ) : (
+    '-'
+  );
 
-// Flatten data for each data type
-function flattenRows(data: any[], type: DataType) {
-  if (!data) return [];
-  switch (type) {
-    case 'ai_overview':
-      return data.flatMap((row: any) => {
-        const dates = Object.keys(row.historicalData || {});
-        return dates.flatMap(date => {
-          const entry = row.historicalData[date];
-          const ref = entry?.keywordData?.ai_overview?.references?.[0];
-          if (!ref) return [];
-          return [{
-            term: row.term,
-            device: row.device,
-            location: row.location,
-            date,
-            source: ref.source
-              ? ref.source.replace(/(https?:\/\/[^\s]+)/, ' $1')
-              : '-',
-            snippet: ref.snippet,
-            referenceTitle: ref.title,
-            referenceLink: ref.link,
-          }];
-        });
-      });
-    case 'related_questions':
-      return data.flatMap((row: any) => {
-        const dates = Object.keys(row.historicalData || {});
-        return dates.flatMap(date => {
-          const entry = row.historicalData[date];
-          const q = entry?.keywordData?.related_questions?.[0];
-          if (!q) return [];
-          return [{
-            term: row.term,
-            device: row.device,
-            location: row.location,
-            date,
-            question: q.question || '-',
-            snippet: q.snippet || '-',
-            title: q.title || '-',
-            link: q.link || '-',
-            listItems: (q.list || []).join(', '),
-            displayedLink: q.displayed_link || '-',
-          }];
-        });
-      });
-    case 'reddit':
-      return data.flatMap((row: any) => {
-        const dates = Object.keys(row.historicalData || {});
-        return dates.flatMap(date => {
-          const entry = row.historicalData[date];
-          const results = entry?.keywordData?.organic_results ?? [];
-          return results
-            .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
-            .map((result: any) => ({
-              term: row.term,
-              device: row.device,
-              location: row.location,
-              date,
-              title: result.title || '-',
-              snippet: result.snippet || '-',
-              link: result.link || '-',
-              source: result.source || '-',
-              siteLinks: (result?.sitelinks?.list || []).map((li: any) => `${li.title || ''} (${li.link || ''})`).join('; '),
-            }));
-        });
-      });
-    case 'inline_videos':
-      return data.flatMap((row: any) => {
-        const dates = Object.keys(row.historicalData || {});
-        return dates.flatMap(date => {
-          const entry = row.historicalData[date];
-          const video = entry?.keywordData?.inline_videos?.[0];
-          if (!video) return [];
-          return [{
-            term: row.term,
-            device: row.device,
-            location: row.location,
-            date,
-            title: video.title || '-',
-            thumbnail: video.thumbnail || '-',
-            link: video.link || '-',
-            duration: video.duration || '-',
-          }];
-        });
-      });
-    case 'knowledge_graph':
-      return data.flatMap((row: any) => {
-        const dates = Object.keys(row.historicalData || {});
-        return dates.flatMap(date => {
-          const entry = row.historicalData[date];
-          const g = entry?.keywordData?.knowledge_graph;
-          if (!g) return [];
-          return [{
-            term: row.term,
-            device: row.device,
-            location: row.location,
-            date,
-            title: g.title || '-',
-            entity_type: g.entity_type || '-',
-            kgmid: g.kgmid || '-',
-            knowledge_graph_search_link: g.knowledge_graph_search_link || '-',
-            website: g.website || '-',
-            customer_service: g.customer_service || '-',
-            date_founded: g.date_founded || '-',
-            president: g.president || '-',
-          }];
-        });
-      });
-    case 'discussions_and_forums':
-      return data.flatMap((row: any) => {
-        if (!row || !row.historicalData) return [];
+const renderByType: Record<
+  DataType,
+  (row: any, date: string, index: number) => React.ReactNode[]
+> = {
+  ai_overview: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const refs = entry?.keywordData?.data?.ai_overview?.references || entry?.keywordData?.ai_overview?.references || [];
+    if (!refs.length) return [];
 
-        const dates = Object.keys(row.historicalData);
-        return dates.flatMap(date => {
-          const entry = row.historicalData[date];
-          const g = entry?.keywordData?.discussions_and_forums;
-
-          if (!g) return [];
-
-          return g.map((ans, i) => {
-            const snippet = ans.snippet?.trim().replace(/\s+/g, " ") || "";
-            const answerLink = ans.link || "";
-            const extensions = (ans.extensions || []).join(", ");
-
-            return {
-              term: row.term || "-",
-              device: row.device || "-",
-              location: row.location || "-",
-              date,
-              source: ans.source || '-',
-              title: ans.title || '-',
-              link: answerLink || '-',
-              forum_date: ans.date || '-',
-              forum_answers: `snippet: ${snippet} \n 
-link: ${answerLink} \n extensions: ${extensions} \n`
-            };
-          });
-        });
-      });
-
-
-    default:
-      return [];
-  }
-}
+    return refs.map((ref: any, i: number) => (
+      <TableRow key={`${index}-${date}-ref-${i}`}>
+        <TableCell>{row.term}</TableCell>
+        <TableCell>
+          <DeviceType type={row.device} />
+        </TableCell>
+        <TableCell>{row.location}</TableCell>
+        <TableCell>{entry.date}</TableCell>
+        <TableCell>{ref.source}</TableCell>
+        <TableCell>{ref.snippet}</TableCell>
+        <TableCell>{ref.title}</TableCell>
+        <TableCell>{renderCellLink(ref.link)}</TableCell>
+      </TableRow>
+    ));
+  },
+  related_questions: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const q = entry?.keywordData?.data?.related_questions?.[0] || entry?.keywordData?.related_questions?.[0];
+    if (!q) return [];
+    return [
+      <TableRow key={`${index}-${date}-question`}>
+        <TableCell>{row.term}</TableCell>
+        <TableCell>
+          <DeviceType type={row.device} />
+        </TableCell>
+        <TableCell>{row.location}</TableCell>
+        <TableCell>{entry.date}</TableCell>
+        <TableCell>{q.question || '-'}</TableCell>
+        <TableCell className="max-w-[300px] truncate">
+          {q.snippet || '-'}
+        </TableCell>
+        <TableCell>{q.title || '-'}</TableCell>
+        <TableCell>{renderCellLink(q.link)}</TableCell>
+        <TableCell>
+          <ul className="list-disc list-inside">
+            {(q.list || []).map((li: string, i: number) => (
+              <li key={i} className="truncate">
+                {li}
+              </li>
+            ))}
+          </ul>
+        </TableCell>
+        <TableCell>{q.displayed_link || '-'}</TableCell>
+      </TableRow>,
+    ];
+  },
+  reddit: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const results = entry?.keywordData?.data?.organic_results ?? entry?.keywordData?.organic_results ?? [];
+    return results
+      .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
+      .map((result: any, i: number) => (
+        <TableRow key={`${index}-${date}-ref-${i}`}>
+          <TableCell>{row.term}</TableCell>
+          <TableCell>
+            <DeviceType type={row.device} />
+          </TableCell>
+          <TableCell>{row.location}</TableCell>
+          <TableCell>{entry.date}</TableCell>
+          <TableCell>{result.title || '-'}</TableCell>
+          <TableCell>{result.snippet || '-'}</TableCell>
+          <TableCell>{renderCellLink(result.link)}</TableCell>
+          <TableCell>{result.source || '-'}</TableCell>
+          <TableCell>
+            {(result?.sitelinks?.list || []).map((li: any, i: number) => (
+              <ul className="list-disc list-inside mb-4" key={i}>
+                <li className="truncate">Title: {li?.title}</li>
+                <li className="truncate">Link: {li?.link}</li>
+                <li className="truncate">Answer count: {li?.answer_count}</li>
+                <li className="truncate">Date: {li?.date}</li>
+              </ul>
+            ))}
+          </TableCell>
+        </TableRow>
+      ));
+  },
+  inline_videos: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const video = entry?.keywordData?.data?.inline_videos?.[0] || entry?.keywordData?.inline_videos?.[0];
+    if (!video) return [];
+    return [
+      <TableRow key={`${index}-${date}-video`}>
+        <TableCell>{row.term}</TableCell>
+        <TableCell>
+          <DeviceType type={row.device} />
+        </TableCell>
+        <TableCell>{row.location}</TableCell>
+        <TableCell>{entry.date}</TableCell>
+        <TableCell>{video.title || '-'}</TableCell>
+        <TableCell>{renderCellLink(video.thumbnail)}</TableCell>
+        <TableCell>{renderCellLink(video.link)}</TableCell>
+        <TableCell>{video.duration || '-'}</TableCell>
+      </TableRow>,
+    ];
+  },
+  knowledge_graph: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const g = entry?.keywordData?.data?.knowledge_graph || entry?.keywordData?.knowledge_graph;
+    if (!g) return [];
+    return [
+      <TableRow key={`${index}-${date}-graph`}>
+        <TableCell>{row.term}</TableCell>
+        <TableCell>
+          <DeviceType type={row.device} />
+        </TableCell>
+        <TableCell>{row.location}</TableCell>
+        <TableCell>{entry.date}</TableCell>
+        <TableCell>{g.title || '-'}</TableCell>
+        <TableCell>{g.entity_type || '-'}</TableCell>
+        <TableCell>{g.kgmid || '-'}</TableCell>
+        <TableCell>{renderCellLink(g.knowledge_graph_search_link)}</TableCell>
+        <TableCell>{g.website || '-'}</TableCell>
+        <TableCell>{g.customer_service || '-'}</TableCell>
+        <TableCell>{g.date_founded || '-'}</TableCell>
+        <TableCell>{g.president || '-'}</TableCell>
+      </TableRow>,
+    ];
+  },
+  discussions_and_forums: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const forum = entry?.keywordData?.data?.discussions_and_forums?.[0] || entry?.keywordData?.discussions_and_forums?.[0];
+    if (!forum) return [];
+    return [
+      <TableRow key={`${index}-${date}-forums`}>
+        <TableCell>{row.term}</TableCell>
+        <TableCell>
+          <DeviceType type={row.device} />
+        </TableCell>
+        <TableCell>{row.location}</TableCell>
+        <TableCell>{entry.date}</TableCell>
+        <TableCell>{forum.title || '-'}</TableCell>
+        <TableCell>{forum.source}</TableCell>
+        <TableCell>{renderCellLink(forum.link)}</TableCell>
+        <TableCell>{forum.date || '-'}</TableCell>
+        <TableCell>
+          {(forum.answers || []).map((li: any, i: number) => (
+            <ul className="list-disc list-inside mb-4" key={i}>
+              <li className="truncate">Snippet: {li?.snippet}</li>
+              <li className="truncate">Link: {li?.link}</li>
+              {li?.extensions ?  <li className="truncate">Extensions: {li?.extensions}</li> : ''}
+            </ul>
+          ))}
+        </TableCell>
+      </TableRow>,
+    ];
+  },
+};
 
 export default function DataTypeFilterPanel({
   isOpen,
@@ -260,37 +271,68 @@ export default function DataTypeFilterPanel({
 }: DataTypeFilterPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
-  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' }>({ key: '', direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: 'asc' | 'desc';
+  }>({ key: '', direction: 'asc' });
   const { toast } = useToast();
 
   const filtered = filterKeywordsByType(data, type);
-  const columns = columnsMap[type];
-  const flatData = useMemo(() => flattenRows(filtered, type), [filtered, type]);
+  const typeInfo = dataTypes.find((dt) => dt.value === type);
+
+  const flatData = useMemo(() => {
+    return filtered
+      ?.flatMap((row: any, index: number) => {
+        const dates = row.historicalData.map((h: any) => h.date);
+        return dates.flatMap(
+          (date: string) => renderByType[type]?.(row, date, index) ?? []
+        );
+      })
+      .filter(Boolean);
+  }, [filtered, type]);
+
+  const getColumnIndex = (key: string): number => {
+    switch (key) {
+      case 'keyword':
+        return 0;
+      case 'device':
+        return 1;
+      case 'location':
+        return 2;
+      case 'date':
+        return 3;
+      default:
+        return 0;
+    }
+  };
 
   const sortedData = useMemo(() => {
-    if (!sortConfig.key) return flatData;
+    if (!sortConfig.key || !flatData) return flatData;
+
     return [...flatData].sort((a, b) => {
-      let aValue = a[sortConfig.key];
-      let bValue = b[sortConfig.key];
-      if (typeof aValue === 'string') aValue = aValue.toLowerCase();
-      if (typeof bValue === 'string') bValue = bValue.toLowerCase();
-      if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-      if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-      return 0;
+      const aValue = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+      const bValue = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+
+      if (aValue === bValue) return 0;
+      if (aValue === undefined) return 1;
+      if (bValue === undefined) return -1;
+
+      const comparison = String(aValue).localeCompare(String(bValue));
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
     });
   }, [flatData, sortConfig]);
-
-  const handleSort = useCallback((key: string) => {
-    setSortConfig(prev => {
-      const direction = prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc';
-      return { key, direction };
-    });
-  }, []);
 
   const paginatedRows = sortedData?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const handlePageChange = ({ page }: { page?: number }) => {
     if (page) {
@@ -300,23 +342,45 @@ export default function DataTypeFilterPanel({
 
   const onItemPerPageChange = useCallback((value: number) => {
     setItemsPerPage(value);
-    setCurrentPage(1); // Reset page to 1 when per page changes
+    setCurrentPage(1);
   }, []);
 
   const downloadAsCSV = useCallback(async () => {
     try {
       const resp = await axiosClient.get(`/api/keywords?fullList=${true}`);
-      flattenDataForCsv(resp?.data || [], type);
+      if (!resp?.data?.length) {
+        toast({
+          title: 'No data to export',
+          description: 'There is no data available',
+        });
+        return;
+      }
+
+      // Filter the data by type
+      const filteredData = filterKeywordsByType(resp.data, type);
+      if (!filteredData?.length) {
+        toast({
+          title: 'No data to export',
+          description: `There is no data available for type: ${type}`,
+        });
+        return;
+      }
+
+      // Use flattenDataForCsv for proper data formatting
+      flattenDataForCsv(filteredData, type);
+      toast({
+        title: 'Success',
+        description: 'CSV file has been downloaded',
+      });
     } catch (err) {
+      console.error('Export error:', err);
       toast({
         title: 'Failed to export csv',
         description: 'Something went wrong',
+        variant: 'destructive',
       });
     }
-  }, [toast]);
-
-  const typeInfo = dataTypes.find((dt) => dt.value === type);
-
+  }, [type, toast]);
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
@@ -355,41 +419,40 @@ export default function DataTypeFilterPanel({
           <Table>
             <TableHeader>
               <TableRow>
-                {columns.map(col => (
-                  <TableHead
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <span className="flex items-center gap-1">
-                      {col.label}
-                      <ArrowUpDown className="h-4 w-4" />
-                    </span>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('keyword')}>
+                    Keyword
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('device')}>
+                    Device
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('location')}>
+                    Location
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('date')}>
+                    Date
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
                   </TableHead>
-                ))}
+                {columnMap[type]}
               </TableRow>
             </TableHeader>
-            <TableBody>
-              {paginatedRows && paginatedRows.length > 0 ? (
-                paginatedRows.map((row, idx) => (
-                  <TableRow key={idx}>
-                    {columns.map(col => (
-                      <TableCell key={col.key}>{String(row[col.key] ?? '')}</TableCell>
-                    ))}
-                  </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={columns.length}>No data</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
+            <TableBody>{paginatedRows}</TableBody>
           </Table>
         </div>
 
         <div className="border-t px-4 py-2 sticky bottom-0 bg-white z-10">
           <Pagination
-            totalCount={sortedData?.length}
+            totalCount={flatData?.length}
             currentPage={currentPage}
             onPageChange={handlePageChange}
             onItemPerPageChange={onItemPerPageChange}

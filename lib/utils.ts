@@ -168,22 +168,23 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
       return false;
 
     const entries = item.historicalData;
+
     switch (type) {
       case 'ai_overview':
-        return entries.some((entry: any) => entry?.keywordData?.ai_overview);
+        return entries.some((entry: any) => entry?.keywordData?.data?.ai_overview);
 
       case 'related_questions':
         return entries.some(
           (entry: any) =>
-            Array.isArray(entry?.keywordData?.related_questions) ||
+            Array.isArray(entry?.keywordData?.data.related_questions) ||
             typeof entry?.keywordData?.related_questions === 'object'
         );
 
       case 'reddit':
         return entries.some(
           (entry: any) =>
-            Array.isArray(entry?.keywordData?.organic_results) &&
-            entry?.keywordData?.organic_results.some(
+            Array.isArray(entry?.keywordData?.data?.organic_results) &&
+            entry?.keywordData?.data?.organic_results.some(
               (r: any) =>
                 typeof r?.source === 'string' &&
                 /\breddit\b/i.test(r.source.toLowerCase())
@@ -192,16 +193,16 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
 
       case 'inline_videos':
         return entries.some((entry: any) =>
-          Array.isArray(entry?.keywordData?.inline_videos)
+          Array.isArray(entry?.keywordData?.data?.inline_videos)
         );
 
       case 'knowledge_graph':
         return entries.some(
-          (entry: any) => entry?.keywordData?.knowledge_graph
+          (entry: any) => entry?.keywordData?.data?.knowledge_graph
         );
       case 'discussions_and_forums':
         return entries.some(
-          (entry: any) => entry?.keywordData?.discussions_and_forums
+          (entry: any) => entry?.keywordData?.data?.discussions_and_forums
         );
 
       default:

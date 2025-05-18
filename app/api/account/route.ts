@@ -12,9 +12,9 @@ export async function GET() {
     const lastSearchKeywordHistorical =
       await KeywordHistoricalMore.findOne().sort({ updatedAt: -1 }); // historical data
     const lastSearchDate =
-      lastSearchKeyword.updatedAt > lastSearchKeywordHistorical.updatedAt
-        ? lastSearchKeyword.updatedAt
-        : lastSearchKeywordHistorical.updatedAt;
+      lastSearchKeyword?.updatedAt > lastSearchKeywordHistorical?.updatedAt
+        ? lastSearchKeyword?.updatedAt
+        : lastSearchKeywordHistorical?.updatedAt;
 
     return NextResponse.json({ ...accountData, lastSearchDate });
   } catch (error) {

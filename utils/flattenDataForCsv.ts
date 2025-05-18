@@ -1,6 +1,8 @@
 import { csvParser } from './index';
 import { IKeyword } from '@/types';
 
+const CHUNK_SIZE = 1000; // Process 1000 items at a time
+
 export function flattenDataForCsv(data: IKeyword[], type: string) {
   let headers: string[] = ['Keyword', 'Device', 'Location', 'Date'];
   let rows: string[][] = [];
@@ -12,7 +14,8 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
     const entry = (row.historicalData || []).find(
       (item: any) => item.date === date
     );
-    return entry?.keywordData?.[field];
+    // Check if data is nested under 'data' field
+    return entry?.keywordData?.data?.[field] || entry?.keywordData?.[field];
   };
 
   const buildBaseRow = (row: IKeyword, date: string) => ({
@@ -64,7 +67,8 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
 
       data.forEach((row) => {
         getHistoricalDates(row).forEach((date: string) => {
-          const aiOverview = getKeywordData(row, date, 'ai_overview');
+          const entry = row.historicalData.find((h: any) => h.date === date);
+          const aiOverview = entry?.keywordData?.data?.ai_overview;
           const base = {
             ...buildBaseRow(row, date),
             expandable_title: '',
@@ -107,81 +111,157 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         'Snippet',
         'Link',
         'Source',
-        'Displayed Link',
-        ...Array.from({ length: 9 }, (_, i) => `Reddit Answer ${i + 1}`),
-        'Site links',
+        'Site Links',
       ];
 
-      data.forEach((row) => {
-        getHistoricalDates(row).forEach((date: string) => {
-          const redditResults = getKeywordData(row, date, 'organic_results') || [];
+      // Process data in chunks
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        chunk.forEach((row) => {
+          getHistoricalDates(row).forEach((date: string) => {
+            const entry = row.historicalData.find((h: any) => h.date === date);
+            // Check both data structures
+            const results = entry?.keywordData?.data?.organic_results ?? entry?.keywordData?.organic_results ?? [];
+            results
+              .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
+              .forEach((result: any) => {
+                rows.push([
+                  row.term,
+                  row.device,
+                  row.location,
+                  date,
+                  result.title || '',
+                  result.snippet || '',
+                  result.link || '',
+                  result.source || '',
+                  (result?.sitelinks?.list || [])
+                    .map((li: any) => `${li?.title}: ${li?.link}`)
+                    .join('; '),
+                ]);
+              });
+          });
+        });
 
-          redditResults
-            .filter(
-              (result: any) =>
-                typeof result?.source === 'string' &&
-                /\breddit\b/i.test(result.source.toLowerCase())
-            )
-            .forEach((post: any) => {
-              const {
-                title,
-                link,
-                displayed_link,
-                snippet,
-                sitelinks,
-                answers = [],
-              } = post;
+        // Write chunk to file
+        if (i === 0) {
+          csvParser(
+            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            `${type}_data.csv`,
+            true
+          );
+        } else {
+          csvParser(
+            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            `${type}_data.csv`,
+            false
+          );
+        }
+        rows = [];
+      }
+    },
 
-              const redditAnswers: string[] = Array.from(
-                { length: 9 },
-                (_, i) => answers[i]?.link || ''
-              );
+    discussions_and_forums: () => {
+      headers = [
+        ...headers,
+        'Title',
+        'Source',
+        'Link',
+        'Forum Date',
+        'Answers',
+      ];
 
-              const siteLinks = (sitelinks?.list || [])
-                .map(
-                  (item: any) =>
-                    `${item.title || 'No title'}\n   📅 ${item.date || 'No date'}\n   💬 ${item.answer_count || 0} answers\n   🔗 ${item.link || 'No link'}`
-                )
-                .join('\n\n');
-
+      // Process data in chunks
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        chunk.forEach((row) => {
+          getHistoricalDates(row).forEach((date: string) => {
+            const entry = row.historicalData.find((h: any) => h.date === date);
+            // Check both data structures
+            const forum = entry?.keywordData?.data?.discussions_and_forums?.[0] || entry?.keywordData?.discussions_and_forums?.[0];
+            if (forum) {
               rows.push([
                 row.term,
                 row.device,
                 row.location,
                 date,
-                title || '',
-                snippet || '',
-                link || '',
-                post.source || '',
-                displayed_link || '',
-                ...redditAnswers,
-                siteLinks,
+                forum.title || '',
+                forum.source || '',
+                forum.link || '',
+                forum.date || '',
+                (forum.answers || [])
+                  .map((a: any) => `${a.snippet} (${a.link})`)
+                  .join('; '),
               ]);
-            });
+            }
+          });
         });
-      });
+
+        // Write chunk to file
+        if (i === 0) {
+          csvParser(
+            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            `${type}_data.csv`,
+            true
+          );
+        } else {
+          csvParser(
+            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            `${type}_data.csv`,
+            false
+          );
+        }
+        rows = [];
+      }
     },
 
     inline_videos: () => {
-      headers = [...headers, 'Title', 'Thumbnail', 'Link', 'Duration'];
+      headers = [
+        ...headers,
+        'Title',
+        'Thumbnail',
+        'Link',
+        'Duration',
+      ];
 
-      data.forEach((row) => {
-        getHistoricalDates(row).forEach((date: string) => {
-          const videos = getKeywordData(row, date, 'inline_videos') || [];
-          videos.forEach((video: any) => {
-            rows.push([
-              row.term,
-              row.device,
-              row.location,
-              date,
-              video.title || '',
-              video.thumbnail || '',
-              video.link || '',
-              video.duration || '',
-            ]);
+      // Process data in chunks
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        chunk.forEach((row) => {
+          getHistoricalDates(row).forEach((date: string) => {
+            const entry = row.historicalData.find((h: any) => h.date === date);
+            // Check both data structures
+            const video = entry?.keywordData?.data?.inline_videos?.[0] || entry?.keywordData?.inline_videos?.[0];
+            if (video) {
+              rows.push([
+                row.term,
+                row.device,
+                row.location,
+                date,
+                video.title || '',
+                video.thumbnail || '',
+                video.link || '',
+                video.duration || '',
+              ]);
+            }
           });
         });
-      });
+
+        // Write chunk to file
+        if (i === 0) {
+          csvParser(
+            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            `${type}_data.csv`,
+            true
+          );
+        } else {
+          csvParser(
+            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            `${type}_data.csv`,
+            false
+          );
+        }
+        rows = [];
+      }
     },
 
     knowledge_graph: () => {
@@ -197,25 +277,49 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         'President',
       ];
 
-      data.forEach((row) => {
-        getHistoricalDates(row).forEach((date: string) => {
-          const graph = getKeywordData(row, date, 'knowledge_graph') || {};
-          rows.push([
-            row.term,
-            row.device,
-            row.location,
-            date,
-            graph.title || '',
-            graph.entity_type || '',
-            graph.kgmid || '',
-            graph.knowledge_graph_search_link || '',
-            graph.website || '',
-            graph.customer_service || '',
-            graph.date_founded || '',
-            graph.president || '',
-          ]);
+      // Process data in chunks
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        chunk.forEach((row) => {
+          getHistoricalDates(row).forEach((date: string) => {
+            const entry = row.historicalData.find((h: any) => h.date === date);
+            // Check both data structures
+            const g = entry?.keywordData?.data?.knowledge_graph || entry?.keywordData?.knowledge_graph;
+            if (g) {
+              rows.push([
+                row.term,
+                row.device,
+                row.location,
+                date,
+                g.title || '',
+                g.entity_type || '',
+                g.kgmid || '',
+                g.knowledge_graph_search_link || '',
+                g.website || '',
+                g.customer_service || '',
+                g.date_founded || '',
+                g.president || '',
+              ]);
+            }
+          });
         });
-      });
+
+        // Write chunk to file
+        if (i === 0) {
+          csvParser(
+            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            `${type}_data.csv`,
+            true
+          );
+        } else {
+          csvParser(
+            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            `${type}_data.csv`,
+            false
+          );
+        }
+        rows = [];
+      }
     },
 
     related_questions: () => {
@@ -229,35 +333,54 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         'Displayed Link',
       ];
 
-      data.forEach((row) => {
-        getHistoricalDates(row).forEach((date: string) => {
-          const questions = getKeywordData(row, date, 'related_questions') || [];
-          questions.forEach((q: any) => {
-            const listItems = (q.list || [])
-              .map((item: any) => `• ${item}`)
-              .join('\n');
-            rows.push([
-              row.term,
-              row.device,
-              row.location,
-              date,
-              q.question || '',
-              q.snippet || '',
-              q.title || '',
-              q.link || '',
-              listItems,
-              q.displayed_link || '',
-            ]);
+      // Process data in chunks
+      for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+        const chunk = data.slice(i, i + CHUNK_SIZE);
+        chunk.forEach((row) => {
+          getHistoricalDates(row).forEach((date: string) => {
+            const entry = row.historicalData.find((h: any) => h.date === date);
+            // Check both data structures
+            const q = entry?.keywordData?.data?.related_questions?.[0] || entry?.keywordData?.related_questions?.[0];
+            if (q) {
+              rows.push([
+                row.term,
+                row.device,
+                row.location,
+                date,
+                q.question || '',
+                q.snippet || '',
+                q.title || '',
+                q.link || '',
+                (q.list || []).join('; '),
+                q.displayed_link || '',
+              ]);
+            }
           });
         });
-      });
+
+        // Write chunk to file
+        if (i === 0) {
+          csvParser(
+            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            `${type}_data.csv`,
+            true
+          );
+        } else {
+          csvParser(
+            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            `${type}_data.csv`,
+            false
+          );
+        }
+        rows = [];
+      }
     },
   };
 
   if (handlers[type]) {
     handlers[type]();
   } else {
-    // Default handler for all data types
+    // Default handler for unknown types
     headers = [
       ...headers,
       'KGMID',
@@ -269,31 +392,42 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
       'Updated At',
     ];
 
-    data.forEach((row) => {
-      getHistoricalDates(row).forEach((date: string) => {
-        rows.push([
-          row.term,
-          row.device,
-          row.location,
-          date,
-          row.kgmid || '',
-          row.kgmTitle || '',
-          row.kgmWebsite || '',
-          row.organicResultsCount?.toString() || '0',
-          (row.tags || []).join(', '),
-          new Date(row.createdAt).toISOString(),
-          new Date(row.updatedAt).toISOString(),
-        ]);
+    // Process data in chunks
+    for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+      const chunk = data.slice(i, i + CHUNK_SIZE);
+      chunk.forEach((row) => {
+        getHistoricalDates(row).forEach((date: string) => {
+          rows.push([
+            row.term,
+            row.device,
+            row.location,
+            date,
+            row.kgmid || '',
+            row.kgmTitle || '',
+            row.kgmWebsite || '',
+            row.organicResultsCount?.toString() || '0',
+            (row.tags || []).join(', '),
+            new Date(row.createdAt).toISOString(),
+            new Date(row.updatedAt).toISOString(),
+          ]);
+        });
       });
-    });
+
+      // Write chunk to file
+      if (i === 0) {
+        csvParser(
+          [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+          `${type}_data.csv`,
+          true
+        );
+      } else {
+        csvParser(
+          rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+          `${type}_data.csv`,
+          false
+        );
+      }
+      rows = [];
+    }
   }
-
-  const csvContent = [
-    headers.join(','),
-    ...rows.map((row) =>
-      row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-    ),
-  ].join('\n');
-
-  csvParser(csvContent, `${type}_data.csv`);
 }
