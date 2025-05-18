@@ -1,4 +1,4 @@
-import Keyword from './Keyword';
+import Keyword from '../schemas/Keyword';
 import { searchKeyword } from '@/lib/serpApi';
 import { checkDateDifference } from '@/lib/utils';
 

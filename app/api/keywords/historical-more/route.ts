@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import { IKeyword } from '@/types';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
-import KeywordHistoricalMore from '@/lib/db/models/KeywordHistoricalMore';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistocalMore';
 import { searchKeyword } from '@/lib/serpApi';
 
 const CHUNK_SIZE = 10; // Process 5 keywords at a time

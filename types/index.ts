@@ -99,6 +99,8 @@ export interface SearchKeywordResponse {
     total_results?: number;
     time_taken_displayed?: number;
     organic_results_state?: string;
+    volume?: number | null;
+    difficulty?: number | null;
   };
   knowledge_graph?: {
     title?: string;

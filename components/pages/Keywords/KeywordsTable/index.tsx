@@ -90,18 +90,20 @@ export default function KeywordsTable({
 
     return keywords.map((keyword) => ({
       ...keyword,
-      historicalData:
-        keyword.historicalData instanceof Map
-          ? keyword.historicalData
-          : new Map(Object.entries(keyword.historicalData || {})),
+      historicalData: Array.isArray(keyword.historicalData)
+        ? keyword.historicalData
+        : Object.entries(keyword.historicalData || {}).map(([key, value]) => ({
+            key,
+            value,
+          })),
     }));
   }, [keywords]);
 
   const getHistoricalDates = useCallback((keyword: IKeyword) => {
     const data = [];
-    for (const [key, value] of keyword.historicalData) {
+    for (const value of keyword.historicalData) {
       data.push({
-        date: key,
+        date: value.date,
         kgmid: value.kgmid,
         kgmTitle: value.kgmTitle,
         kgmWebsite: value.kgmWebsite,
@@ -357,7 +359,6 @@ export default function KeywordsTable({
                 {!fetchLoading ? (
                   filteredAndSortedData.map((keyword) => {
                     const dates = getHistoricalDates(keyword);
-
                     return (
                       <React.Fragment key={keyword._id}>
                         <TableRow className="hover:bg-muted/50 cursor-pointer">
@@ -526,10 +527,10 @@ export default function KeywordsTable({
                                       </TableRow>
                                     </TableHeader>
                                     <TableBody className="text-xs">
-                                      {dates.map((entry) => {
+                                      {dates.map((entry, i) => {
                                         return (
                                           <TableRow
-                                            key={entry.date}
+                                            key={entry.date + i}
                                             className="hover:bg-muted/30"
                                           >
                                             <TableCell className="py-2 font-medium">

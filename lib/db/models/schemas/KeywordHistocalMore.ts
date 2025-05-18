@@ -27,4 +27,4 @@ const KeywordHistoricalMoreSchema = new mongoose.Schema(
 );
 
 export default mongoose.models.KeywordHistoricalMore ||
-  mongoose.model('KeywordHistoricalMore', KeywordHistoricalMoreSchema);
+mongoose.model('KeywordHistoricalMore', KeywordHistoricalMoreSchema);

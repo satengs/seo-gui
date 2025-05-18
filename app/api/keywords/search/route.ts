@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData';
 import { searchKeyword } from '@/lib/serpApi';
 import { findAndUpdateDailyKeyword } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities } from '@/lib/db/helpers';
@@ -72,29 +73,27 @@ export async function GET(request: Request) {
 
     const todayKey = new Date().toISOString().split('T')[0];
 
-    const keywordData = {
+    const keyword = await Keyword.create({
       term,
       location,
       device,
       isDefaultKeywords,
-      historicalData: new Map([
-        [
-          todayKey,
-          {
-            organicResultsCount:
-              searchResponse.search_information?.total_results || 0,
-            kgmTitle: searchResponse.knowledge_graph?.title || '',
-            kgmWebsite: searchResponse.knowledge_graph?.website || '',
-            difficulty: null,
-            volume: null,
-            backlinksNeeded: null,
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      ]),
-    };
+    });
 
-    const keyword = await Keyword.create(keywordData);
+    await KeywordHistoricalData.create({
+      id: keyword._id,
+      date: todayKey,
+      organicResultsCount:
+        searchResponse.search_information?.total_results || 0,
+      kgmid: searchResponse.knowledge_graph?.kgmid || '',
+      kgmTitle: searchResponse.knowledge_graph?.title || '',
+      kgmWebsite: searchResponse.knowledge_graph?.website || '',
+      difficulty: searchResponse.search_information?.difficulty || null,
+      volume: searchResponse.search_information?.volume || null,
+      backlinksNeeded: null,
+      timestamp: new Date(),
+      keywordData: searchResponse,
+    });
 
     return NextResponse.json({
       entitiesData: [keyword],

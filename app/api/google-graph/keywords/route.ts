@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db/index';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
+import Keyword from '@/lib/db/models/schemas/Keyword';
 
 export async function GET() {
   try {
