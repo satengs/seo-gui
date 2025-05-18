@@ -40,56 +40,64 @@ export const getKeywordDataCols = (keyword: IKeyword) => {
   return data;
 };
 
-export const getKeywordHistoricalCols = (data: IHistoricalMapEntry) => {
-  if (data && data instanceof Map) {
-    let historicalData = {};
-    const keys = data.keys();
-    for (let key of keys) {
-      historicalData = {
-        ...historicalData,
-        [`${key}.historical`]: data.get(key),
-      };
-    }
-    return historicalData;
+export const getKeywordHistoricalCols = (data: any) => {
+  if (data && Array.isArray(data)) {
+    return data.map(entry => {
+      if (entry && entry.date) {
+        return {
+          ...entry,
+          keywordData: entry.keywordData || {}
+        };
+      }
+      return entry;
+    });
   }
-  return { historicalData: {} };
+  return [];
 };
 
 export const getCsvKeywordData = (keyword: any) => {
+
   const simpleTypeCos = getSimplyTypeRows(keyword);
   const keywordData = getKeywordDataCols(keyword?.keywordData?.data);
   const historicalData = getKeywordHistoricalCols(keyword.historicalData);
-  return { ...simpleTypeCos, ...keywordData, ...historicalData };
+
+  return {
+    ...simpleTypeCos,
+    ...keywordData,
+    historicalData: historicalData
+  };
 };
 
-export const getConsistentData = (data: IKeyword[]) => {
+export const getConsistentData = (data: any[]) => {
   const allKeys = new Set<string>();
   data.forEach((row) => {
     Object.keys(row).forEach((key) => {
       allKeys.add(key);
     });
   });
+
   return data.map((row) => {
-    const rowWithAllKeys: any = {};
+    const rowWithAllKeys: Record<string, any> = {};
     allKeys.forEach((key) => {
-      // @ts-ignore
-      rowWithAllKeys[key] = row[key] !== undefined ? row[key] : {}; // Fill missing keys with empty string
+      if (key === 'historicalData') {
+        rowWithAllKeys[key] = Array.isArray(row[key]) ? row[key] : [];
+      } else {
+        // For other keys, use empty object as fallback
+        rowWithAllKeys[key] = row[key] !== undefined ? row[key] : {};
+      }
     });
     return rowWithAllKeys;
   });
 };
 
 export const getCsvKeywordMultiData = (keywords: IKeyword[]) => {
-  const csvData = keywords.map((keyword) => getCsvKeywordData(keyword));
-  const data: IKeyword[] = [];
-  for (let k in csvData) {
-    // @ts-ignore
-    data.push(csvData[k]);
-  }
-  return getConsistentData(data);
+  const csvData = keywords.map((keyword) => {
+    return getCsvKeywordData(keyword);
+  });
+  return getConsistentData(csvData);
 };
 
-export const csvParser = (csvData: string, fileName: string) => {
+export const csvParser = (csvData: string, fileName: string, append: boolean = false) => {
   const blob = new Blob([csvData], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -106,11 +114,41 @@ export const generateCsvFile = (keywordOrArr: IKeyword | IKeyword[]) => {
   if (Array.isArray(keywordOrArr)) {
     csvData = getCsvKeywordMultiData(keywordOrArr);
   } else {
-    csvData = getCsvKeywordData(keywordOrArr);
+    csvData = [getCsvKeywordData(keywordOrArr)];
   }
 
-  const parser = new Parser({});
-  const csvContent = parser.parse(csvData);
-  const result = csvParser(csvContent, 'keyword-data.csv');
-  return result;
+  const processedData = csvData.map((row: Record<string, any>) => {
+    const processedRow = { ...row };
+    if (Array.isArray(processedRow.historicalData)) {
+      // Convert each historical data entry to a string
+      processedRow.historicalData = processedRow.historicalData
+        .map((entry: any) => JSON.stringify(entry))
+        .join('|');
+    } else {
+      processedRow.historicalData = '';
+    }
+    return processedRow;
+  });
+
+  console.log('Final data for CSV:', processedData);
+  console.log('Number of rows:', processedData.length);
+  console.log('Size of data (MB):', new Blob([JSON.stringify(processedData)]).size / (1024 * 1024));
+
+  const parser = new Parser({
+    fields: Object.keys(processedData[0] || {}),
+    header: true
+  });
+
+  const csvContent = parser.parse(processedData);
+
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'keyword-data.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(url);
 };

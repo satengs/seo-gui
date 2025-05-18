@@ -17,12 +17,15 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Download, ExternalLink, ArrowUpDown } from 'lucide-react';
 import { filterKeywordsByType } from '@/lib/utils';
 import { flattenDataForCsv } from '@/utils/flattenDataForCsv';
 import { DeviceType } from '@/components/ui/device-type';
 import { dataTypes, DataType } from '@/consts/dataTypes';
 import Pagination from '../KeywordsTable/Pagination';
+import axiosClient from '@/lib/axiosClient/index';
+import { useToast } from '@/hooks/use-toast';
+import { generateCsvFile } from '@/utils';
 
 interface DataTypeFilterPanelProps {
   isOpen: boolean;
@@ -79,6 +82,15 @@ const columnMap: Record<DataType, React.ReactNode> = {
       <TableHead>President</TableHead>
     </>
   ),
+  discussions_and_forums: (
+    <>
+      <TableHead>Title</TableHead>
+      <TableHead>Source</TableHead>
+      <TableHead>Link</TableHead>
+      <TableHead>Forum date</TableHead>
+      <TableHead>Answers</TableHead>
+    </>
+  ),
 };
 
 const renderCellLink = (url?: string, text = 'View') =>
@@ -99,27 +111,28 @@ const renderByType: Record<
   (row: any, date: string, index: number) => React.ReactNode[]
 > = {
   ai_overview: (row, date, index) => {
-    const ref =
-      row.historicalData[date]?.keywordData?.data?.ai_overview?.references?.[0];
-    if (!ref) return [];
-    return [
-      <TableRow key={`${index}-${date}-ref`}>
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const refs = entry?.keywordData?.data?.ai_overview?.references || entry?.keywordData?.ai_overview?.references || [];
+    if (!refs.length) return [];
+
+    return refs.map((ref: any, i: number) => (
+      <TableRow key={`${index}-${date}-ref-${i}`}>
         <TableCell>{row.term}</TableCell>
         <TableCell>
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
-        <TableCell>{date}</TableCell>
+        <TableCell>{entry.date}</TableCell>
         <TableCell>{ref.source}</TableCell>
         <TableCell>{ref.snippet}</TableCell>
         <TableCell>{ref.title}</TableCell>
         <TableCell>{renderCellLink(ref.link)}</TableCell>
-      </TableRow>,
-    ];
+      </TableRow>
+    ));
   },
   related_questions: (row, date, index) => {
-    const q =
-      row.historicalData[date]?.keywordData?.data?.related_questions?.[0];
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const q = entry?.keywordData?.data?.related_questions?.[0] || entry?.keywordData?.related_questions?.[0];
     if (!q) return [];
     return [
       <TableRow key={`${index}-${date}-question`}>
@@ -128,7 +141,7 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
-        <TableCell>{date}</TableCell>
+        <TableCell>{entry.date}</TableCell>
         <TableCell>{q.question || '-'}</TableCell>
         <TableCell className="max-w-[300px] truncate">
           {q.snippet || '-'}
@@ -149,8 +162,8 @@ const renderByType: Record<
     ];
   },
   reddit: (row, date, index) => {
-    const results =
-      row.historicalData[date]?.keywordData?.data?.organic_results ?? [];
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const results = entry?.keywordData?.data?.organic_results ?? entry?.keywordData?.organic_results ?? [];
     return results
       .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
       .map((result: any, i: number) => (
@@ -160,7 +173,7 @@ const renderByType: Record<
             <DeviceType type={row.device} />
           </TableCell>
           <TableCell>{row.location}</TableCell>
-          <TableCell>{date}</TableCell>
+          <TableCell>{entry.date}</TableCell>
           <TableCell>{result.title || '-'}</TableCell>
           <TableCell>{result.snippet || '-'}</TableCell>
           <TableCell>{renderCellLink(result.link)}</TableCell>
@@ -179,8 +192,8 @@ const renderByType: Record<
       ));
   },
   inline_videos: (row, date, index) => {
-    const video =
-      row.historicalData[date]?.keywordData?.data?.inline_videos?.[0];
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const video = entry?.keywordData?.data?.inline_videos?.[0] || entry?.keywordData?.inline_videos?.[0];
     if (!video) return [];
     return [
       <TableRow key={`${index}-${date}-video`}>
@@ -189,7 +202,7 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
-        <TableCell>{date}</TableCell>
+        <TableCell>{entry.date}</TableCell>
         <TableCell>{video.title || '-'}</TableCell>
         <TableCell>{renderCellLink(video.thumbnail)}</TableCell>
         <TableCell>{renderCellLink(video.link)}</TableCell>
@@ -198,7 +211,8 @@ const renderByType: Record<
     ];
   },
   knowledge_graph: (row, date, index) => {
-    const g = row.historicalData[date]?.keywordData?.data?.knowledge_graph;
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const g = entry?.keywordData?.data?.knowledge_graph || entry?.keywordData?.knowledge_graph;
     if (!g) return [];
     return [
       <TableRow key={`${index}-${date}-graph`}>
@@ -207,7 +221,7 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
-        <TableCell>{date}</TableCell>
+        <TableCell>{entry.date}</TableCell>
         <TableCell>{g.title || '-'}</TableCell>
         <TableCell>{g.entity_type || '-'}</TableCell>
         <TableCell>{g.kgmid || '-'}</TableCell>
@@ -216,6 +230,34 @@ const renderByType: Record<
         <TableCell>{g.customer_service || '-'}</TableCell>
         <TableCell>{g.date_founded || '-'}</TableCell>
         <TableCell>{g.president || '-'}</TableCell>
+      </TableRow>,
+    ];
+  },
+  discussions_and_forums: (row, date, index) => {
+    const entry = row.historicalData.find((h: any) => h.date === date);
+    const forum = entry?.keywordData?.data?.discussions_and_forums?.[0] || entry?.keywordData?.discussions_and_forums?.[0];
+    if (!forum) return [];
+    return [
+      <TableRow key={`${index}-${date}-forums`}>
+        <TableCell>{row.term}</TableCell>
+        <TableCell>
+          <DeviceType type={row.device} />
+        </TableCell>
+        <TableCell>{row.location}</TableCell>
+        <TableCell>{entry.date}</TableCell>
+        <TableCell>{forum.title || '-'}</TableCell>
+        <TableCell>{forum.source}</TableCell>
+        <TableCell>{renderCellLink(forum.link)}</TableCell>
+        <TableCell>{forum.date || '-'}</TableCell>
+        <TableCell>
+          {(forum.answers || []).map((li: any, i: number) => (
+            <ul className="list-disc list-inside mb-4" key={i}>
+              <li className="truncate">Snippet: {li?.snippet}</li>
+              <li className="truncate">Link: {li?.link}</li>
+              {li?.extensions ?  <li className="truncate">Extensions: {li?.extensions}</li> : ''}
+            </ul>
+          ))}
+        </TableCell>
       </TableRow>,
     ];
   },
@@ -229,6 +271,11 @@ export default function DataTypeFilterPanel({
 }: DataTypeFilterPanelProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(30);
+  const [sortConfig, setSortConfig] = useState<{
+    key: string;
+    direction: 'asc' | 'desc';
+  }>({ key: '', direction: 'asc' });
+  const { toast } = useToast();
 
   const filtered = filterKeywordsByType(data, type);
   const typeInfo = dataTypes.find((dt) => dt.value === type);
@@ -236,18 +283,56 @@ export default function DataTypeFilterPanel({
   const flatData = useMemo(() => {
     return filtered
       ?.flatMap((row: any, index: number) => {
-        const dates = Object.keys(row.historicalData || {});
+        const dates = row.historicalData.map((h: any) => h.date);
         return dates.flatMap(
-          (date) => renderByType[type]?.(row, date, index) ?? []
+          (date: string) => renderByType[type]?.(row, date, index) ?? []
         );
       })
       .filter(Boolean);
   }, [filtered, type]);
 
-  const paginatedRows = flatData?.slice(
+  const getColumnIndex = (key: string): number => {
+    switch (key) {
+      case 'keyword':
+        return 0;
+      case 'device':
+        return 1;
+      case 'location':
+        return 2;
+      case 'date':
+        return 3;
+      default:
+        return 0;
+    }
+  };
+
+  const sortedData = useMemo(() => {
+    if (!sortConfig.key || !flatData) return flatData;
+
+    return [...flatData].sort((a, b) => {
+      const aValue = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+      const bValue = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+
+      if (aValue === bValue) return 0;
+      if (aValue === undefined) return 1;
+      if (bValue === undefined) return -1;
+
+      const comparison = String(aValue).localeCompare(String(bValue));
+      return sortConfig.direction === 'asc' ? comparison : -comparison;
+    });
+  }, [flatData, sortConfig]);
+
+  const paginatedRows = sortedData?.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
+
+  const handleSort = (key: string) => {
+    setSortConfig((prev) => ({
+      key,
+      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
 
   const handlePageChange = ({ page }: { page?: number }) => {
     if (page) {
@@ -257,16 +342,51 @@ export default function DataTypeFilterPanel({
 
   const onItemPerPageChange = useCallback((value: number) => {
     setItemsPerPage(value);
-    setCurrentPage(1); // Reset page to 1 when per page changes
+    setCurrentPage(1);
   }, []);
 
-  const downloadAsCSV = () => flattenDataForCsv(filtered, type);
+  const downloadAsCSV = useCallback(async () => {
+    try {
+      const resp = await axiosClient.get(`/api/keywords?fullList=${true}`);
+      if (!resp?.data?.length) {
+        toast({
+          title: 'No data to export',
+          description: 'There is no data available',
+        });
+        return;
+      }
 
+      // Filter the data by type
+      const filteredData = filterKeywordsByType(resp.data, type);
+      if (!filteredData?.length) {
+        toast({
+          title: 'No data to export',
+          description: `There is no data available for type: ${type}`,
+        });
+        return;
+      }
+
+      // Use flattenDataForCsv for proper data formatting
+      flattenDataForCsv(filteredData, type);
+      toast({
+        title: 'Success',
+        description: 'CSV file has been downloaded',
+      });
+    } catch (err) {
+      console.error('Export error:', err);
+      toast({
+        title: 'Failed to export csv',
+        description: 'Something went wrong',
+        variant: 'destructive',
+      });
+    }
+  }, [type, toast]);
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
       <SheetContent
         side="right"
         className="w-screen max-w-none h-screen flex flex-col py-4"
+        style={{ zIndex: 50 }}
       >
         <SheetHeader className="space-y-4">
           <div className="flex items-center justify-between px-4 pt-4">
@@ -299,10 +419,30 @@ export default function DataTypeFilterPanel({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Keyword</TableHead>
-                <TableHead>Device</TableHead>
-                <TableHead>Location</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('keyword')}>
+                    Keyword
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('device')}>
+                    Device
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('location')}>
+                    Location
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('date')}>
+                    Date
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                  </TableHead>
                 {columnMap[type]}
               </TableRow>
             </TableHeader>

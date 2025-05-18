@@ -108,9 +108,11 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
   const renderHistoricalData = useCallback(
     (date: string, data: any) => {
       const isExpanded = expandedHistoricalItems[date];
-
       return (
-        <div key={date} className="border-b border-gray-300 last:border-b-0">
+        <div
+          key={date + data?._id}
+          className="border-b border-gray-300 last:border-b-0"
+        >
           <div
             className="flex items-center gap-2 py-2 cursor-pointer hover:bg-cyan-200 px-2"
             onClick={(e) => {
@@ -209,7 +211,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
 
   const content = useMemo(() => {
     const processedData = processData(data);
-
+    console.log('processedData', processedData);
     if (processedData === null || typeof processedData !== 'object') {
       return renderValue(processedData);
     }
@@ -222,12 +224,9 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
     }
 
     if (isHistoricalData) {
-      return Object.entries(processedData)
-        .sort(
-          ([dateA], [dateB]) =>
-            new Date(dateB).getTime() - new Date(dateA).getTime()
-        )
-        .map(([date, value]) => renderHistoricalData(date, value));
+      return (processedData as any[])
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .map((item) => renderHistoricalData(item.date, item));
     }
 
     return Object.entries(processedData).map(([key, value]) => {

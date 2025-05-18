@@ -8,9 +8,10 @@ import { useToast } from '@/hooks/use-toast';
 import Pagination from '@/components/pages/Keywords/KeywordsTable/Pagination';
 import { csvParser } from '@/utils';
 import TableHeaderComponent from '@/components/pages/GoogleGraph/GoogleGraphTable/TableHeader';
-import SearchBar from '@/components/pages/GoogleGraph/GoogleGraphTable/SearchBar';
 import DataTable from '@/components/pages/GoogleGraph/GoogleGraphTable/DataTable';
 import DataViewModal from '@/components/pages/GoogleGraph/GoogleGraphTable/DataViewModal';
+import { AlertCircle, Search } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 interface GoogleGraphTableProps {
   data: any[];
@@ -19,7 +20,16 @@ interface GoogleGraphTableProps {
   totalPages: number;
   fetchLoading: boolean;
   pageSize: number;
-  onPageChange: (data: { page?: number }) => void;
+  onPageChange: (params: { page?: number }) => void;
+  onItemPerPageChange: (value: number) => void;
+  onSort: (key: string) => void;
+  sortConfig: {
+    key: string;
+    direction: 'asc' | 'desc';
+  };
+  searchTerm: string;
+  onSearchChange: (value: string) => void;
+  onSearch: () => void;
 }
 
 const CSV_FIELDS = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
@@ -27,9 +37,19 @@ const CSV_FIELDS = ['_id', 'keywordId', 'term', 'createdAt', 'data'];
 const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   data: initialData = [],
   currentPage,
+  totalCount,
+  fetchLoading,
+  pageSize,
   onPageChange,
+  onItemPerPageChange,
+  onSort,
+  sortConfig,
+  searchTerm,
+  onSearchChange,
+  onSearch,
 }) => {
   const [data, setData] = useState<any[]>(initialData);
+  const [keywords, setKeywords] = useState<any[]>([]);
   const [rowData, setRowData] = useState<Record<string, any[]>>({});
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [showModal, setShowModal] = useState(false);
@@ -37,135 +57,47 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
     {}
   );
   const [loadingHistory, setLoadingHistory] = useState(false);
-  const [searchInput, setSearchInput] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [sortConfig, setSortConfig] = useState<{
-    key: string;
-    direction: 'asc' | 'desc';
-  }>({ key: '', direction: 'asc' });
-  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchLatest = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await axios.get('/api/google-graph', {
-          params: { latest: true },
-        });
-
-        if (response.data && Array.isArray(response.data.data)) {
-          setData(response.data.data);
-        } else {
-          setData([]);
-          console.warn('Received invalid data format:', response.data);
-        }
-      } catch (error: any) {
-        console.error('Error fetching latest data:', error);
-        const errorMessage =
-          error.response?.data?.error ||
-          error.message ||
-          'Failed to fetch data';
-        setError(errorMessage);
-        setData([]);
-
-        // Show toast notification for error
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          variant: 'destructive',
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLatest();
-  }, [toast]);
+    setData(initialData);
+  }, [initialData]);
 
   // Fetch row data
   useEffect(() => {
     const fetchRowData = async () => {
-      const newRowData: Record<string, any[]> = {};
-      await Promise.all(
-        data.map(async (row) => {
-          try {
-            const { data: json } = await axios.get('/api/google-graph', {
-              params: {
-                keywordId: row.keywordId,
-                limit: 1,
-              },
-            });
-            if (json.data?.[0]?.data) {
-              newRowData[row._id] = json.data[0].data;
+      if (fetchLoading) return; // Don't fetch if parent is loading
+
+      try {
+        const newRowData: Record<string, any[]> = {};
+        await Promise.all(
+          data.map(async (row) => {
+            try {
+              const { data: json } = await axios.get('/api/google-graph', {
+                params: {
+                  keywordId: row.keywordId,
+                  limit: 1,
+                },
+              });
+              if (json.data?.[0]?.data) {
+                newRowData[row._id] = json.data[0].data;
+              }
+            } catch (e) {
+              console.error('Error fetching row data:', e);
             }
-          } catch (e) {
-            console.error('Error fetching row data:', e);
-          }
-        })
-      );
-      setRowData(newRowData);
+          })
+        );
+        setRowData(newRowData);
+      } catch (error) {
+        console.error('Error in fetchRowData:', error);
+      }
     };
-    fetchRowData();
-  }, [data]);
 
-  const filteredAndSortedData = useMemo(() => {
-    let filtered = data;
-    if (searchTerm) {
-      filtered = filtered.filter((row) =>
-        row.term.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    if (data.length > 0) {
+      fetchRowData();
     }
-    if (sortConfig.key) {
-      filtered = [...filtered].sort((a, b) => {
-        let aValue = a[sortConfig.key];
-        let bValue = b[sortConfig.key];
-
-        if (sortConfig.key === 'createdAt') {
-          aValue = new Date(aValue).getTime();
-          bValue = new Date(bValue).getTime();
-        } else if (sortConfig.key === 'itemsCount') {
-          aValue = rowData[a._id]?.length || 0;
-          bValue = rowData[b._id]?.length || 0;
-        }
-
-        if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return filtered;
-  }, [data, searchTerm, sortConfig, rowData]);
-
-  // Paginate data
-  const paginatedRows = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedData.slice(start, start + itemsPerPage);
-  }, [filteredAndSortedData, currentPage, itemsPerPage]);
-
-  // Handlers
-  const handleItemPerPageChange = useCallback(
-    (value: number) => {
-      setItemsPerPage(value);
-      onPageChange({ page: 1 });
-    },
-    [onPageChange]
-  );
-
-  const handleSort = useCallback((key: string) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  }, []);
-
-  const handleSearch = useCallback(() => {
-    setSearchTerm(searchInput);
-    onPageChange({ page: 1 });
-  }, [searchInput, onPageChange]);
+  }, [data, fetchLoading]);
 
   const handleSelectRow = useCallback((id: string, checked: boolean) => {
     setSelectedRows((prev) => {
@@ -182,10 +114,10 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
   const handleSelectAll = useCallback(
     (checked: boolean) => {
       setSelectedRows(
-        checked ? new Set(paginatedRows.map((row) => row._id)) : new Set()
+        checked ? new Set(data.map((row) => row._id)) : new Set()
       );
     },
-    [paginatedRows]
+    [data]
   );
 
   useEffect(() => {
@@ -235,39 +167,47 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         });
         csvRows.push(values.join(','));
       }
+
       csvParser(csvRows.join('\n'), filename);
     },
     []
   );
 
   const handleExportSelected = useCallback(async () => {
-    const selected = data.filter((row) => selectedRows.has(row._id));
-    if (!selected.length) {
-      toast({ title: 'No rows selected', variant: 'destructive' });
-      return;
-    }
-    const allHistory = (
-      await Promise.all(
-        selected.map(async (row) => {
-          try {
-            const { data: json } = await axios.get('/api/google-graph', {
-              params: { keywordId: row.keywordId, limit: 100 },
-            });
-            return Array.isArray(json.data) ? json.data : [];
-          } catch {
-            return [];
-          }
-        })
-      )
-    ).flat();
-    if (!allHistory.length) {
+    if (selectedRows.size === 0) {
       toast({
-        title: 'No historical data found for selected',
+        title: 'No rows selected',
+        description: 'Please select at least one row to export',
         variant: 'destructive',
       });
       return;
     }
-    exportToCsv(allHistory);
+
+    try {
+      const selectedData = data.filter((row) => selectedRows.has(row._id));
+      if (selectedData.length === 0) {
+        toast({
+          title: 'Export failed',
+          description: 'No data found for selected rows',
+          variant: 'destructive',
+        });
+        return;
+      }
+      exportToCsv(
+        selectedData,
+        `google-graph-selected-${new Date().toISOString()}.csv`
+      );
+      toast({
+        title: 'Export successful',
+        description: `Exported ${selectedData.length} rows to CSV`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Export failed',
+        description: 'Failed to export selected data',
+        variant: 'destructive',
+      });
+    }
   }, [data, selectedRows, exportToCsv, toast]);
 
   const handleExportAllHistorical = useCallback(async () => {
@@ -275,52 +215,71 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
       const { data: json } = await axios.get('/api/google-graph', {
         params: { limit: 1000 },
       });
+
       if (!json.data?.length) {
-        toast({ title: 'No historical data found', variant: 'destructive' });
+        toast({
+          title: 'No data available',
+          description: 'There is no data to export',
+          variant: 'destructive',
+        });
         return;
       }
-      exportToCsv(json.data);
-    } catch (e) {
+
+      exportToCsv(
+        json.data,
+        `google-graph-all-${new Date().toISOString()}.csv`
+      );
+    } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to export historical data',
+        title: 'Export failed',
+        description: 'Failed to export all data',
         variant: 'destructive',
       });
     }
   }, [exportToCsv, toast]);
 
   return (
-    <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">
+    <div className="mt-4">
       <Card className="bg-opacity-5 bg-gray-200">
         <TableHeaderComponent
-          totalItems={filteredAndSortedData.length}
+          totalItems={totalCount}
           selectedRows={selectedRows.size}
           onExportSelected={handleExportSelected}
           onExportAll={handleExportAllHistorical}
-          loading={loading}
+          loading={fetchLoading}
         />
         <CardContent>
-          <SearchBar
-            searchInput={searchInput}
-            onSearchInputChange={setSearchInput}
-            onSearch={handleSearch}
-          />
+          <div className="mb-6 space-y-4">
+            <div className="flex items-center space-x-2">
+              <Input
+                placeholder="Search keywords..."
+                value={searchTerm}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="max-w-sm"
+              />
+              <Button variant="outline" onClick={onSearch}>
+                <Search className="h-4 w-4 text-muted-foreground" />
+              </Button>
+            </div>
+          </div>
 
           <DataTable
-            data={paginatedRows}
+            data={data}
             selectedRows={selectedRows}
             rowData={rowData}
-            onSort={handleSort}
+            onSort={onSort}
             onSelectRow={handleSelectRow}
             onSelectAll={handleSelectAll}
+            sortConfig={sortConfig}
+            loading={fetchLoading}
           />
 
           <Pagination
-            totalCount={filteredAndSortedData.length}
+            totalCount={totalCount}
             currentPage={currentPage}
             onPageChange={onPageChange}
-            onItemPerPageChange={handleItemPerPageChange}
-            itemsPerPage={itemsPerPage}
+            onItemPerPageChange={onItemPerPageChange}
+            itemsPerPage={pageSize}
           />
 
           {selectedRows.size > 0 && (

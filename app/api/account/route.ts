@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAccountInfo } from '@/lib/serpApi';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
-import KeywordHistoricalMore from '@/lib/db/models/KeywordHistoricalMore';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistocalMore';
 
 export async function GET() {
   try {
@@ -12,9 +12,9 @@ export async function GET() {
     const lastSearchKeywordHistorical =
       await KeywordHistoricalMore.findOne().sort({ updatedAt: -1 }); // historical data
     const lastSearchDate =
-      lastSearchKeyword.updatedAt > lastSearchKeywordHistorical.updatedAt
-        ? lastSearchKeyword.updatedAt
-        : lastSearchKeywordHistorical.updatedAt;
+      lastSearchKeyword?.updatedAt > lastSearchKeywordHistorical?.updatedAt
+        ? lastSearchKeyword?.updatedAt
+        : lastSearchKeywordHistorical?.updatedAt;
 
     return NextResponse.json({ ...accountData, lastSearchDate });
   } catch (error) {

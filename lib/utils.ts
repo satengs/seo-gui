@@ -164,28 +164,27 @@ export function shortenLocation(location: string): string {
 }
 export function filterKeywordsByType(keywords: any[], type: DataType) {
   return keywords?.filter((item) => {
-    if (!item.historicalData) return false;
+    if (!item.historicalData || !Array.isArray(item.historicalData))
+      return false;
 
-    const entries = Object.values(item.historicalData);
+    const entries = item.historicalData;
 
     switch (type) {
       case 'ai_overview':
-        return entries.some(
-          (entry: any) => entry?.keywordData?.data?.ai_overview
-        );
+        return entries.some((entry: any) => entry?.keywordData?.data?.ai_overview);
 
       case 'related_questions':
         return entries.some(
           (entry: any) =>
-            Array.isArray(entry?.keywordData?.data?.related_questions) ||
-            typeof entry?.keywordData?.data?.related_questions === 'object'
+            Array.isArray(entry?.keywordData?.data.related_questions) ||
+            typeof entry?.keywordData?.related_questions === 'object'
         );
 
       case 'reddit':
         return entries.some(
           (entry: any) =>
             Array.isArray(entry?.keywordData?.data?.organic_results) &&
-            entry.keywordData.data.organic_results.some(
+            entry?.keywordData?.data?.organic_results.some(
               (r: any) =>
                 typeof r?.source === 'string' &&
                 /\breddit\b/i.test(r.source.toLowerCase())
@@ -200,6 +199,10 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
       case 'knowledge_graph':
         return entries.some(
           (entry: any) => entry?.keywordData?.data?.knowledge_graph
+        );
+      case 'discussions_and_forums':
+        return entries.some(
+          (entry: any) => entry?.keywordData?.data?.discussions_and_forums
         );
 
       default:

@@ -1,4 +1,4 @@
-import Roles from '@/lib/db/models/Roles';
+import Roles from '@/lib/db/models/schemas/Roles';
 
 const rolesInitial = [
   {
