@@ -97,7 +97,7 @@ export const getCsvKeywordMultiData = (keywords: IKeyword[]) => {
   return getConsistentData(csvData);
 };
 
-export const csvParser = (csvData: string, fileName: string) => {
+export const csvParser = (csvData: string, fileName: string, append: boolean = false) => {
   const blob = new Blob([csvData], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
