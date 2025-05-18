@@ -19,7 +19,9 @@ const GoogleGraphSchema: Schema = new Schema(
   }
 );
 
+// Compound indexes for better query performance
 GoogleGraphSchema.index({ keywordId: 1, createdAt: -1 });
+GoogleGraphSchema.index({ term: 1, createdAt: -1 });
 GoogleGraphSchema.index({ createdAt: -1 });
 
 const GoogleGraphData =
