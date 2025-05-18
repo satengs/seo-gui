@@ -218,7 +218,7 @@ export default function GoogleGraphPage() {
         setProgress(100);
         toast({
           title: 'Success',
-          description: 'All keywords have been processed successfully',
+          description: `Successfully updated ${processedKeywords} keywords`,
         });
         await fetchData(currentPage, pageSize);
       }
@@ -243,7 +243,12 @@ export default function GoogleGraphPage() {
 
       if (hasData) {
         setShowConfirmModal(true);
+        toast({
+          title: 'Data Found',
+          description: 'Existing data found for today. Please confirm to update.',
+        });
       } else {
+        setIsChecking(false);
         setIsUpdating(true);
         setProgress(0);
         setIsCancelled(false);
@@ -251,13 +256,19 @@ export default function GoogleGraphPage() {
       }
     } catch (error) {
       setError('Failed to check existing data');
-    } finally {
       setIsChecking(false);
+      setProgress(0);
+      toast({
+        title: 'Error',
+        description: 'Failed to check existing data',
+        variant: 'destructive',
+      });
     }
   };
 
   const handleConfirmUpdate = async () => {
     setShowConfirmModal(false);
+    setIsChecking(false);
     setIsUpdating(true);
     setProgress(0);
     setIsCancelled(false);
@@ -333,7 +344,7 @@ export default function GoogleGraphPage() {
             {isChecking ? (
               <div className="flex items-center justify-center">
                 <Spinner className="mr-2 h-4 w-4" />
-                <span>Checking Data...</span>
+                <span>Checking Data... {progress}%</span>
               </div>
             ) : isUpdating ? (
               <div className="flex items-center justify-center">
@@ -343,7 +354,7 @@ export default function GoogleGraphPage() {
             ) : (
               'Update Daily Data'
             )}
-            {isUpdating && progress > 0 && (
+            {(isUpdating || isChecking) && progress > 0 && (
               <div
                 className="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-300"
                 style={{ width: `${progress}%` }}
@@ -387,7 +398,13 @@ export default function GoogleGraphPage() {
 
       <UpdateConfirmationDialog
         onConfirm={handleConfirmUpdate}
-        onOpenChange={setShowConfirmModal}
+        onOpenChange={(open) => {
+          setShowConfirmModal(open);
+          if (!open) {
+            setIsChecking(false);
+            setProgress(0);
+          }
+        }}
         open={showConfirmModal}
       />
     </div>
