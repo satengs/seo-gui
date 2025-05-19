@@ -132,6 +132,7 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
           {isExpanded && (
             <div className="pl-8 pr-4 pb-2">
               {Object.entries(data).map(([key, value]) => {
+                if (key === 'date') return null; // Skip rendering the inner date field
                 const isObject = typeof value === 'object' && value !== null;
                 const icon = getKeyIcon(key);
 
@@ -211,7 +212,6 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
 
   const content = useMemo(() => {
     const processedData = processData(data);
-    console.log('processedData', processedData);
     if (processedData === null || typeof processedData !== 'object') {
       return renderValue(processedData);
     }
@@ -224,7 +224,28 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
     }
 
     if (isHistoricalData) {
-      return (processedData as any[])
+      if (!Array.isArray(processedData)) {
+        // Try to convert object to array if it's an object with dates as keys
+        if (typeof processedData === 'object' && processedData !== null) {
+          const arrayData = Object.entries(processedData as Record<string, any>).map(([date, data]) => ({
+            date,
+            data
+          }));
+          return arrayData
+            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .map((item) => renderHistoricalData(item.date, item));
+        }
+        return <span>Invalid historical data format</span>;
+      }
+
+      // Filter out items without valid dates before sorting
+      const validData = processedData.filter(item => item && item.date);
+
+      if (validData.length === 0) {
+        return <span>No valid historical data found</span>;
+      }
+
+      return validData
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .map((item) => renderHistoricalData(item.date, item));
     }
