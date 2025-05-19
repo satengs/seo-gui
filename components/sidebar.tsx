@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { BarChart3, KeyRound, Menu, Network } from 'lucide-react';
+import { BarChart3, KeyRound, Menu, Network, MapPin } from 'lucide-react';
 // import Image from 'next/image';
 
 const menuItems = [
@@ -32,6 +32,11 @@ const menuItems = [
     title: 'Google Graph',
     icon: Network,
     href: '/google-graph',
+  },
+  {
+    title: 'Locations',
+    icon: MapPin,
+    href: '/locations',
   },
   // {
   //   title: 'Competitors',

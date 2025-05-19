@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
+import Location from '@/lib/db/models/Location';
 import Keyword from '@/lib/db/models/schemas/Keyword';
 import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData';
 import { searchKeyword } from '@/lib/serpApi';
 import { findAndUpdateDailyKeyword } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities } from '@/lib/db/helpers';
 import { SearchKeywordResponse } from '@/types';
-import { locationList } from '@/consts/locations';
 
 export async function POST(request: Request) {
   try {
@@ -18,8 +18,9 @@ export async function POST(request: Request) {
     const keywordsArr = data?.term?.split('\n');
     for (let i = 0; i < keywordsArr?.length; i++) {
       if (data?.includeDefaultLocation && !data?.location) {
-        for (let l = 0; l < locationList.length; l++) {
-          const currentLocation = locationList[l];
+        const defaultLocations = await Location.find();
+        for (let l = 0; l < defaultLocations.length; l++) {
+          const currentLocation = defaultLocations[l].location;
           await findAndUpdateDailyKeyword({
             keyword: keywordsArr[i],
             location: currentLocation,

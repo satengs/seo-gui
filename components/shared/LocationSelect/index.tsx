@@ -8,19 +8,7 @@ import React, {
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import axiosClient from '@/lib/axiosClient';
-
-interface ILocation {
-  id: string;
-  canonical_name: string;
-  country_code: string;
-  google_id: number;
-  google_parent_id: number | null;
-  gps: number[];
-  keys: string[];
-  name: string;
-  reach: number;
-  target_type: string;
-}
+import { ILocation } from '@/types';
 
 interface LocationSelectProps {
   onValueChange: (item: ILocation | string) => void;

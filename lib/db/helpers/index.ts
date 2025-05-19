@@ -1,4 +1,4 @@
-import { IHistoricalMapEntry, IKeyword, ISortConfig, ISortObj } from '@/types';
+import { ISortConfig, ISortObj } from '@/types';
 import { DateRange } from 'react-day-picker';
 
 export const paginateEntities = async (
@@ -156,4 +156,51 @@ export const paginateEntitiesByFilter = async (
   }
 };
 
+export const paginateLocationsByFilter = async (
+  page: number,
+  pageSize: number,
+  schema: any,
+  location: string,
+  sortBy?: ISortConfig
+) => {
+  const skip = (page - 1) * pageSize;
 
+  try {
+    const regex = new RegExp(location, 'i');
+    let query = location
+      ? {
+          $or: [
+            { location: { $regex: regex } },
+            { countryCode: { $in: [regex] } },
+            { longitude: { $regex: regex } },
+            { latitude: { $regex: regex } },
+          ],
+        }
+      : {};
+
+    const sort: ISortObj = {};
+    if (sortBy?.sortKey?.length) {
+      sort[`${sortBy.sortKey}`] = sortBy.sortDirection === 'asc' ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    const entitiesData = await schema
+      .find(query)
+      .skip(skip)
+      .limit(pageSize)
+      .sort(sort);
+
+    const totalCount = await schema.countDocuments(query);
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    return {
+      entitiesData,
+      totalCount,
+      totalPages,
+      currentPage: page,
+    };
+  } catch (err: any) {
+    throw new Error('Error fetching paginated data: ' + (err?.message || ''));
+  }
+};
