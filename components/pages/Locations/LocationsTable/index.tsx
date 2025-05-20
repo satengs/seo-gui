@@ -16,6 +16,7 @@ interface ILocationsTableProps {
   locations: ILocation[];
   fetchLoading: boolean;
   currentPage: number;
+  searchKey: string;
   onLocationChange: (date: any) => void;
   onLocationFilterChange: (date: any) => void;
 }
@@ -24,10 +25,11 @@ const LocationsTable = ({
   locations,
   fetchLoading,
   currentPage,
+  searchKey,
   onLocationChange,
   onLocationFilterChange,
 }: ILocationsTableProps) => {
-  const [_, setSortConfig] = useState({
+  const [sortConfig, setSortConfig] = useState({
     key: '',
     direction: 'asc',
   });
@@ -122,6 +124,11 @@ const LocationsTable = ({
                               location={item}
                               currentPage={currentPage}
                               onLocationChange={onLocationChange}
+                              searchKey={searchKey}
+                              sortBy={{
+                                sortKey: sortConfig.key,
+                                sortDirection: sortConfig.direction,
+                              }}
                             />
                           </div>
                         </TableCell>

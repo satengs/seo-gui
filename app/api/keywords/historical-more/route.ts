@@ -52,7 +52,6 @@ async function processAllKeywords() {
               $lt: endOfDay,
             },
           });
-
         if (!existInHistoricalMoreKeyword) {
           const searchParams = {
             keyword: keyword.term,
@@ -79,8 +78,8 @@ async function processAllKeywords() {
         totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     }
 
-    processedPercent =
-      totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
+    // processedPercent =
+    //   totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     return {
       success: true,
       processedCount,

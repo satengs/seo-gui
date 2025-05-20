@@ -171,12 +171,14 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
 
     switch (type) {
       case 'ai_overview':
-        return entries.some((entry: any) => entry?.keywordData?.data?.ai_overview);
+        return entries.some(
+          (entry: any) => entry?.keywordData?.data?.ai_overview
+        );
 
       case 'related_questions':
         return entries.some(
           (entry: any) =>
-            Array.isArray(entry?.keywordData?.data.related_questions) ||
+            Array.isArray(entry?.keywordData?.data?.related_questions) ||
             typeof entry?.keywordData?.related_questions === 'object'
         );
 

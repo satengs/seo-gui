@@ -5,17 +5,22 @@ import { Trash } from 'lucide-react';
 import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 import axiosClient from '@/lib/axiosClient';
 import { ILocation } from '@/types';
+import { SIZE } from '@/consts';
 
 interface IActionsComponent {
   location: any;
   currentPage: number;
   onLocationChange: (data: any, obj?: any) => void;
+  searchKey: string;
+  sortBy: { sortKey: string; sortDirection: string };
 }
 
 const LocationItemActions: React.FC<IActionsComponent> = ({
   location,
   currentPage,
   onLocationChange,
+  searchKey,
+  sortBy,
 }) => {
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -24,10 +29,19 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
   const deleteLocation = useCallback(
     async (location: ILocation) => {
       try {
+        let queryString = `/api/locations?location=${location._id}&page=${currentPage}`;
+        if (SIZE) {
+          queryString += `&size=${SIZE}`;
+        }
+        if (searchKey) {
+          queryString += `&searchKey=${searchKey}`;
+        }
+        if (sortBy?.sortKey?.length) {
+          queryString += `&sortKey=${sortBy?.sortKey}&sortDirection=${sortBy?.sortDirection}`;
+        }
+
         setRemoveModalLoading(true);
-        const response = await axiosClient.delete(
-          `/api/locations?location=${location._id}&page=${currentPage || 1}`
-        );
+        const response = await axiosClient.delete(queryString);
         onLocationChange(response?.data || []);
       } catch (err) {
         toast({
@@ -39,7 +53,7 @@ const LocationItemActions: React.FC<IActionsComponent> = ({
         setRemoveModalLoading(false);
       }
     },
-    [currentPage, onLocationChange, toast]
+    [currentPage, onLocationChange, toast, searchKey, sortBy]
   );
 
   const onCloseModal = useCallback(() => setShowModal(false), []);

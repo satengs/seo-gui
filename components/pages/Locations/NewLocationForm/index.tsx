@@ -39,7 +39,6 @@ const NewLocationForm = ({ onNewLocation }: INewLocationFormProps) => {
   const onSubmit = async (formData: INewLocationFormValues) => {
     try {
       setIsLoading(true);
-      console.log('form dtata: ', formData);
       if (Object.keys(formData) && formDataLoc?.length) {
         const response = await axiosClient.post('/api/locations', formDataLoc);
         onNewLocation(response?.data || []);

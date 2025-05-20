@@ -116,19 +116,15 @@ export default function LocationsPage() {
           Add Location
         </Button>
       </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <PageInfoItem
-          title={'Default Locations Count'}
-          icon={<Pin className="text-primary" />}
-          statistic={'15'}
-        />
-      </div>
       {showNewLocationForm ? (
         <NewLocationForm onNewLocation={onLocationChange} />
       ) : null}
 
       <Card className="p-6">
+        <div className="flex items-center justify-center mb-4 text-sm text-muted-foreground">
+          Total: {totalCount || ''} locations
+        </div>
+
         <div className="flex gap-4 mb-6">
           <div className="flex-1">
             <Input
@@ -150,6 +146,7 @@ export default function LocationsPage() {
           currentPage={currentPage}
           onLocationChange={onLocationChange}
           onLocationFilterChange={onLocationFilterChange}
+          searchKey={searchKey}
         />
         <Pagination
           totalCount={totalCount}
