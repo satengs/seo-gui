@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import axios from 'axios';
+import axiosClient from '@/lib/axiosClient';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -74,7 +74,7 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         await Promise.all(
           data.map(async (row) => {
             try {
-              const { data: json } = await axios.get('/api/google-graph', {
+              const { data: json } = await axiosClient.get('/api/google-graph', {
                 params: {
                   keywordId: row.keywordId,
                   limit: 1,
@@ -130,7 +130,7 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
           const row = data.find((r) => r._id === rowId);
           if (!row) return;
           try {
-            const { data: json } = await axios.get('/api/google-graph', {
+            const { data: json } = await axiosClient.get('/api/google-graph', {
               params: {
                 keywordId: row.keywordId,
                 limit: 100,
@@ -212,7 +212,7 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
 
   const handleExportAllHistorical = useCallback(async () => {
     try {
-      const { data: json } = await axios.get('/api/google-graph', {
+      const { data: json } = await axiosClient.get('/api/google-graph', {
         params: { limit: 1000 },
       });
 

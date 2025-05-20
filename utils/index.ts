@@ -130,10 +130,6 @@ export const generateCsvFile = (keywordOrArr: IKeyword | IKeyword[]) => {
     return processedRow;
   });
 
-  console.log('Final data for CSV:', processedData);
-  console.log('Number of rows:', processedData.length);
-  console.log('Size of data (MB):', new Blob([JSON.stringify(processedData)]).size / (1024 * 1024));
-
   const parser = new Parser({
     fields: Object.keys(processedData[0] || {}),
     header: true

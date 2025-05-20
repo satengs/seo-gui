@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import axios from 'axios';
+import axiosClient from '@/lib/axiosClient';
+import { isAxiosError, isCancel } from 'axios';
 import GoogleGraphTable from '@/components/pages/GoogleGraph/GoogleGraphTable';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Spinner } from '@/components/ui/spinner';
 import UpdateConfirmationDialog from '@/components/pages/GoogleGraph/UpdateConfirmationDialog';
-import axiosClient from '@/lib/axiosClient/index';
 
 export default function GoogleGraphPage() {
   const [data, setData] = useState<any[]>([]);
@@ -40,7 +40,7 @@ export default function GoogleGraphPage() {
 
   const fetchKeywords = useCallback(async () => {
     try {
-      const resp = await axios.get('/api/google-graph/keywords');
+      const resp = await axiosClient.get('/api/google-graph/keywords');
       if (!resp.data || !Array.isArray(resp.data)) {
         console.error('Invalid response format:', resp.data);
         toast({
@@ -53,7 +53,7 @@ export default function GoogleGraphPage() {
 
       setKeywords(resp.data);
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (isAxiosError(error)) {
         console.error('Axios error details:', {
           status: error.response?.status,
           data: error.response?.data,
@@ -88,7 +88,7 @@ export default function GoogleGraphPage() {
           params.searchTerm = activeSearchTerm;
         }
 
-        const { data: json } = await axios.get('/api/google-graph', { params });
+        const { data: json } = await axiosClient.get('/api/google-graph', { params });
 
         if (json.error) {
           setError(json.error);
@@ -177,7 +177,7 @@ export default function GoogleGraphPage() {
         }
 
         try {
-          const result = await axios.post(
+          const result = await axiosClient.post(
             '/api/google-graph',
             {
               keywordId: keyword._id,
@@ -191,7 +191,7 @@ export default function GoogleGraphPage() {
           );
           results.push(result.data);
         } catch (error) {
-          if (axios.isCancel(error)) {
+          if (isCancel(error)) {
             return;
           }
           results.push({
@@ -223,7 +223,7 @@ export default function GoogleGraphPage() {
         await fetchData(currentPage, pageSize);
       }
     } catch (error) {
-      if (axios.isCancel(error)) {
+      if (isCancel(error)) {
         return;
       }
       setIsUpdating(false);

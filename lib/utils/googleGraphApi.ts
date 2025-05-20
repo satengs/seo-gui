@@ -1,4 +1,5 @@
-import axios, { AxiosError } from 'axios';
+import axiosClient from '@/lib/axiosClient';
+import { AxiosError } from 'axios';
 
 interface GoogleGraphResponse {
   entitiesData: any[];
@@ -10,13 +11,12 @@ interface TransformedEntity {
   name: string;
   type: string;
   description: string;
-  detailedDescription?: {
-    articleBody?: string;
-    url?: string;
-    hello?: string;
+  detailedDescription: {
+    articleBody: string;
+    url: string;
   };
-  image?: string;
-  website?: string;
+  image: string;
+  website: string;
 }
 
 export class GoogleGraphApiService {
@@ -71,7 +71,7 @@ export class GoogleGraphApiService {
         indent: true,
       };
 
-      const response = await axios.get(url, {
+      const response = await axiosClient.get(url, {
         params,
         timeout: 10000,
       });
@@ -87,7 +87,7 @@ export class GoogleGraphApiService {
 
       return { entitiesData };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (error instanceof AxiosError) {
         console.error('[Google Graph API Service] Axios error details:', {
           status: error.response?.status,
           statusText: error.response?.statusText,
