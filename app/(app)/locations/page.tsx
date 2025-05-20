@@ -122,7 +122,7 @@ export default function LocationsPage() {
 
       <Card className="p-6">
         <div className="flex items-center justify-center mb-4 text-sm text-muted-foreground">
-          Total: {totalCount} locations
+          Total: {totalCount || ''} locations
         </div>
 
         <div className="flex gap-4 mb-6">
