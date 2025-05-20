@@ -88,11 +88,11 @@ export const paginateEntitiesByFilter = async (
         { location: { $regex: regex } },
         { device: { $regex: regex } },
         { kgmid: { $regex: regex } },
-        { kgmTitle: { $regex: regex } }
+        { kgmTitle: { $regex: regex } },
       ];
 
       if (term.includes(',')) {
-        const tags = term.split(',').map(tag => tag.trim());
+        const tags = term.split(',').map((tag) => tag.trim());
         query.$or.push({ tags: { $in: tags } });
       } else {
         query.$or.push({ tags: { $in: [term] } });
@@ -124,32 +124,47 @@ export const paginateEntitiesByFilter = async (
                 $expr: {
                   $and: [
                     { $eq: ['$id', '$$keywordId'] },
-                    ...(fromDate ? [{ $gte: ['$date', fromDate.toISOString().split('T')[0]] }] : []),
-                    ...(toDate ? [{ $lte: ['$date', toDate.toISOString().split('T')[0]] }] : [])
-                  ]
-                }
-              }
+                    ...(fromDate
+                      ? [
+                          {
+                            $gte: [
+                              '$date',
+                              fromDate.toISOString().split('T')[0],
+                            ],
+                          },
+                        ]
+                      : []),
+                    ...(toDate
+                      ? [
+                          {
+                            $lte: ['$date', toDate.toISOString().split('T')[0]],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              },
             },
-            { $sort: { date: -1 } }
+            { $sort: { date: -1 } },
           ],
-          as: 'historicalData'
-        }
+          as: 'historicalData',
+        },
       },
       { $sort: sort },
       { $skip: skip },
-      { $limit: pageSize }
+      { $limit: pageSize },
     ];
 
     const [entitiesData, totalCount] = await Promise.all([
       schema.aggregate(pipeline),
-      schema.countDocuments(query)
+      schema.countDocuments(query),
     ]);
 
     return {
       entitiesData,
       totalCount,
       totalPages: Math.ceil(totalCount / pageSize),
-      currentPage: page
+      currentPage: page,
     };
   } catch (err: any) {
     throw new Error('Error fetching paginated data: ' + (err?.message || ''));
@@ -172,8 +187,6 @@ export const paginateLocationsByFilter = async (
           $or: [
             { location: { $regex: regex } },
             { countryCode: { $in: [regex] } },
-            { longitude: { $regex: regex } },
-            { latitude: { $regex: regex } },
           ],
         }
       : {};

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
 import Location from '@/lib/db/models/Location';
-import { paginateEntities, paginateEntitiesByFilter } from '@/lib/db/helpers';
+import { paginateLocationsByFilter } from '@/lib/db/helpers';
 import { ILocation, IPaginateData } from '@/types';
 import { SIZE } from '@/consts';
 
@@ -14,9 +14,10 @@ export async function GET(req: Request) {
     const searchKey = searchParams.get('searchKey') || '';
     const sortKey = searchParams.get('sortKey') || '';
     const sortDirection = searchParams.get('sortDirection') || 'asc';
+    console.log('search params: ', searchParams);
 
     let _locations: IPaginateData<ILocation>;
-    _locations = await paginateEntitiesByFilter(
+    _locations = await paginateLocationsByFilter(
       page as number,
       size as number,
       Location,
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || SIZE;
+    const searchKey = searchParams.get('searchKey') || '';
+    const sortKey = searchParams.get('sortKey') || '';
+    const sortDirection = searchParams.get('sortDirection') || 'asc';
     if (data?.length) {
       for (let i = 0; i < data?.length; i++) {
         const existLocation = await Location.findOne({
@@ -58,7 +62,13 @@ export async function POST(request: Request) {
         }
       }
     }
-    const locations = await paginateEntities(+page, +size, Location);
+    const locations = await paginateLocationsByFilter(
+      page as number,
+      size as number,
+      Location,
+      searchKey,
+      { sortKey, sortDirection }
+    );
     return NextResponse.json(locations);
   } catch (error) {
     console.error('Failed to create location:', error);
@@ -76,11 +86,17 @@ export async function DELETE(request: Request) {
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || SIZE;
     const location = searchParams.get('location') || '';
+    console.log('loctaion: ', location);
+    const searchKey = searchParams.get('searchKey') || '';
+    const sortKey = searchParams.get('sortKey') || '';
+    const sortDirection = searchParams.get('sortDirection') || 'asc';
     await Location.deleteOne({ _id: location });
-    const locations = await paginateEntities(
+    const locations = await paginateLocationsByFilter(
       page as number,
       size as number,
-      Location
+      Location,
+      searchKey,
+      { sortKey, sortDirection }
     );
     return NextResponse.json(locations);
   } catch (error) {
