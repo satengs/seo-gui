@@ -52,8 +52,6 @@ async function processAllKeywords() {
               $lt: endOfDay,
             },
           });
-        console.log('exist: ', existInHistoricalMoreKeyword);
-
         if (!existInHistoricalMoreKeyword) {
           const searchParams = {
             keyword: keyword.term,
