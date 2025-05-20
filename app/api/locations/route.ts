@@ -14,7 +14,6 @@ export async function GET(req: Request) {
     const searchKey = searchParams.get('searchKey') || '';
     const sortKey = searchParams.get('sortKey') || '';
     const sortDirection = searchParams.get('sortDirection') || 'asc';
-    console.log('search params: ', searchParams);
 
     let _locations: IPaginateData<ILocation>;
     _locations = await paginateLocationsByFilter(
@@ -86,7 +85,6 @@ export async function DELETE(request: Request) {
     const page = searchParams.get('page') || 1;
     const size = searchParams.get('size') || SIZE;
     const location = searchParams.get('location') || '';
-    console.log('loctaion: ', location);
     const searchKey = searchParams.get('searchKey') || '';
     const sortKey = searchParams.get('sortKey') || '';
     const sortDirection = searchParams.get('sortDirection') || 'asc';

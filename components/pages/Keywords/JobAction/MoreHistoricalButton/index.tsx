@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
-export const STATUS_CHECK_INTERVAL = 30000;
+export const STATUS_CHECK_INTERVAL = 5000;
 
 const MoreHistoricalButton: React.FC = () => {
   const { toast } = useToast();
