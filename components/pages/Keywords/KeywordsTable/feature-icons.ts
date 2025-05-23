@@ -36,7 +36,8 @@ import {
   TriangleAlertIcon,
   MessageSquareWarning,
   Globe,
-  Megaphone
+  Megaphone,
+  ShieldQuestion
 } from 'lucide-react';
 import { IFeaturedIcon } from '@/types';
 
@@ -342,6 +343,13 @@ const featureIcons: Record<string, IFeaturedIcon> = {
     bgClass: 'bg-amber-100 dark:bg-amber-900',
     textClass: 'text-amber-800 dark:text-amber-200',
     borderClass: 'border-amber-200 dark:border-amber-800',
+  },
+  questions_and_answers: {
+    icon: ShieldQuestion,
+    label: 'Questions and Answers',
+    bgClass: 'bg-lime-100 dark:bg-lime-900',
+    textClass: 'text-lime-800 dark:text-lime-200',
+    borderClass: 'border-lime-200 dark:border-lime-800',
   }
 };
 
