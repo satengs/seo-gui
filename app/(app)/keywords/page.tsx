@@ -34,6 +34,7 @@ export default function KeywordsPage() {
     useState<boolean>(false);
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [location, setLocation] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
@@ -210,6 +211,11 @@ export default function KeywordsPage() {
     setAsDefault((prevState) => !prevState);
   }, []);
 
+  const onItemsSelect = useCallback((selected: string[]) => {
+    const items = Array.from(selected);
+    setSelectedItems(items);
+  }, []);
+
   useEffect(() => {
     setCurrentPage(1);
     fetchKeywords(1, itemsPerPage, searchTerm, sortBy, dateRange);
@@ -218,7 +224,7 @@ export default function KeywordsPage() {
   return (
     <div className="p-1.5 space-y-6">
       <Card className="px-6">
-        <JobAction />
+        <JobAction selectedItems={selectedItems} />
         <div className="flex items-center bg-fuchsia-50 rounded-md shadow-lg px-3 py-2 mb-6">
           <Info className="text-primary bg-blue-95 dark:text-blue-17 opacity-60" />
           <span className="ml-2 text-blue-95 text-center px-3 dark:text-blue-17 opacity-60">
@@ -294,6 +300,8 @@ export default function KeywordsPage() {
           totalPages={totalPages}
           onKeywordsPaginate={onKeywordsPaginate}
           fetchLoading={fetchLoading}
+          dateRange={dateRange}
+          onItemsSelect={onItemsSelect}
         />
         <Pagination
           totalCount={totalCount}

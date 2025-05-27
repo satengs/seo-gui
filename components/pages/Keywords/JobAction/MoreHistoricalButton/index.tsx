@@ -3,10 +3,18 @@ import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
+import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 export const STATUS_CHECK_INTERVAL = 5000;
 
-const MoreHistoricalButton: React.FC = () => {
+interface IMoreHistoricalButtonProps {
+  selectedItems: any[];
+}
+
+const MoreHistoricalButton = ({
+  selectedItems,
+}: IMoreHistoricalButtonProps) => {
   const { toast } = useToast();
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
   const [isHistoricalFetching, setIsHistoricalFetching] = useState(false);
   const [processedPercent, setProcessedPercent] = useState<number>(0);
   const [totalProcessed, setTotalProcessed] = useState<number>(0);
@@ -26,8 +34,9 @@ const MoreHistoricalButton: React.FC = () => {
 
   const checkStatus = useCallback(async () => {
     try {
-      const response = await axiosClient.get(
-        `/api/keywords/historical-more?action=status`
+      const response = await axiosClient.post(
+        `/api/keywords/historical-more?action=status`,
+        { items: [] }
       );
       const { isProcessing, processedPercent, processedTotal, processedCount } =
         response?.data || {};
@@ -47,6 +56,12 @@ const MoreHistoricalButton: React.FC = () => {
         }
         return newChunk;
       });
+      if (processedCount === processedTotal && isProcessing) {
+        toast({
+          title: 'Success',
+          description: `Completed processing all ${totalProcessed} keywords`,
+        });
+      }
     } catch (error) {
       console.error('Failed to check status:', error);
       toast({
@@ -62,7 +77,9 @@ const MoreHistoricalButton: React.FC = () => {
 
   const handleGetMoreHistorical = useCallback(async () => {
     try {
-      await axiosClient.get(`/api/keywords/historical-more?action=start`);
+      await axiosClient.post(`/api/keywords/historical-more?action=start`, {
+        items: selectedItems,
+      });
       setIsHistoricalFetching(true);
       setCurrentChunk(0);
       setTotalProcessed(0);
@@ -78,11 +95,21 @@ const MoreHistoricalButton: React.FC = () => {
         description: 'Failed to start processing',
       });
     }
-  }, [checkStatus, toast]);
+  }, [checkStatus, toast, selectedItems]);
+
+  const onGetMoreBtnClick = useCallback(async () => {
+    if (selectedItems?.length) {
+      setShowConfirmModal(true);
+    } else {
+      await handleGetMoreHistorical();
+    }
+  }, [handleGetMoreHistorical, selectedItems?.length]);
 
   const handleCancelHistorical = useCallback(async () => {
     try {
-      await axiosClient.get(`/api/keywords/historical-more?action=stop`);
+      await axiosClient.post(`/api/keywords/historical-more?action=stop`, {
+        items: [],
+      });
       toast({
         title: 'Processing Stopped',
         description: 'Processing will stop after the current chunk completes',
@@ -101,7 +128,7 @@ const MoreHistoricalButton: React.FC = () => {
       <Button
         variant={'secondary'}
         className="bg-orange-200 text-blue-17 min-w-[200px] relative hover:bg-orange-100"
-        onClick={handleGetMoreHistorical}
+        onClick={onGetMoreBtnClick}
         disabled={isHistoricalFetching}
       >
         {isHistoricalFetching ? (
@@ -115,13 +142,21 @@ const MoreHistoricalButton: React.FC = () => {
       </Button>
 
       {isHistoricalFetching && (
-        <button
-          className="px-4 py-2 rounded-md bg-red-500 text-white"
+        <Button
+          variant="secondary"
+          className="bg-red-300 text-red-900 min-w-[100px]"
           onClick={handleCancelHistorical}
         >
           Stop
-        </button>
+        </Button>
       )}
+      <ConfirmDialog
+        type={'Get historical'}
+        onActionHandle={handleGetMoreHistorical}
+        setIsOpen={setShowConfirmModal}
+        isOpen={showConfirmModal}
+        selectedCount={selectedItems?.length}
+      />
     </div>
   );
 };

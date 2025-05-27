@@ -3,7 +3,7 @@ import dbConnect from '@/lib/db';
 import Keyword from '@/lib/db/models/schemas/Keyword';
 import { seedInitialKeywords } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities, paginateEntitiesByFilter } from '@/lib/db/helpers';
-import { IKeyword, IPaginatedKeywords } from '@/types';
+import { IPaginatedKeywords } from '@/types';
 import { SIZE } from '@/consts';
 
 export async function GET(req: Request) {
@@ -19,8 +19,6 @@ export async function GET(req: Request) {
     const dateRangeFrom = searchParams.get('dateFrom');
     const dateRangeTo = searchParams.get('dateTo');
 
-    // Log to debug date range values
-
     // Seed initial keywords if empty
     const count = await Keyword.countDocuments();
     if (count === 0) {
@@ -28,20 +26,15 @@ export async function GET(req: Request) {
     }
 
     if (fullList) {
-      const keywords = await Keyword.aggregate([
-        {
-          $lookup: {
-            from: 'keywordHistoricalData',
-            localField: '_id',
-            foreignField: 'id',
-            as: 'historicalData'
-          }
-        },
-        {
-          $sort: { createdAt: -1 }
-        }
-      ]);
-      return NextResponse.json(keywords);
+      const _keywords = await paginateEntitiesByFilter(
+        null,
+        null,
+        Keyword,
+        searchTerm,
+        { sortKey, sortDirection },
+        { from: dateRangeFrom, to: dateRangeTo }
+      );
+      return NextResponse.json(_keywords.entitiesData);
     }
 
     let _keywords: IPaginatedKeywords;
@@ -50,7 +43,10 @@ export async function GET(req: Request) {
       size as number,
       Keyword,
       searchTerm,
-      { sortKey, sortDirection },
+      {
+        sortKey,
+        sortDirection,
+      },
       { from: dateRangeFrom, to: dateRangeTo }
     );
 
