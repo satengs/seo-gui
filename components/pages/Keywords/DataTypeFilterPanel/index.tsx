@@ -68,6 +68,8 @@ const columnMap: Record<DataType, React.ReactNode> = {
       <TableHead>Thumbnail</TableHead>
       <TableHead>Link</TableHead>
       <TableHead>Duration</TableHead>
+      <TableHead>Channel</TableHead>
+      <TableHead>Platform</TableHead>
     </>
   ),
   knowledge_graph: (
@@ -122,7 +124,24 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
-        <TableCell>{entry.date}</TableCell>
+        <TableCell>
+          {row?.tags && row?.tags?.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {row?.tags.map((tag:string) => (
+                    <span
+                        key={tag}
+                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                    >
+                                      {tag}
+                                    </span>
+                ))}
+              </div>
+          ) : (
+              <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+          )}
+        </TableCell>        <TableCell>{entry.date}</TableCell>
         <TableCell>{ref.source}</TableCell>
         <TableCell>{ref.snippet}</TableCell>
         <TableCell>{ref.title}</TableCell>
@@ -141,6 +160,24 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
+        <TableCell>
+          {row?.tags && row?.tags?.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {row?.tags.map((tag:string) => (
+                    <span
+                        key={tag}
+                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                    >
+                                      {tag}
+                                    </span>
+                ))}
+              </div>
+          ) : (
+              <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+          )}
+        </TableCell>
         <TableCell>{entry.date}</TableCell>
         <TableCell>{q.question || '-'}</TableCell>
         <TableCell className="max-w-[300px] truncate">
@@ -173,6 +210,24 @@ const renderByType: Record<
             <DeviceType type={row.device} />
           </TableCell>
           <TableCell>{row.location}</TableCell>
+          <TableCell>
+            {row?.tags && row?.tags?.length > 0 ? (
+                <div className="flex flex-wrap gap-1">
+                  {row?.tags.map((tag:string) => (
+                      <span
+                          key={tag}
+                          className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                      >
+                                      {tag}
+                                    </span>
+                  ))}
+                </div>
+            ) : (
+                <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+            )}
+          </TableCell>
           <TableCell>{entry.date}</TableCell>
           <TableCell>{result.title || '-'}</TableCell>
           <TableCell>{result.snippet || '-'}</TableCell>
@@ -202,11 +257,31 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
+        <TableCell>
+          {row?.tags && row?.tags?.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {row?.tags.map((tag:string) => (
+                    <span
+                        key={tag}
+                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                    >
+                                      {tag}
+                                    </span>
+                ))}
+              </div>
+          ) : (
+              <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+          )}
+        </TableCell>
         <TableCell>{entry.date}</TableCell>
         <TableCell>{video.title || '-'}</TableCell>
         <TableCell>{renderCellLink(video.thumbnail)}</TableCell>
         <TableCell>{renderCellLink(video.link)}</TableCell>
         <TableCell>{video.duration || '-'}</TableCell>
+        <TableCell>{video.channel || '-'}</TableCell>
+        <TableCell>{video.platform || '-'}</TableCell>
       </TableRow>,
     ];
   },
@@ -221,6 +296,24 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
+        <TableCell>
+          {row?.tags && row?.tags?.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {row?.tags.map((tag:string) => (
+                    <span
+                        key={tag}
+                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                    >
+                                      {tag}
+                                    </span>
+                ))}
+              </div>
+          ) : (
+              <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+          )}
+        </TableCell>
         <TableCell>{entry.date}</TableCell>
         <TableCell>{g.title || '-'}</TableCell>
         <TableCell>{g.entity_type || '-'}</TableCell>
@@ -244,6 +337,24 @@ const renderByType: Record<
           <DeviceType type={row.device} />
         </TableCell>
         <TableCell>{row.location}</TableCell>
+        <TableCell>
+          {row?.tags && row?.tags?.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {row?.tags.map((tag:string) => (
+                    <span
+                        key={tag}
+                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                    >
+                                      {tag}
+                                    </span>
+                ))}
+              </div>
+          ) : (
+              <span className="text-muted-foreground text-sm">
+                                  No tags
+                                </span>
+          )}
+        </TableCell>
         <TableCell>{entry.date}</TableCell>
         <TableCell>{forum.title || '-'}</TableCell>
         <TableCell>{forum.source}</TableCell>
@@ -299,8 +410,10 @@ export default function DataTypeFilterPanel({
         return 1;
       case 'location':
         return 2;
-      case 'date':
+      case 'tags':
         return 3;
+      case 'date':
+        return 4;
       default:
         return 0;
     }
@@ -310,8 +423,44 @@ export default function DataTypeFilterPanel({
     if (!sortConfig.key || !flatData) return flatData;
 
     return [...flatData].sort((a, b) => {
-      const aValue = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
-      const bValue = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+      let aValue, bValue;
+      
+      if (sortConfig.key === 'tags') {
+        // Special handling for tags
+        const aTagsElement = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+        const bTagsElement = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+        
+        // Helper function to extract tag text
+        const extractTagText = (element: any): string => {
+          if (!element) return '';
+          
+          // If it's a div with flex-wrap (tags container)
+          if (element.props?.className?.includes('flex-wrap')) {
+            const tags = element.props.children;
+            if (Array.isArray(tags)) {
+              return tags
+                .map((tag: any) => tag.props?.children)
+                .filter(Boolean)
+                .join(', ');
+            }
+            return element.props.children?.props?.children || '';
+          }
+          
+          // If it's a single tag
+          if (element.props?.children) {
+            return element.props.children;
+          }
+          
+          return '';
+        };
+
+        aValue = extractTagText(aTagsElement);
+        bValue = extractTagText(bTagsElement);
+      } else {
+        // Normal handling for other columns
+        aValue = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+        bValue = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+      }
 
       if (aValue === bValue) return 0;
       if (aValue === undefined) return 1;
@@ -327,11 +476,26 @@ export default function DataTypeFilterPanel({
     currentPage * itemsPerPage
   );
 
-  const handleSort = (key: string) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
-    }));
+
+  
+  const handleSort = (key: string | string[]) => {
+    setSortConfig((prev) => {
+      // If key is an array, use the first key that's different from current
+      // or default to the first key in the array
+      if (Array.isArray(key)) {
+        const newKey = key.find(k => k !== prev.key) || key[0];
+        return {
+          key: newKey,
+          direction: prev.key === newKey && prev.direction === 'asc' ? 'desc' : 'asc',
+        };
+      }
+      
+      // Handle single key as before
+      return {
+        key,
+        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+      };
+    });
   };
 
   const handlePageChange = ({ page }: { page?: number }) => {
@@ -434,6 +598,12 @@ export default function DataTypeFilterPanel({
                 <TableHead>
                   <Button variant="ghost" onClick={() => handleSort('location')}>
                     Location
+                    <ArrowUpDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button variant="ghost" onClick={() => handleSort('tags')}>
+                    Tags
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
                 </TableHead>
