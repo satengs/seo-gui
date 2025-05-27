@@ -101,10 +101,24 @@ export async function DELETE() {
 export async function POST(request: Request) {
   try {
     await dbConnect();
-    PROCESSING_STATUS.set('cancelled', false);
+    const isCancelled = PROCESSING_STATUS.get('cancelled');
+    if (!isCancelled) {
+      PROCESSING_STATUS.set('cancelled', false);
+    }
+    if (isCancelled) {
+    }
+
+    const { items } = await request.json();
+    let query: Record<string, any> = {};
 
     console.log('Fetching default keywords...');
-    const keywords = await Keyword.find({ isDefaultKeywords: true });
+    if (items.length > 0) {
+      query._id = { $in: items };
+    } else {
+      query.isDefaultKeywords = true;
+    }
+
+    const keywords = await Keyword.find(query);
 
     if (!keywords.length) {
       return NextResponse.json({

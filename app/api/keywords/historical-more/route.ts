@@ -12,7 +12,7 @@ let processedPercent = 0;
 let processedCount = 0;
 let processedTotal = 0;
 
-async function processAllKeywords() {
+async function processAllKeywords(keywordIds: string[]) {
   if (isProcessing) {
     return { error: 'Processing already in progress' };
   }
@@ -22,18 +22,27 @@ async function processAllKeywords() {
     shouldStop = false;
 
     await dbConnect();
-
-    const totalKeywords = await Keyword.countDocuments({
-      isDefaultKeywords: true,
-    });
+    let totalKeywords;
+    if (keywordIds?.length) {
+      totalKeywords = keywordIds?.length;
+    } else {
+      totalKeywords = await Keyword.countDocuments({
+        isDefaultKeywords: true,
+      });
+    }
     processedTotal = totalKeywords;
     processedCount = 0;
     processedPercent = 0;
 
     while (processedCount < totalKeywords && !shouldStop) {
-      const keywords: IKeyword[] = await Keyword.find({
-        isDefaultKeywords: true,
-      })
+      let query: Record<string, any> = {};
+
+      if (keywordIds.length > 0) {
+        query._id = { $in: keywordIds };
+      } else {
+        query.isDefaultKeywords = true;
+      }
+      const keywords: IKeyword[] = await Keyword.find(query)
         .skip(processedCount)
         .limit(CHUNK_SIZE);
 
@@ -77,9 +86,6 @@ async function processAllKeywords() {
       processedPercent =
         totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     }
-
-    // processedPercent =
-    //   totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     return {
       success: true,
       processedCount,
@@ -95,13 +101,14 @@ async function processAllKeywords() {
   }
 }
 
-export async function GET(req: Request) {
+export async function POST(req: Request) {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
+    const { items } = await req.json();
 
     if (action === 'start') {
-      processAllKeywords().catch(console.error);
+      processAllKeywords(items).catch(console.error);
       return NextResponse.json({ message: 'Processing started' });
     } else if (action === 'stop') {
       shouldStop = true;
@@ -117,7 +124,6 @@ export async function GET(req: Request) {
         processedTotal,
       });
     }
-
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('API error:', error);
