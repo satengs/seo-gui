@@ -276,8 +276,8 @@ export default function KeywordsTable({
   ];
 
   const renderDataFeatures = useCallback(
-    (keyword: IKeyword) => {
-      //TODO fix this
+    (keyword:any) => {
+      //TODO fix this and remove the any type
       const data = keyword.kgmData?.data && Object.keys(keyword.kgmData?.data).length ?  keyword.kgmData.data :  keyword.kgmData || {};
 
       const features = Object.keys(data).filter(
