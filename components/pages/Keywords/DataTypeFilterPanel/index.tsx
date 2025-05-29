@@ -114,6 +114,8 @@ const renderByType: Record<
 > = {
   ai_overview: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
+    //TODO fix this
+
     const refs = entry?.keywordData?.data?.ai_overview?.references || entry?.keywordData?.ai_overview?.references || [];
     if (!refs.length) return [];
 

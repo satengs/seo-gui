@@ -40,7 +40,9 @@ export interface IKeyword {
   organicResultsCount: number;
   isDefaultKeywords: boolean;
   tags?: string[];
+  //TODO fix this
   keywordData: IKeywordData;
+  kgmData: IKeywordData;
   historicalData: any;
   organicResultsHistoricalData?: IOrganicResultsHistoricalData;
   createdAt: Date | string;
