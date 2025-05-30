@@ -204,8 +204,7 @@ export default function KeywordsTable({
   const downloadAsCSVAll = useCallback(async () => {
     try {
       setDownloadAllCsv(true);
-      let queryString = `/api/keywords?fullList=true`;
-
+      let queryString = `/api/keywords?`;
       if (searchTerm) {
         queryString += `&searchTerm=${searchTerm}`;
       }
@@ -215,9 +214,19 @@ export default function KeywordsTable({
       if (dateRange?.from && dateRange?.to) {
         queryString += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
       }
-      const resp = await axiosClient.get(queryString);
-      generateCsvFile(resp?.data || []);
+      if (totalCount > 100) {
+        for (let i = 0; i < totalCount; i += 100) {
+          const paginateQueryString = `${queryString}&page=${Math.floor(i / 100) + 1}&size=100`;
+          const resp = await axiosClient.get(paginateQueryString);
+          generateCsvFile(resp?.data?.entitiesData || []);
+        }
+      } else {
+        const paginateQueryString = `${queryString}&page=1&size=100`;
+        const resp = await axiosClient.get(paginateQueryString);
+        generateCsvFile(resp?.data?.entitiesData || []);
+      }
     } catch (err) {
+      console.log('err: ', err);
       toast({
         title: 'Failed to export csv',
         description: 'Something went wrong',
@@ -225,7 +234,7 @@ export default function KeywordsTable({
     } finally {
       setDownloadAllCsv(false);
     }
-  }, [toast, searchTerm, sortConfig, dateRange]);
+  }, [toast, searchTerm, sortConfig, dateRange, totalCount]);
 
   const handleKeywordsDelete = async () => {
     try {
@@ -288,7 +297,7 @@ export default function KeywordsTable({
               <Button variant="outline" size="sm" onClick={downloadAsCSVAll}>
                 {downloadAllCsv ? (
                   <div className="flex items-center">
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 ) : (
                   <>
@@ -305,10 +314,8 @@ export default function KeywordsTable({
                   onClick={() => downloadAsCSV(selectedKeywords)}
                 >
                   {downloadSelectedCsv ? (
-                    // <div className="flex items-center min-w-30 w-full">
                     <Loader2 className=" h-4 w-4 animate-spin" />
                   ) : (
-                    // </div>
                     <>
                       {' '}
                       <Download className="h-4 w-4 mr-2" />
