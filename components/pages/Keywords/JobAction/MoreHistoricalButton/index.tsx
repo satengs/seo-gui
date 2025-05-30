@@ -7,11 +7,13 @@ import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 export const STATUS_CHECK_INTERVAL = 5000;
 
 interface IMoreHistoricalButtonProps {
-  selectedItems: any[];
+  selectedItems: string[];
+  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
 }
 
 const MoreHistoricalButton = ({
   selectedItems,
+  setSelectedItems,
 }: IMoreHistoricalButtonProps) => {
   const { toast } = useToast();
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
@@ -61,6 +63,9 @@ const MoreHistoricalButton = ({
           title: 'Success',
           description: `Completed processing all ${totalProcessed} keywords`,
         });
+        if (selectedItems?.length) {
+          setSelectedItems([]);
+        }
       }
     } catch (error) {
       console.error('Failed to check status:', error);
@@ -69,7 +74,13 @@ const MoreHistoricalButton = ({
         description: 'Failed to check processing status',
       });
     }
-  }, [totalProcessed, updateToast, toast]);
+  }, [
+    totalProcessed,
+    updateToast,
+    toast,
+    selectedItems?.length,
+    setSelectedItems,
+  ]);
 
   useEffect(() => {
     checkStatus();
@@ -120,8 +131,12 @@ const MoreHistoricalButton = ({
         title: 'Error',
         description: 'Failed to stop processing',
       });
+    } finally {
+      if (selectedItems?.length) {
+        setSelectedItems([]);
+      }
     }
-  }, [toast]);
+  }, [toast, selectedItems?.length, setSelectedItems]);
 
   return (
     <div className="flex items-center space-x-4">
