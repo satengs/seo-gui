@@ -284,6 +284,33 @@ export default function KeywordsTable({
     'serpapi_pagination',
   ];
 
+  const renderDataFeatures = useCallback(
+    (keyword:any) => {
+      //TODO fix this and remove the any type
+      const data = keyword.kgmData?.data && Object.keys(keyword.kgmData?.data).length ?  keyword.kgmData.data :  keyword.kgmData || {};
+
+      const features = Object.keys(data).filter(
+        (field) => !fieldsArr.includes(field)
+      );
+      return features.map((field) => {
+        const feature = featureIcons[field];
+        if (!feature) return null;
+
+        const IconComponent = feature.icon;
+        return (
+          <div
+            key={field}
+            className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
+            title={feature.label}
+          >
+            <IconComponent className="h-3.5 w-3.5" />
+          </div>
+        );
+      });
+    },
+    [fieldsArr]
+  );
+
   return (
     <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">
       <Card className="bg-opacity-5 bg-gray-200">
@@ -637,36 +664,7 @@ export default function KeywordsTable({
                                               </TableCell>
                                               <TableCell>
                                                 <div className="flex items-center gap-0.5">
-                                                  {entry.kgmData &&
-                                                    entry.kgmData.data &&
-                                                    Object.keys(
-                                                      entry.kgmData.data
-                                                    ).map((field) => {
-                                                      if (
-                                                        fieldsArr.includes(
-                                                          field
-                                                        )
-                                                      )
-                                                        return null;
-
-                                                      const feature =
-                                                        featureIcons[field];
-                                                      if (!feature)
-                                                        return field;
-
-                                                      const IconComponent =
-                                                        feature.icon;
-
-                                                      return (
-                                                        <div
-                                                          key={field}
-                                                          className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
-                                                          title={feature.label}
-                                                        >
-                                                          <IconComponent className="h-3.5 w-3.5" />
-                                                        </div>
-                                                      );
-                                                    })}
+                                                {renderDataFeatures(entry)}
                                                 </div>
                                               </TableCell>
                                               <TableCell

@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { IKeyword, IHistoricalEntry } from '@/types';
 import { Parser } from '@json2csv/plainjs';
-import { DataType } from '../consts/dataTypes';
+import { DataType } from '@/consts/dataTypes';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -171,19 +171,19 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
 
     switch (type) {
       case 'ai_overview':
-        return entries.some(
+        return entries.map(
           (entry: any) => entry?.keywordData?.data?.ai_overview
         );
 
       case 'related_questions':
-        return entries.some(
+        return entries.map(
           (entry: any) =>
             Array.isArray(entry?.keywordData?.data?.related_questions) ||
             typeof entry?.keywordData?.related_questions === 'object'
         );
 
       case 'reddit':
-        return entries.some(
+        return entries.map(
           (entry: any) =>
             Array.isArray(entry?.keywordData?.data?.organic_results) &&
             entry?.keywordData?.data?.organic_results.some(
@@ -194,16 +194,16 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
         );
 
       case 'inline_videos':
-        return entries.some((entry: any) =>
+        return entries.map((entry: any) =>
           Array.isArray(entry?.keywordData?.data?.inline_videos)
         );
 
       case 'knowledge_graph':
-        return entries.some(
+        return entries.map(
           (entry: any) => entry?.keywordData?.data?.knowledge_graph
         );
       case 'discussions_and_forums':
-        return entries.some(
+        return entries.map(
           (entry: any) => entry?.keywordData?.data?.discussions_and_forums
         );
 
