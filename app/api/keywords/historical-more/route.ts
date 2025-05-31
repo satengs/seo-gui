@@ -5,43 +5,58 @@ import Keyword from '@/lib/db/models/schemas/Keyword';
 import KeywordHistoricalMore from '@/lib/db/models/schemas/KeywordHistocalMore';
 import { searchKeyword } from '@/lib/serpApi';
 
-const CHUNK_SIZE = 10; // Process 5 keywords at a time
-let isProcessing = false;
-let shouldStop = false;
-let processedPercent = 0;
-let processedCount = 0;
-let processedTotal = 0;
+const CHUNK_SIZE = 10;
+let processingJobId: string | null = null;
 
-async function processAllKeywords(keywordIds: string[]) {
-  if (isProcessing) {
-    return { error: 'Processing already in progress' };
+async function getProcessingStatus(keywordIds: string[]) {
+  let query: Record<string, any> = {};
+  let totalKeywords: number;
+
+  if (keywordIds.length > 0) {
+    query._id = { $in: keywordIds };
+    totalKeywords = keywordIds.length;
+  } else {
+    query.isDefaultKeywords = true;
+    totalKeywords = await Keyword.countDocuments({ isDefaultKeywords: true });
   }
 
+  const todayKey = new Date().toISOString().split('T')[0];
+  const startOfDay = new Date(todayKey + 'T00:00:00.000Z');
+  const endOfDay = new Date(todayKey + 'T23:59:59.999Z');
+
+  const processedCount = await KeywordHistoricalMore.countDocuments({
+    createdAt: {
+      $gte: startOfDay,
+      $lt: endOfDay,
+    },
+    ...(keywordIds.length > 0 && { keywordId: { $in: keywordIds } }),
+  });
+
+  return {
+    isProcessing: !!processingJobId,
+    processedPercent:
+      totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0,
+    processedCount,
+    processedTotal: totalKeywords,
+  };
+}
+
+async function processKeywords(keywordIds: string[]) {
   try {
-    isProcessing = true;
-    shouldStop = false;
+    let query: Record<string, any> = {};
+    let totalKeywords: number;
 
-    await dbConnect();
-    let totalKeywords;
-    if (keywordIds?.length) {
-      totalKeywords = keywordIds?.length;
+    if (keywordIds.length > 0) {
+      query._id = { $in: keywordIds };
+      totalKeywords = keywordIds.length;
     } else {
-      totalKeywords = await Keyword.countDocuments({
-        isDefaultKeywords: true,
-      });
+      query.isDefaultKeywords = true;
+      totalKeywords = await Keyword.countDocuments({ isDefaultKeywords: true });
     }
-    processedTotal = totalKeywords;
-    processedCount = 0;
-    processedPercent = 0;
 
-    while (processedCount < totalKeywords && !shouldStop) {
-      let query: Record<string, any> = {};
+    let processedCount = 0;
 
-      if (keywordIds.length > 0) {
-        query._id = { $in: keywordIds };
-      } else {
-        query.isDefaultKeywords = true;
-      }
+    while (processedCount < totalKeywords && processingJobId) {
       const keywords: IKeyword[] = await Keyword.find(query)
         .skip(processedCount)
         .limit(CHUNK_SIZE);
@@ -51,17 +66,17 @@ async function processAllKeywords(keywordIds: string[]) {
       const endOfDay = new Date(todayKey + 'T23:59:59.999Z');
 
       for (const keyword of keywords) {
-        if (shouldStop) break;
+        if (!processingJobId) break;
 
-        const existInHistoricalMoreKeyword =
-          await KeywordHistoricalMore.findOne({
-            keywordId: keyword._id,
-            createdAt: {
-              $gte: startOfDay,
-              $lt: endOfDay,
-            },
-          });
-        if (!existInHistoricalMoreKeyword) {
+        const existingRecord = await KeywordHistoricalMore.findOne({
+          keywordId: keyword._id,
+          createdAt: {
+            $gte: startOfDay,
+            $lt: endOfDay,
+          },
+        });
+
+        if (!existingRecord) {
           const searchParams = {
             keyword: keyword.term,
             location: keyword.location,
@@ -71,33 +86,26 @@ async function processAllKeywords(keywordIds: string[]) {
             type: 'json',
           };
 
-          const _keyword = await searchKeyword(searchParams);
+          const searchResult = await searchKeyword(searchParams);
 
           await KeywordHistoricalMore.create({
             keywordId: keyword._id,
             historicalMore: {
-              data: _keyword,
+              data: searchResult,
             },
           });
         }
       }
 
       processedCount += keywords.length;
-      processedPercent =
-        totalKeywords > 0 ? (processedCount / totalKeywords) * 100 : 0;
     }
-    return {
-      success: true,
-      processedCount,
-      totalCount: totalKeywords,
-      stopped: shouldStop,
-    };
+
+    if (processedCount >= totalKeywords) {
+      processingJobId = null;
+    }
   } catch (error) {
-    console.error('Error processing keywords:', error);
-    return { error: 'Failed to process keywords' };
-  } finally {
-    isProcessing = false;
-    shouldStop = false;
+    console.error('Error in processKeywords:', error);
+    processingJobId = null;
   }
 }
 
@@ -105,25 +113,35 @@ export async function POST(req: Request) {
   try {
     const url = new URL(req.url);
     const action = url.searchParams.get('action');
-    const { items } = await req.json();
+    const { items = [] } = await req.json();
+
+    await dbConnect();
 
     if (action === 'start') {
-      processAllKeywords(items).catch(console.error);
-      return NextResponse.json({ message: 'Processing started' });
-    } else if (action === 'stop') {
-      shouldStop = true;
+      if (processingJobId) {
+        return NextResponse.json({
+          message: 'Processing already in progress',
+          jobId: processingJobId,
+        });
+      }
+
+      processingJobId = new Date().getTime().toString();
+      processKeywords(items).catch(console.error);
+
       return NextResponse.json({
-        message: 'Processing will stop after current chunk',
+        message: 'Processing started',
+        jobId: processingJobId,
+      });
+    } else if (action === 'stop') {
+      processingJobId = null;
+      return NextResponse.json({
+        message: 'Processing stopped',
       });
     } else if (action === 'status') {
-      return NextResponse.json({
-        isProcessing,
-        shouldStop,
-        processedPercent,
-        processedCount,
-        processedTotal,
-      });
+      const status = await getProcessingStatus(items);
+      return NextResponse.json(status);
     }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('API error:', error);

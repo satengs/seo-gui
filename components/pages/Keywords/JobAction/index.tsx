@@ -3,18 +3,18 @@
 import React, { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 import MoreHistoricalButton from '@/components/pages/Keywords/JobAction/MoreHistoricalButton';
+import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import axiosClient from '@/lib/axiosClient';
-import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 
 interface IJobActionProps {
   selectedItems: string[];
-  setSelectedItems: React.Dispatch<React.SetStateAction<string[]>>;
+  clearSelected: () => void;
 }
 
-const JobAction = ({ selectedItems, setSelectedItems }: IJobActionProps) => {
+const JobAction = ({ selectedItems, clearSelected }: IJobActionProps) => {
   const { toast } = useToast();
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
@@ -60,7 +60,7 @@ const JobAction = ({ selectedItems, setSelectedItems }: IJobActionProps) => {
       if (hasMore && nextIndex !== null && !cancelled) {
         await processNextChunk(nextIndex, totalKeywords);
         if (selectedItems?.length) {
-          setSelectedItems([]);
+          clearSelected?.();
         }
       } else if (cancelled) {
         toast({
@@ -74,7 +74,7 @@ const JobAction = ({ selectedItems, setSelectedItems }: IJobActionProps) => {
         });
         setProgress(0);
         if (selectedItems?.length) {
-          setSelectedItems([]);
+          clearSelected?.();
         }
       }
     } catch (error) {
@@ -162,7 +162,7 @@ const JobAction = ({ selectedItems, setSelectedItems }: IJobActionProps) => {
       )}
       <MoreHistoricalButton
         selectedItems={selectedItems}
-        setSelectedItems={setSelectedItems}
+        clearSelected={clearSelected}
       />
       <ConfirmDialog
         onActionHandle={handleCheckKeywords}

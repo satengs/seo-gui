@@ -116,7 +116,10 @@ const renderByType: Record<
     const entry = row.historicalData.find((h: any) => h.date === date);
     //TODO fix this
 
-    const refs = entry?.keywordData?.data?.ai_overview?.references || entry?.keywordData?.ai_overview?.references || [];
+    const refs =
+      entry?.keywordData?.data?.ai_overview?.references ||
+      entry?.keywordData?.ai_overview?.references ||
+      [];
     if (!refs.length) return [];
 
     return refs.map((ref: any, i: number) => (
@@ -128,22 +131,21 @@ const renderByType: Record<
         <TableCell>{row.location}</TableCell>
         <TableCell>
           {row?.tags && row?.tags?.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {row?.tags.map((tag:string) => (
-                    <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                    >
-                                      {tag}
-                                    </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {row?.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           ) : (
-              <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
+            <span className="text-muted-foreground text-sm">No tags</span>
           )}
-        </TableCell>        <TableCell>{entry.date}</TableCell>
+        </TableCell>{' '}
+        <TableCell>{entry.date}</TableCell>
         <TableCell>{ref.source}</TableCell>
         <TableCell>{ref.snippet}</TableCell>
         <TableCell>{ref.title}</TableCell>
@@ -153,7 +155,9 @@ const renderByType: Record<
   },
   related_questions: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const q = entry?.keywordData?.data?.related_questions?.[0] || entry?.keywordData?.related_questions?.[0];
+    const q =
+      entry?.keywordData?.data?.related_questions?.[0] ||
+      entry?.keywordData?.related_questions?.[0];
     if (!q) return [];
     return [
       <TableRow key={`${index}-${date}-question`}>
@@ -164,20 +168,18 @@ const renderByType: Record<
         <TableCell>{row.location}</TableCell>
         <TableCell>
           {row?.tags && row?.tags?.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {row?.tags.map((tag:string) => (
-                    <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                    >
-                                      {tag}
-                                    </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {row?.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           ) : (
-              <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
+            <span className="text-muted-foreground text-sm">No tags</span>
           )}
         </TableCell>
         <TableCell>{entry.date}</TableCell>
@@ -202,7 +204,10 @@ const renderByType: Record<
   },
   reddit: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const results = entry?.keywordData?.data?.organic_results ?? entry?.keywordData?.organic_results ?? [];
+    const results =
+      entry?.keywordData?.data?.organic_results ??
+      entry?.keywordData?.organic_results ??
+      [];
     return results
       .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
       .map((result: any, i: number) => (
@@ -214,20 +219,18 @@ const renderByType: Record<
           <TableCell>{row.location}</TableCell>
           <TableCell>
             {row?.tags && row?.tags?.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {row?.tags.map((tag:string) => (
-                      <span
-                          key={tag}
-                          className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                      >
-                                      {tag}
-                                    </span>
-                  ))}
-                </div>
+              <div className="flex flex-wrap gap-1">
+                {row?.tags.map((tag: string) => (
+                  <span
+                    key={tag}
+                    className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
             ) : (
-                <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
+              <span className="text-muted-foreground text-sm">No tags</span>
             )}
           </TableCell>
           <TableCell>{entry.date}</TableCell>
@@ -250,7 +253,9 @@ const renderByType: Record<
   },
   inline_videos: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const video = entry?.keywordData?.data?.inline_videos?.[0] || entry?.keywordData?.inline_videos?.[0];
+    const video =
+      entry?.keywordData?.data?.inline_videos?.[0] ||
+      entry?.keywordData?.inline_videos?.[0];
     if (!video) return [];
     return [
       <TableRow key={`${index}-${date}-video`}>
@@ -261,20 +266,18 @@ const renderByType: Record<
         <TableCell>{row.location}</TableCell>
         <TableCell>
           {row?.tags && row?.tags?.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {row?.tags.map((tag:string) => (
-                    <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                    >
-                                      {tag}
-                                    </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {row?.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           ) : (
-              <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
+            <span className="text-muted-foreground text-sm">No tags</span>
           )}
         </TableCell>
         <TableCell>{entry.date}</TableCell>
@@ -289,7 +292,9 @@ const renderByType: Record<
   },
   knowledge_graph: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const g = entry?.keywordData?.data?.knowledge_graph || entry?.keywordData?.knowledge_graph;
+    const g =
+      entry?.keywordData?.data?.knowledge_graph ||
+      entry?.keywordData?.knowledge_graph;
     if (!g) return [];
     return [
       <TableRow key={`${index}-${date}-graph`}>
@@ -300,20 +305,18 @@ const renderByType: Record<
         <TableCell>{row.location}</TableCell>
         <TableCell>
           {row?.tags && row?.tags?.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {row?.tags.map((tag:string) => (
-                    <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                    >
-                                      {tag}
-                                    </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {row?.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           ) : (
-              <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
+            <span className="text-muted-foreground text-sm">No tags</span>
           )}
         </TableCell>
         <TableCell>{entry.date}</TableCell>
@@ -330,7 +333,9 @@ const renderByType: Record<
   },
   discussions_and_forums: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const forum = entry?.keywordData?.data?.discussions_and_forums?.[0] || entry?.keywordData?.discussions_and_forums?.[0];
+    const forum =
+      entry?.keywordData?.data?.discussions_and_forums?.[0] ||
+      entry?.keywordData?.discussions_and_forums?.[0];
     if (!forum) return [];
     return [
       <TableRow key={`${index}-${date}-forums`}>
@@ -341,20 +346,18 @@ const renderByType: Record<
         <TableCell>{row.location}</TableCell>
         <TableCell>
           {row?.tags && row?.tags?.length > 0 ? (
-              <div className="flex flex-wrap gap-1">
-                {row?.tags.map((tag:string) => (
-                    <span
-                        key={tag}
-                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                    >
-                                      {tag}
-                                    </span>
-                ))}
-              </div>
+            <div className="flex flex-wrap gap-1">
+              {row?.tags.map((tag: string) => (
+                <span
+                  key={tag}
+                  className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
           ) : (
-              <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
+            <span className="text-muted-foreground text-sm">No tags</span>
           )}
         </TableCell>
         <TableCell>{entry.date}</TableCell>
@@ -367,7 +370,11 @@ const renderByType: Record<
             <ul className="list-disc list-inside mb-4" key={i}>
               <li className="truncate">Snippet: {li?.snippet}</li>
               <li className="truncate">Link: {li?.link}</li>
-              {li?.extensions ?  <li className="truncate">Extensions: {li?.extensions}</li> : ''}
+              {li?.extensions ? (
+                <li className="truncate">Extensions: {li?.extensions}</li>
+              ) : (
+                ''
+              )}
             </ul>
           ))}
         </TableCell>
@@ -389,6 +396,7 @@ export default function DataTypeFilterPanel({
     direction: 'asc' | 'desc';
   }>({ key: '', direction: 'asc' });
   const { toast } = useToast();
+  console.log('data.length: ', data.length);
 
   const filtered = filterKeywordsByType(data, type);
   const typeInfo = dataTypes.find((dt) => dt.value === type);
@@ -426,16 +434,18 @@ export default function DataTypeFilterPanel({
 
     return [...flatData].sort((a, b) => {
       let aValue, bValue;
-      
+
       if (sortConfig.key === 'tags') {
         // Special handling for tags
-        const aTagsElement = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
-        const bTagsElement = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
-        
+        const aTagsElement =
+          a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+        const bTagsElement =
+          b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+
         // Helper function to extract tag text
         const extractTagText = (element: any): string => {
           if (!element) return '';
-          
+
           // If it's a div with flex-wrap (tags container)
           if (element.props?.className?.includes('flex-wrap')) {
             const tags = element.props.children;
@@ -447,12 +457,12 @@ export default function DataTypeFilterPanel({
             }
             return element.props.children?.props?.children || '';
           }
-          
+
           // If it's a single tag
           if (element.props?.children) {
             return element.props.children;
           }
-          
+
           return '';
         };
 
@@ -460,8 +470,10 @@ export default function DataTypeFilterPanel({
         bValue = extractTagText(bTagsElement);
       } else {
         // Normal handling for other columns
-        aValue = a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
-        bValue = b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+        aValue =
+          a.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
+        bValue =
+          b.props.children[getColumnIndex(sortConfig.key)]?.props?.children;
       }
 
       if (aValue === bValue) return 0;
@@ -478,24 +490,24 @@ export default function DataTypeFilterPanel({
     currentPage * itemsPerPage
   );
 
-
-  
   const handleSort = (key: string | string[]) => {
     setSortConfig((prev) => {
       // If key is an array, use the first key that's different from current
       // or default to the first key in the array
       if (Array.isArray(key)) {
-        const newKey = key.find(k => k !== prev.key) || key[0];
+        const newKey = key.find((k) => k !== prev.key) || key[0];
         return {
           key: newKey,
-          direction: prev.key === newKey && prev.direction === 'asc' ? 'desc' : 'asc',
+          direction:
+            prev.key === newKey && prev.direction === 'asc' ? 'desc' : 'asc',
         };
       }
-      
+
       // Handle single key as before
       return {
         key,
-        direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
+        direction:
+          prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc',
       };
     });
   };
@@ -598,7 +610,10 @@ export default function DataTypeFilterPanel({
                   </Button>
                 </TableHead>
                 <TableHead>
-                  <Button variant="ghost" onClick={() => handleSort('location')}>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort('location')}
+                  >
                     Location
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
@@ -614,7 +629,7 @@ export default function DataTypeFilterPanel({
                     Date
                     <ArrowUpDown className="ml-2 h-4 w-4" />
                   </Button>
-                  </TableHead>
+                </TableHead>
                 {columnMap[type]}
               </TableRow>
             </TableHeader>

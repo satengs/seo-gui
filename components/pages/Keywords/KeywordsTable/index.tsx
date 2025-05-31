@@ -51,6 +51,7 @@ interface KeywordsTableProps {
   totalCount: number;
   totalPages: number;
   fetchLoading: boolean;
+  needClearSelected: boolean;
   dateRange: DateRange | undefined;
   onActionKeywordsChange: (data: any, obj?: any) => void;
   onSingleKeywordChange: (data: any) => void;
@@ -64,6 +65,7 @@ export default function KeywordsTable({
   currentPage,
   totalCount,
   fetchLoading,
+  needClearSelected,
   dateRange,
   onItemsSelect,
   onKeywordFilterChange,
@@ -285,9 +287,12 @@ export default function KeywordsTable({
   ];
 
   const renderDataFeatures = useCallback(
-    (keyword:any) => {
+    (keyword: any) => {
       //TODO fix this and remove the any type
-      const data = keyword.kgmData?.data && Object.keys(keyword.kgmData?.data).length ?  keyword.kgmData.data :  keyword.kgmData || {};
+      const data =
+        keyword.kgmData?.data && Object.keys(keyword.kgmData?.data).length
+          ? keyword.kgmData.data
+          : keyword.kgmData || {};
 
       const features = Object.keys(data).filter(
         (field) => !fieldsArr.includes(field)
@@ -310,6 +315,12 @@ export default function KeywordsTable({
     },
     [fieldsArr]
   );
+
+  useEffect(() => {
+    if (needClearSelected) {
+      setSelectedRows(new Set());
+    }
+  }, [needClearSelected]);
 
   return (
     <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">
@@ -664,7 +675,7 @@ export default function KeywordsTable({
                                               </TableCell>
                                               <TableCell>
                                                 <div className="flex items-center gap-0.5">
-                                                {renderDataFeatures(entry)}
+                                                  {renderDataFeatures(entry)}
                                                 </div>
                                               </TableCell>
                                               <TableCell
