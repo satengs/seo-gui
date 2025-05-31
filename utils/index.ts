@@ -42,11 +42,11 @@ export const getKeywordDataCols = (keyword: IKeyword) => {
 
 export const getKeywordHistoricalCols = (data: any) => {
   if (data && Array.isArray(data)) {
-    return data.map(entry => {
+    return data.map((entry) => {
       if (entry && entry.date) {
         return {
           ...entry,
-          keywordData: entry.keywordData || {}
+          keywordData: entry.keywordData || {},
         };
       }
       return entry;
@@ -56,7 +56,6 @@ export const getKeywordHistoricalCols = (data: any) => {
 };
 
 export const getCsvKeywordData = (keyword: any) => {
-
   const simpleTypeCos = getSimplyTypeRows(keyword);
   const keywordData = getKeywordDataCols(keyword?.keywordData?.data);
   const historicalData = getKeywordHistoricalCols(keyword.historicalData);
@@ -64,7 +63,7 @@ export const getCsvKeywordData = (keyword: any) => {
   return {
     ...simpleTypeCos,
     ...keywordData,
-    historicalData: historicalData
+    historicalData: historicalData,
   };
 };
 
@@ -97,7 +96,11 @@ export const getCsvKeywordMultiData = (keywords: IKeyword[]) => {
   return getConsistentData(csvData);
 };
 
-export const csvParser = (csvData: string, fileName: string, append: boolean = false) => {
+export const csvParser = (
+  csvData: string,
+  fileName: string,
+  append: boolean = false
+) => {
   const blob = new Blob([csvData], { type: 'text/csv' });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -132,7 +135,7 @@ export const generateCsvFile = (keywordOrArr: IKeyword | IKeyword[]) => {
 
   const parser = new Parser({
     fields: Object.keys(processedData[0] || {}),
-    header: true
+    header: true,
   });
 
   const csvContent = parser.parse(processedData);

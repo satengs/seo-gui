@@ -304,12 +304,11 @@ export const paginateEntitiesByFilter = async (
     const totalCount = totalCountResult?.[0]?.totalCount || 0;
 
     const entitiesData = await schema.aggregate(pipeline);
-
     return {
       entitiesData,
       totalCount,
-      totalPages: Math.ceil(totalCount / pageSize),
-      currentPage: page,
+      totalPages: Math.ceil(totalCount / (pageSize ?? 1)),
+      currentPage: page ?? 1,
     };
   } catch (err: any) {
     throw new Error('Error fetching paginated data: ' + (err?.message || ''));

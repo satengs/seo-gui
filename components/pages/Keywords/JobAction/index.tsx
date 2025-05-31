@@ -3,13 +3,18 @@
 import React, { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 import MoreHistoricalButton from '@/components/pages/Keywords/JobAction/MoreHistoricalButton';
+import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import axiosClient from '@/lib/axiosClient';
-import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 
-const JobAction = ({ selectedItems }: { selectedItems: string[] }) => {
+interface IJobActionProps {
+  selectedItems: string[];
+  clearSelected: () => void;
+}
+
+const JobAction = ({ selectedItems, clearSelected }: IJobActionProps) => {
   const { toast } = useToast();
   const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
 
@@ -54,18 +59,23 @@ const JobAction = ({ selectedItems }: { selectedItems: string[] }) => {
       // Continue processing if there are more keywords
       if (hasMore && nextIndex !== null && !cancelled) {
         await processNextChunk(nextIndex, totalKeywords);
+        if (selectedItems?.length) {
+          clearSelected?.();
+        }
       } else if (cancelled) {
         toast({
           title: 'Checking was stopped',
           description: `Completed processing  ${processedKeywords} keywords`,
         });
       } else {
-        alert('a');
         toast({
           title: 'Success',
           description: `Completed processing all ${totalKeywords} keywords`,
         });
         setProgress(0);
+        if (selectedItems?.length) {
+          clearSelected?.();
+        }
       }
     } catch (error) {
       throw error;
@@ -150,7 +160,10 @@ const JobAction = ({ selectedItems }: { selectedItems: string[] }) => {
           Stop
         </Button>
       )}
-      <MoreHistoricalButton selectedItems={selectedItems} />
+      <MoreHistoricalButton
+        selectedItems={selectedItems}
+        clearSelected={clearSelected}
+      />
       <ConfirmDialog
         onActionHandle={handleCheckKeywords}
         type={'Check'}

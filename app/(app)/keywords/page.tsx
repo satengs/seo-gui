@@ -40,6 +40,7 @@ export default function KeywordsPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<ISortConfig>();
   const [fetchLoading, setFetchLoading] = useState<boolean>(true);
+  const [needClearSelected, setNeedClearSelected] = useState<boolean>(false);
   type ExtendedDataType = DataType | 'All';
   const [dataType, setDataType] = useState<ExtendedDataType>('All');
   const { toast } = useToast();
@@ -145,6 +146,10 @@ export default function KeywordsPage() {
     }
   }
 
+  const onClearSelected = useCallback(() => {
+    setNeedClearSelected(true);
+    setSelectedItems([]);
+  }, []);
   const onDateRangeChange = useCallback(
     (start: Date | undefined, end: Date | undefined) =>
       setDateRange({ from: start, to: end }),
@@ -224,7 +229,10 @@ export default function KeywordsPage() {
   return (
     <div className="p-1.5 space-y-6">
       <Card className="px-6">
-        <JobAction selectedItems={selectedItems} />
+        <JobAction
+          selectedItems={selectedItems}
+          clearSelected={onClearSelected}
+        />
         <div className="flex items-center bg-fuchsia-50 rounded-md shadow-lg px-3 py-2 mb-6">
           <Info className="text-primary bg-blue-95 dark:text-blue-17 opacity-60" />
           <span className="ml-2 text-blue-95 text-center px-3 dark:text-blue-17 opacity-60">
@@ -302,6 +310,7 @@ export default function KeywordsPage() {
           fetchLoading={fetchLoading}
           dateRange={dateRange}
           onItemsSelect={onItemsSelect}
+          needClearSelected={needClearSelected}
         />
         <Pagination
           totalCount={totalCount}

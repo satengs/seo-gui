@@ -106,6 +106,16 @@ export async function POST(request: Request) {
       PROCESSING_STATUS.set('cancelled', false);
     }
     if (isCancelled) {
+      return NextResponse.json({
+        cancelled: true,
+        results: [],
+        // totalKeywords: keywords.length,
+        // processedKeywords: Math.min(nextIndex, keywords.length),
+        // hasMore: hasMore && !cancelled,
+        // nextIndex: hasMore ? nextIndex : null,
+        // results,
+        // cancelled,
+      });
     }
 
     const { items } = await request.json();
