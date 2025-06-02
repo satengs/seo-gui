@@ -44,6 +44,8 @@ import { IKeyword, IKeywordPaginateParams } from '@/types';
 import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 import { DeviceType } from '@/components/ui/device-type';
 import { DateRange } from 'react-day-picker';
+import TagsInput from "@/components/pages/Keywords/TagsInput";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 
 interface KeywordsTableProps {
   keywords: IKeyword[] | null;
@@ -86,6 +88,7 @@ export default function KeywordsTable({
   const [showTagsDialog, setShowTagsDialog] = useState<boolean>(false);
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModalTags, setShowModalTags] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleRowExpansion = useCallback((id: string) => {
@@ -277,6 +280,12 @@ export default function KeywordsTable({
   }, [searchTerm, onKeywordFilterChange]);
 
   const onModalOpen = useCallback(() => setShowModal(true), []);
+// --- New state for Assign Tags functionality ---
+  const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
+  const [tagsInAssignModal, setTagsInAssignModal] = useState<string[]>([]);
+  // Stores the _ids of keywords that will be affected by tag changes in the modal
+  const [keywordIdsToAssignTags, setKeywordIdsToAssignTags] = useState<Set<string>>(new Set());
+  // --- End new state ---
   const onModalClose = useCallback(() => setShowModal(false), []);
   const fieldsArr = [
     'search_metadata',
@@ -321,6 +330,73 @@ export default function KeywordsTable({
       setSelectedRows(new Set());
     }
   }, [needClearSelected]);
+
+  // --- New functions for Assign Tags Modal ---
+  const openAssignTagsModal = useCallback((keywordIds: string[], initialTags: string[]) => {
+    setKeywordIdsToAssignTags(new Set(keywordIds));
+    setTagsInAssignModal(initialTags);
+    setIsAssignTagsModalOpen(true);
+  }, []);
+
+  const closeAssignTagsModal = useCallback(() => {
+    setIsAssignTagsModalOpen(false);
+    setTagsInAssignModal([]); // Clear tags in modal on close
+    setKeywordIdsToAssignTags(new Set()); // Clear target keywords
+    setSelectedRows(new Set()); // Clear selected rows after assigning tags
+  }, []);
+
+  const handleSaveAssignedTags = useCallback(async (newTags: string[]) => {
+    try {
+      // Find the keywords that were targeted by the modal
+      const keywordsToUpdate = filteredAndSortedData.filter(k => keywordIdsToAssignTags.has(k._id));
+
+      if (keywordsToUpdate.length === 0) {
+        toast({
+          title: 'No keywords selected',
+          description: 'Please select keywords to assign tags.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Perform API call to update tags for each targeted keyword
+      // Assuming your backend has an endpoint to update keyword by ID and tags
+      await Promise.all(
+          keywordsToUpdate.map(async (keyword) => {
+            // If you have a single endpoint for multiple keywords, use it.
+            // Otherwise, map over and make individual PUT calls.
+            await axiosClient.patch(`/api/keywords/${keyword._id}`, { tags: newTags });
+          })
+      );
+
+      // After successful update, update the local state to reflect changes
+      // This will ensure the UI shows the new tags immediately
+      const updatedKeywords = keywords?.map(kw => {
+        if (keywordIdsToAssignTags.has(kw._id)) {
+          return { ...kw, tags: newTags }; // Replace tags with the new set
+        }
+        return kw;
+      });
+      // Assuming onActionKeywordsChange updates the parent's keywords state
+      onActionKeywordsChange({ entitiesData: updatedKeywords, totalCount });
+
+      toast({
+        title: 'Success',
+        description: `Tags assigned to ${keywordsToUpdate.length} keyword(s).`,
+      });
+    } catch (error) {
+      console.error('Failed to assign tags:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign tags to keywords.',
+        variant: 'destructive',
+      });
+    } finally {
+      closeAssignTagsModal();
+    }
+  }, [keywordIdsToAssignTags, filteredAndSortedData, keywords, onActionKeywordsChange, totalCount, toast, closeAssignTagsModal]);
+
+  // --- End new functions ---
 
   return (
     <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">
@@ -721,10 +797,26 @@ export default function KeywordsTable({
             <div className="fixed right-0 top-1/2 flex flex-col gap-2 transform -translate-y-1/2">
               <Button
                 variant="secondary"
-                className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-red-800 h-auto py-3 px-4"
+                className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-sky-800 h-auto py-3 px-4"
                 onClick={onModalOpen}
               >
                 View Data
+              </Button>
+              <Button
+                  variant="secondary"
+                  className="text-white bg-green-900 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-gray-600 h-auto py-3 px-4"
+                  onClick={() => {
+                    // Populate modal with combined tags from all selected keywords
+                    let combinedTags: string[] = [];
+                    selectedRows.forEach(id => {
+                      const keyword = filteredAndSortedData.find(k => k._id === id);
+                      if (keyword) {
+                        combinedTags = [...new Set([...combinedTags, ...(keyword.tags || [])])];
+                      }
+                    });
+                    openAssignTagsModal(Array.from(selectedRows), combinedTags);
+                  }}              >
+                Assign Tags
               </Button>
               <Button
                 variant="secondary"
@@ -760,6 +852,33 @@ export default function KeywordsTable({
             multipleKeyword
             isOpen={isOpen}
           />
+          {/* New Assign Tags Modal */}
+
+          {/*//TODO: combine this with KeywordDialog*/}
+          <Dialog
+              open={isAssignTagsModalOpen}
+              onOpenChange={closeAssignTagsModal}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Tags </DialogTitle>
+              </DialogHeader>
+            <TagsInput
+                tags={tagsInAssignModal}
+                onTagsChange={setTagsInAssignModal} // Update local state for TagsInput
+                placeholder="Add or remove tags..."
+                maxTags={15} // You can adjust this max
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={closeAssignTagsModal}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleSaveAssignedTags(tagsInAssignModal)} className="bg-blue-500 hover:bg-blue-600 text-white">
+                Save Tags
+              </Button>
+            </div>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>
