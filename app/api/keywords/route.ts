@@ -14,6 +14,7 @@ export async function GET(req: Request) {
     const page = parseInt(searchParams.get('page') || '1', 10);
     const size = parseInt(searchParams.get('size') || SIZE.toString(), 10);
     const searchTerm = searchParams.get('searchTerm') || '';
+    const showCount = searchParams.get('showCount') || '';
     const sortKey = searchParams.get('sortKey') || '';
     const sortDirection = searchParams.get('sortDirection') || 'asc';
     const dateRangeFrom = searchParams.get('dateFrom');
@@ -25,10 +26,14 @@ export async function GET(req: Request) {
       await seedInitialKeywords();
     }
 
+    if (showCount) {
+      const totalKeywordsCount = await Keyword.countDocuments();
+      return NextResponse.json({ totalCount: totalKeywordsCount });
+    }
     if (fullList) {
       const _keywords = await paginateEntitiesByFilter(
-        null,
-        null,
+        page,
+        size,
         Keyword,
         searchTerm,
         { sortKey, sortDirection },

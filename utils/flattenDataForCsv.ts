@@ -102,6 +102,14 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
       rows = flattenedRows.map((row) =>
         headers.map((header) => String(row[header] || '').replace(/"/g, '""'))
       );
+      csvParser(
+        [
+          headers.join(','),
+          ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
+        ].join('\n'),
+        `${type}_data.csv`,
+        true
+      );
     },
 
     reddit: () => {
@@ -121,7 +129,10 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const results = entry?.keywordData?.data?.organic_results ?? entry?.keywordData?.organic_results ?? [];
+            const results =
+              entry?.keywordData?.data?.organic_results ??
+              entry?.keywordData?.organic_results ??
+              [];
             results
               .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
               .forEach((result: any) => {
@@ -145,13 +156,26 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         // Write chunk to file
         if (i === 0) {
           csvParser(
-            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            [
+              headers.join(','),
+              ...rows.map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              ),
+            ].join('\n'),
             `${type}_data.csv`,
             true
           );
         } else {
           csvParser(
-            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            rows
+              .map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              )
+              .join('\n'),
             `${type}_data.csv`,
             false
           );
@@ -177,7 +201,9 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const forum = entry?.keywordData?.data?.discussions_and_forums?.[0] || entry?.keywordData?.discussions_and_forums?.[0];
+            const forum =
+              entry?.keywordData?.data?.discussions_and_forums?.[0] ||
+              entry?.keywordData?.discussions_and_forums?.[0];
             if (forum) {
               rows.push([
                 row.term,
@@ -199,13 +225,26 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         // Write chunk to file
         if (i === 0) {
           csvParser(
-            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            [
+              headers.join(','),
+              ...rows.map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              ),
+            ].join('\n'),
             `${type}_data.csv`,
             true
           );
         } else {
           csvParser(
-            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            rows
+              .map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              )
+              .join('\n'),
             `${type}_data.csv`,
             false
           );
@@ -215,13 +254,7 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
     },
 
     inline_videos: () => {
-      headers = [
-        ...headers,
-        'Title',
-        'Thumbnail',
-        'Link',
-        'Duration',
-      ];
+      headers = [...headers, 'Title', 'Thumbnail', 'Link', 'Duration'];
 
       // Process data in chunks
       for (let i = 0; i < data.length; i += CHUNK_SIZE) {
@@ -230,7 +263,9 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const video = entry?.keywordData?.data?.inline_videos?.[0] || entry?.keywordData?.inline_videos?.[0];
+            const video =
+              entry?.keywordData?.data?.inline_videos?.[0] ||
+              entry?.keywordData?.inline_videos?.[0];
             if (video) {
               rows.push([
                 row.term,
@@ -249,13 +284,26 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         // Write chunk to file
         if (i === 0) {
           csvParser(
-            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            [
+              headers.join(','),
+              ...rows.map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              ),
+            ].join('\n'),
             `${type}_data.csv`,
             true
           );
         } else {
           csvParser(
-            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            rows
+              .map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              )
+              .join('\n'),
             `${type}_data.csv`,
             false
           );
@@ -284,7 +332,9 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const g = entry?.keywordData?.data?.knowledge_graph || entry?.keywordData?.knowledge_graph;
+            const g =
+              entry?.keywordData?.data?.knowledge_graph ||
+              entry?.keywordData?.knowledge_graph;
             if (g) {
               rows.push([
                 row.term,
@@ -307,13 +357,26 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         // Write chunk to file
         if (i === 0) {
           csvParser(
-            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            [
+              headers.join(','),
+              ...rows.map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              ),
+            ].join('\n'),
             `${type}_data.csv`,
             true
           );
         } else {
           csvParser(
-            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            rows
+              .map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              )
+              .join('\n'),
             `${type}_data.csv`,
             false
           );
@@ -340,7 +403,9 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const q = entry?.keywordData?.data?.related_questions?.[0] || entry?.keywordData?.related_questions?.[0];
+            const q =
+              entry?.keywordData?.data?.related_questions?.[0] ||
+              entry?.keywordData?.related_questions?.[0];
             if (q) {
               rows.push([
                 row.term,
@@ -361,13 +426,26 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         // Write chunk to file
         if (i === 0) {
           csvParser(
-            [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+            [
+              headers.join(','),
+              ...rows.map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              ),
+            ].join('\n'),
             `${type}_data.csv`,
             true
           );
         } else {
           csvParser(
-            rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+            rows
+              .map((row) =>
+                row
+                  .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                  .join(',')
+              )
+              .join('\n'),
             `${type}_data.csv`,
             false
           );
@@ -416,13 +494,26 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
       // Write chunk to file
       if (i === 0) {
         csvParser(
-          [headers.join(','), ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n'),
+          [
+            headers.join(','),
+            ...rows.map((row) =>
+              row
+                .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                .join(',')
+            ),
+          ].join('\n'),
           `${type}_data.csv`,
           true
         );
       } else {
         csvParser(
-          rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'),
+          rows
+            .map((row) =>
+              row
+                .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+                .join(',')
+            )
+            .join('\n'),
           `${type}_data.csv`,
           false
         );

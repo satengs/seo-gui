@@ -7,6 +7,15 @@ import { searchKeyword } from '@/lib/serpApi';
 
 const CHUNK_SIZE = 10;
 let processingJobId: string | null = null;
+let isProcessingPaused = false;
+
+function getTodayDateRange() {
+  const todayKey = new Date().toISOString().split('T')[0];
+  return {
+    startOfDay: new Date(todayKey + 'T00:00:00.000Z'),
+    endOfDay: new Date(todayKey + 'T23:59:59.999Z'),
+  };
+}
 
 async function getProcessingStatus(keywordIds: string[]) {
   let query: Record<string, any> = {};
@@ -53,20 +62,29 @@ async function processKeywords(keywordIds: string[]) {
       query.isDefaultKeywords = true;
       totalKeywords = await Keyword.countDocuments({ isDefaultKeywords: true });
     }
+    const { startOfDay, endOfDay } = getTodayDateRange();
+    const processedKeywordIds = await KeywordHistoricalMore.find({
+      createdAt: { $gte: startOfDay, $lt: endOfDay },
+      ...(keywordIds.length > 0 && { keywordId: { $in: keywordIds } }),
+    }).distinct('keywordId');
 
-    let processedCount = 0;
+    let processedCount = processedKeywordIds?.length
+      ? processedKeywordIds.length
+      : 0;
 
-    while (processedCount < totalKeywords && processingJobId) {
+    console.log('Already fetched historical more: ', processedCount);
+    console.log('Start from : ', processedCount);
+
+    while (
+      processedCount < totalKeywords &&
+      processingJobId &&
+      !isProcessingPaused
+    ) {
       const keywords: IKeyword[] = await Keyword.find(query)
         .skip(processedCount)
         .limit(CHUNK_SIZE);
-
-      const todayKey = new Date().toISOString().split('T')[0];
-      const startOfDay = new Date(todayKey + 'T00:00:00.000Z');
-      const endOfDay = new Date(todayKey + 'T23:59:59.999Z');
-
       for (const keyword of keywords) {
-        if (!processingJobId) break;
+        if (!processingJobId || isProcessingPaused) break;
 
         const existingRecord = await KeywordHistoricalMore.findOne({
           keywordId: keyword._id,
@@ -96,7 +114,6 @@ async function processKeywords(keywordIds: string[]) {
           });
         }
       }
-
       processedCount += keywords.length;
     }
 
@@ -119,6 +136,13 @@ export async function POST(req: Request) {
 
     if (action === 'start') {
       if (processingJobId) {
+        if (isProcessingPaused) {
+          isProcessingPaused = false;
+          return NextResponse.json({
+            message: 'Processing resumed',
+            jobId: processingJobId,
+          });
+        }
         return NextResponse.json({
           message: 'Processing already in progress',
           jobId: processingJobId,
@@ -126,6 +150,7 @@ export async function POST(req: Request) {
       }
 
       processingJobId = new Date().getTime().toString();
+      isProcessingPaused = false;
       processKeywords(items).catch(console.error);
 
       return NextResponse.json({
@@ -134,6 +159,7 @@ export async function POST(req: Request) {
       });
     } else if (action === 'stop') {
       processingJobId = null;
+      isProcessingPaused = true;
       return NextResponse.json({
         message: 'Processing stopped',
       });

@@ -17,7 +17,13 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Download, ExternalLink, ArrowUpDown } from 'lucide-react';
+import {
+  ArrowLeft,
+  Download,
+  ExternalLink,
+  ArrowUpDown,
+  Loader2,
+} from 'lucide-react';
 import { filterKeywordsByType } from '@/lib/utils';
 import { flattenDataForCsv } from '@/utils/flattenDataForCsv';
 import { DeviceType } from '@/components/ui/device-type';
@@ -395,8 +401,8 @@ export default function DataTypeFilterPanel({
     key: string;
     direction: 'asc' | 'desc';
   }>({ key: '', direction: 'asc' });
+  const [loading, setLoading] = useState<boolean>(false);
   const { toast } = useToast();
-  console.log('data.length: ', data.length);
 
   const filtered = filterKeywordsByType(data, type);
   const typeInfo = dataTypes.find((dt) => dt.value === type);
@@ -525,31 +531,40 @@ export default function DataTypeFilterPanel({
 
   const downloadAsCSV = useCallback(async () => {
     try {
-      const resp = await axiosClient.get(`/api/keywords?fullList=${true}`);
-      if (!resp?.data?.length) {
-        toast({
-          title: 'No data to export',
-          description: 'There is no data available',
-        });
-        return;
-      }
+      setLoading(true);
+      const resp = await axiosClient.get(`/api/keywords?showCount=true`);
+      const totalCount = resp?.data?.totalCount;
+      for (let i = 0; i < totalCount; i += 100) {
+        const keywordsResp = await axiosClient.get(
+          `/api/keywords?fullList=true&page=${i + 1}&size=100`
+        );
+        console.log('kkk: ', keywordsResp.data);
+        if (!keywordsResp?.data?.length) {
+          toast({
+            title: 'No data to export',
+            description: 'There is no data available',
+          });
+          continue;
+        }
 
-      // Filter the data by type
-      const filteredData = filterKeywordsByType(resp.data, type);
-      if (!filteredData?.length) {
-        toast({
-          title: 'No data to export',
-          description: `There is no data available for type: ${type}`,
-        });
-        return;
-      }
+        // Filter the data by type
+        //TODO change keywordData?.{type}=>keywordData?.data?.{type}
+        const filteredData = filterKeywordsByType(keywordsResp.data, type);
+        if (!filteredData?.length) {
+          toast({
+            title: 'No data to export',
+            description: `There is no data available for type: ${type}`,
+          });
+          continue;
+        }
 
-      // Use flattenDataForCsv for proper data formatting
-      flattenDataForCsv(filteredData, type);
-      toast({
-        title: 'Success',
-        description: 'CSV file has been downloaded',
-      });
+        // Use flattenDataForCsv for proper data formatting
+        flattenDataForCsv(filteredData, type);
+        toast({
+          title: 'Success',
+          description: 'CSV file has been downloaded',
+        });
+      }
     } catch (err) {
       console.error('Export error:', err);
       toast({
@@ -557,6 +572,8 @@ export default function DataTypeFilterPanel({
         description: 'Something went wrong',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   }, [type, toast]);
   return (
@@ -586,9 +603,18 @@ export default function DataTypeFilterPanel({
               size="sm"
               onClick={downloadAsCSV}
               className="flex items-center gap-2"
+              disabled={loading}
             >
-              <Download className="h-4 w-4" />
-              Export CSV
+              {loading ? (
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : (
+                <>
+                  <Download className="h-4 w-4" />
+                  Export CSV
+                </>
+              )}
             </Button>
           </div>
         </SheetHeader>
