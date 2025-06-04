@@ -128,11 +128,7 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         chunk.forEach((row) => {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
-            // Check both data structures
-            const results =
-              entry?.keywordData?.data?.organic_results ??
-              entry?.keywordData?.organic_results ??
-              [];
+            const results = entry?.keywordData?.data?.organic_results || [];
             results
               .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
               .forEach((result: any) => {
@@ -200,10 +196,8 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         chunk.forEach((row) => {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
-            // Check both data structures
             const forum =
-              entry?.keywordData?.data?.discussions_and_forums?.[0] ||
-              entry?.keywordData?.discussions_and_forums?.[0];
+              entry?.keywordData?.data?.discussions_and_forums?.[0] || [];
             if (forum) {
               rows.push([
                 row.term,
@@ -263,9 +257,7 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const video =
-              entry?.keywordData?.data?.inline_videos?.[0] ||
-              entry?.keywordData?.inline_videos?.[0];
+            const video = entry?.keywordData?.data?.inline_videos?.[0];
             if (video) {
               rows.push([
                 row.term,
@@ -332,9 +324,7 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
             // Check both data structures
-            const g =
-              entry?.keywordData?.data?.knowledge_graph ||
-              entry?.keywordData?.knowledge_graph;
+            const g = entry?.keywordData?.data?.knowledge_graph;
             if (g) {
               rows.push([
                 row.term,
@@ -402,10 +392,8 @@ export function flattenDataForCsv(data: IKeyword[], type: string) {
         chunk.forEach((row) => {
           getHistoricalDates(row).forEach((date: string) => {
             const entry = row.historicalData.find((h: any) => h.date === date);
-            // Check both data structures
-            const q =
-              entry?.keywordData?.data?.related_questions?.[0] ||
-              entry?.keywordData?.related_questions?.[0];
+
+            const q = entry?.keywordData?.data?.related_questions?.[0];
             if (q) {
               rows.push([
                 row.term,

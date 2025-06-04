@@ -44,8 +44,13 @@ import { IKeyword, IKeywordPaginateParams } from '@/types';
 import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 import { DeviceType } from '@/components/ui/device-type';
 import { DateRange } from 'react-day-picker';
-import TagsInput from "@/components/pages/Keywords/TagsInput";
-import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import TagsInput from '@/components/pages/Keywords/TagsInput';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface KeywordsTableProps {
   keywords: IKeyword[] | null;
@@ -127,7 +132,7 @@ export default function KeywordsTable({
         kgmWebsite: value.kgmWebsite,
         organicResultsCount: value.organicResultsCount,
         timestamp: value.timestamp,
-        kgmData: value.keywordData,
+        keywordData: value.keywordData,
       });
     }
     return data.sort(
@@ -260,6 +265,7 @@ export default function KeywordsTable({
       );
 
       onActionKeywordsChange(response?.data || []);
+      setSelectedRows(new Set());
       toast({
         title: 'Success',
         description: `Successfully deleted ${keywordIds.length} keywords`,
@@ -280,11 +286,13 @@ export default function KeywordsTable({
   }, [searchTerm, onKeywordFilterChange]);
 
   const onModalOpen = useCallback(() => setShowModal(true), []);
-// --- New state for Assign Tags functionality ---
+  // --- New state for Assign Tags functionality ---
   const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
   const [tagsInAssignModal, setTagsInAssignModal] = useState<string[]>([]);
   // Stores the _ids of keywords that will be affected by tag changes in the modal
-  const [keywordIdsToAssignTags, setKeywordIdsToAssignTags] = useState<Set<string>>(new Set());
+  const [keywordIdsToAssignTags, setKeywordIdsToAssignTags] = useState<
+    Set<string>
+  >(new Set());
   // --- End new state ---
   const onModalClose = useCallback(() => setShowModal(false), []);
   const fieldsArr = [
@@ -297,11 +305,7 @@ export default function KeywordsTable({
 
   const renderDataFeatures = useCallback(
     (keyword: any) => {
-      //TODO fix this and remove the any type
-      const data =
-        keyword.kgmData?.data && Object.keys(keyword.kgmData?.data).length
-          ? keyword.kgmData.data
-          : keyword.kgmData || {};
+      const data = keyword.keywordData?.data;
 
       const features = Object.keys(data).filter(
         (field) => !fieldsArr.includes(field)
@@ -332,11 +336,14 @@ export default function KeywordsTable({
   }, [needClearSelected]);
 
   // --- New functions for Assign Tags Modal ---
-  const openAssignTagsModal = useCallback((keywordIds: string[], initialTags: string[]) => {
-    setKeywordIdsToAssignTags(new Set(keywordIds));
-    setTagsInAssignModal(initialTags);
-    setIsAssignTagsModalOpen(true);
-  }, []);
+  const openAssignTagsModal = useCallback(
+    (keywordIds: string[], initialTags: string[]) => {
+      setKeywordIdsToAssignTags(new Set(keywordIds));
+      setTagsInAssignModal(initialTags);
+      setIsAssignTagsModalOpen(true);
+    },
+    []
+  );
 
   const closeAssignTagsModal = useCallback(() => {
     setIsAssignTagsModalOpen(false);
@@ -345,56 +352,71 @@ export default function KeywordsTable({
     setSelectedRows(new Set()); // Clear selected rows after assigning tags
   }, []);
 
-  const handleSaveAssignedTags = useCallback(async (newTags: string[]) => {
-    try {
-      // Find the keywords that were targeted by the modal
-      const keywordsToUpdate = filteredAndSortedData.filter(k => keywordIdsToAssignTags.has(k._id));
+  const handleSaveAssignedTags = useCallback(
+    async (newTags: string[]) => {
+      try {
+        // Find the keywords that were targeted by the modal
+        const keywordsToUpdate = filteredAndSortedData.filter((k) =>
+          keywordIdsToAssignTags.has(k._id)
+        );
 
-      if (keywordsToUpdate.length === 0) {
-        toast({
-          title: 'No keywords selected',
-          description: 'Please select keywords to assign tags.',
-          variant: 'destructive'
-        });
-        return;
-      }
+        if (keywordsToUpdate.length === 0) {
+          toast({
+            title: 'No keywords selected',
+            description: 'Please select keywords to assign tags.',
+            variant: 'destructive',
+          });
+          return;
+        }
 
-      // Perform API call to update tags for each targeted keyword
-      // Assuming your backend has an endpoint to update keyword by ID and tags
-      await Promise.all(
+        // Perform API call to update tags for each targeted keyword
+        // Assuming your backend has an endpoint to update keyword by ID and tags
+        await Promise.all(
           keywordsToUpdate.map(async (keyword) => {
             // If you have a single endpoint for multiple keywords, use it.
             // Otherwise, map over and make individual PUT calls.
-            await axiosClient.patch(`/api/keywords/${keyword._id}`, { tags: newTags });
+            await axiosClient.patch(`/api/keywords/${keyword._id}`, {
+              tags: newTags,
+            });
           })
-      );
+        );
 
-      // After successful update, update the local state to reflect changes
-      // This will ensure the UI shows the new tags immediately
-      const updatedKeywords = keywords?.map(kw => {
-        if (keywordIdsToAssignTags.has(kw._id)) {
-          return { ...kw, tags: newTags }; // Replace tags with the new set
-        }
-        return kw;
-      });
-      // Assuming onActionKeywordsChange updates the parent's keywords state
-      onActionKeywordsChange({ entitiesData: updatedKeywords, totalCount });
+        // After successful update, update the local state to reflect changes
+        // This will ensure the UI shows the new tags immediately
+        const updatedKeywords = keywords?.map((kw) => {
+          if (keywordIdsToAssignTags.has(kw._id)) {
+            return { ...kw, tags: newTags }; // Replace tags with the new set
+          }
+          return kw;
+        });
+        // Assuming onActionKeywordsChange updates the parent's keywords state
+        onActionKeywordsChange({ entitiesData: updatedKeywords, totalCount });
 
-      toast({
-        title: 'Success',
-        description: `Tags assigned to ${keywordsToUpdate.length} keyword(s).`,
-      });
-    } catch (error) {
-      console.error('Failed to assign tags:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to assign tags to keywords.',
-        variant: 'destructive',
-      });
-    } finally {
-      closeAssignTagsModal();
-    }
-  }, [keywordIdsToAssignTags, filteredAndSortedData, keywords, onActionKeywordsChange, totalCount, toast, closeAssignTagsModal]);
+        toast({
+          title: 'Success',
+          description: `Tags assigned to ${keywordsToUpdate.length} keyword(s).`,
+        });
+      } catch (error) {
+        console.error('Failed to assign tags:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to assign tags to keywords.',
+          variant: 'destructive',
+        });
+      } finally {
+        closeAssignTagsModal();
+      }
+    },
+    [
+      keywordIdsToAssignTags,
+      filteredAndSortedData,
+      keywords,
+      onActionKeywordsChange,
+      totalCount,
+      toast,
+      closeAssignTagsModal,
+    ]
+  );
 
   // --- End new functions ---
 
@@ -726,7 +748,7 @@ export default function KeywordsTable({
                                               <TableCell className="py-2 font-medium">
                                                 {new Date(
                                                   entry.date
-                                                ).toLocaleDateString()}{' '}
+                                                ).toLocaleDateString()}
                                               </TableCell>
                                               <TableCell>
                                                 {entry.kgmid || '-'}
@@ -803,19 +825,24 @@ export default function KeywordsTable({
                 View Data
               </Button>
               <Button
-                  variant="secondary"
-                  className="text-white bg-green-900 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-gray-600 h-auto py-3 px-4"
-                  onClick={() => {
-                    // Populate modal with combined tags from all selected keywords
-                    let combinedTags: string[] = [];
-                    selectedRows.forEach(id => {
-                      const keyword = filteredAndSortedData.find(k => k._id === id);
-                      if (keyword) {
-                        combinedTags = [...new Set([...combinedTags, ...(keyword.tags || [])])];
-                      }
-                    });
-                    openAssignTagsModal(Array.from(selectedRows), combinedTags);
-                  }}              >
+                variant="secondary"
+                className="text-white bg-green-900 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-gray-600 h-auto py-3 px-4"
+                onClick={() => {
+                  // Populate modal with combined tags from all selected keywords
+                  let combinedTags: string[] = [];
+                  selectedRows.forEach((id) => {
+                    const keyword = filteredAndSortedData.find(
+                      (k) => k._id === id
+                    );
+                    if (keyword) {
+                      combinedTags = [
+                        ...new Set([...combinedTags, ...(keyword.tags || [])]),
+                      ];
+                    }
+                  });
+                  openAssignTagsModal(Array.from(selectedRows), combinedTags);
+                }}
+              >
                 Assign Tags
               </Button>
               <Button
@@ -856,27 +883,30 @@ export default function KeywordsTable({
 
           {/*//TODO: combine this with KeywordDialog*/}
           <Dialog
-              open={isAssignTagsModalOpen}
-              onOpenChange={closeAssignTagsModal}
+            open={isAssignTagsModalOpen}
+            onOpenChange={closeAssignTagsModal}
           >
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Edit Tags </DialogTitle>
               </DialogHeader>
-            <TagsInput
+              <TagsInput
                 tags={tagsInAssignModal}
                 onTagsChange={setTagsInAssignModal} // Update local state for TagsInput
                 placeholder="Add or remove tags..."
                 maxTags={15} // You can adjust this max
-            />
-            <div className="mt-4 flex justify-end gap-2">
-              <Button variant="outline" onClick={closeAssignTagsModal}>
-                Cancel
-              </Button>
-              <Button onClick={() => handleSaveAssignedTags(tagsInAssignModal)} className="bg-blue-500 hover:bg-blue-600 text-white">
-                Save Tags
-              </Button>
-            </div>
+              />
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="outline" onClick={closeAssignTagsModal}>
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleSaveAssignedTags(tagsInAssignModal)}
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Save Tags
+                </Button>
+              </div>
             </DialogContent>
           </Dialog>
         </CardContent>

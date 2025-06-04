@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { DynamicData } from './DailyData';
 
 const KeywordHistoricalDataSchema = new mongoose.Schema(
   {
@@ -8,10 +9,7 @@ const KeywordHistoricalDataSchema = new mongoose.Schema(
       required: true,
     },
     date: { type: String, required: true },
-    keywordData: {
-      type: mongoose.Schema.Types.Mixed,
-      required: true,
-    },
+    keywordData: DynamicData,
     organicResultsCount: { type: Number },
     kgmid: { type: String },
     kgmTitle: { type: String },

@@ -59,7 +59,7 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
           difficulty: searchResults.search_information?.difficulty || null,
           backlinksNeeded: null,
           timestamp: new Date().toISOString(),
-          keywordData: searchResults,
+          'keywordData.data': searchResults,
         });
       }
 

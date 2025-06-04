@@ -115,11 +115,7 @@ const LocationsTable = ({
                         </TableCell>
                       ) : (
                         <TableCell>
-                          <div
-                            className={
-                              'flex flex-row align-center justify-center'
-                            }
-                          >
+                          <div className="flex flex-row align-center justify-center">
                             <LocationItemActions
                               location={item}
                               currentPage={currentPage}

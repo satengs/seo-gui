@@ -120,12 +120,7 @@ const renderByType: Record<
 > = {
   ai_overview: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    //TODO fix this
-
-    const refs =
-      entry?.keywordData?.data?.ai_overview?.references ||
-      entry?.keywordData?.ai_overview?.references ||
-      [];
+    const refs = entry?.keywordData?.data?.ai_overview?.references || [];
     if (!refs.length) return [];
 
     return refs.map((ref: any, i: number) => (
@@ -150,7 +145,7 @@ const renderByType: Record<
           ) : (
             <span className="text-muted-foreground text-sm">No tags</span>
           )}
-        </TableCell>{' '}
+        </TableCell>
         <TableCell>{entry.date}</TableCell>
         <TableCell>{ref.source}</TableCell>
         <TableCell>{ref.snippet}</TableCell>
@@ -161,9 +156,8 @@ const renderByType: Record<
   },
   related_questions: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const q =
-      entry?.keywordData?.data?.related_questions?.[0] ||
-      entry?.keywordData?.related_questions?.[0];
+    const q = entry?.keywordData?.data?.related_questions?.[0];
+
     if (!q) return [];
     return [
       <TableRow key={`${index}-${date}-question`}>
@@ -210,10 +204,8 @@ const renderByType: Record<
   },
   reddit: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const results =
-      entry?.keywordData?.data?.organic_results ??
-      entry?.keywordData?.organic_results ??
-      [];
+    const results = entry?.keywordData?.data?.organic_results;
+
     return results
       .filter((r: any) => /\breddit\b/i.test(r.source?.toLowerCase()))
       .map((result: any, i: number) => (
@@ -259,9 +251,8 @@ const renderByType: Record<
   },
   inline_videos: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const video =
-      entry?.keywordData?.data?.inline_videos?.[0] ||
-      entry?.keywordData?.inline_videos?.[0];
+    const video = entry?.keywordData?.data?.inline_videos?.[0];
+
     if (!video) return [];
     return [
       <TableRow key={`${index}-${date}-video`}>
@@ -298,12 +289,10 @@ const renderByType: Record<
   },
   knowledge_graph: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const g =
-      entry?.keywordData?.data?.knowledge_graph ||
-      entry?.keywordData?.knowledge_graph;
+    const g = entry?.keywordData?.data?.knowledge_graph;
     if (!g) return [];
     return [
-      <TableRow key={`${index}-${date}-graph`}>
+      <TableRow key={`${row._id}-${date}-${index}-graph`}>
         <TableCell>{row.term}</TableCell>
         <TableCell>
           <DeviceType type={row.device} />
@@ -339,9 +328,7 @@ const renderByType: Record<
   },
   discussions_and_forums: (row, date, index) => {
     const entry = row.historicalData.find((h: any) => h.date === date);
-    const forum =
-      entry?.keywordData?.data?.discussions_and_forums?.[0] ||
-      entry?.keywordData?.discussions_and_forums?.[0];
+    const forum = entry?.keywordData?.data?.discussions_and_forums?.[0];
     if (!forum) return [];
     return [
       <TableRow key={`${index}-${date}-forums`}>

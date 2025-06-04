@@ -4,7 +4,7 @@ import {
   Video,
   HelpCircle,
   MessageSquare,
-  StickyNote
+  StickyNote,
 } from 'lucide-react';
 
 export const dataTypes = [

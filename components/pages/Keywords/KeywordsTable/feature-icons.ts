@@ -37,7 +37,7 @@ import {
   MessageSquareWarning,
   Globe,
   Megaphone,
-  ShieldQuestion
+  ShieldQuestion,
 } from 'lucide-react';
 import { IFeaturedIcon } from '@/types';
 
@@ -350,7 +350,7 @@ const featureIcons: Record<string, IFeaturedIcon> = {
     bgClass: 'bg-lime-100 dark:bg-lime-900',
     textClass: 'text-lime-800 dark:text-lime-200',
     borderClass: 'border-lime-200 dark:border-lime-800',
-  }
+  },
 };
 
 export default featureIcons;
