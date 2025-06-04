@@ -40,7 +40,9 @@ export interface IKeyword {
   organicResultsCount: number;
   isDefaultKeywords: boolean;
   tags?: string[];
+  //TODO fix this
   keywordData: IKeywordData;
+  kgmData: IKeywordData;
   historicalData: any;
   organicResultsHistoricalData?: IOrganicResultsHistoricalData;
   createdAt: Date | string;
@@ -54,6 +56,13 @@ export interface IKeywordData {
 
 export interface IPaginatedKeywords {
   entitiesData: IKeyword[];
+  totalCount: any;
+  totalPages: number;
+  currentPage: number;
+}
+
+export interface IPaginateData<T> {
+  entitiesData: T[];
   totalCount: any;
   totalPages: number;
   currentPage: number;
@@ -99,6 +108,8 @@ export interface SearchKeywordResponse {
     total_results?: number;
     time_taken_displayed?: number;
     organic_results_state?: string;
+    volume?: number | null;
+    difficulty?: number | null;
   };
   knowledge_graph?: {
     title?: string;
@@ -182,4 +193,41 @@ export interface ILoginFormValues {
 
 export interface IRegisterFormValues extends ILoginFormValues {
   fullName: string;
+}
+
+export interface INewLocationFormValues {
+  location: string[];
+  longitude: number;
+  latitude: number;
+  countryCode?: string;
+}
+
+export interface ISerpLocation {
+  id: string;
+  _id: string;
+  canonical_name: string;
+  country_code: string;
+  google_id: number;
+  google_parent_id: number | null;
+  gps: number[];
+  keys: string[];
+  name: string;
+  reach: number;
+  target_type: string;
+}
+
+export interface ILocation {
+  _id: string;
+  location: string;
+  longitude: number;
+  latitude: number;
+  gos?: [];
+  [key: string]: any;
+  label: string;
+  value: string;
+}
+
+export interface IOptionLocation extends ILocation {
+  value: string;
+  label: string;
 }

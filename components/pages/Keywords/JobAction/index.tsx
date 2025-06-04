@@ -3,13 +3,21 @@
 import React, { useState, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import ConfirmDialog from '@/components/pages/Keywords/JobAction/ConfirmDialog';
 import MoreHistoricalButton from '@/components/pages/Keywords/JobAction/MoreHistoricalButton';
+import axiosClient from '@/lib/axiosClient';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import axiosClient from '@/lib/axiosClient';
 
-const JobAction: React.FC = () => {
+interface IJobActionProps {
+  selectedItems: string[];
+  clearSelected: () => void;
+}
+
+const JobAction = ({ selectedItems, clearSelected }: IJobActionProps) => {
   const { toast } = useToast();
+  const [showConfirmModal, setShowConfirmModal] = useState<boolean>(false);
+
   const [isChecking, setIsChecking] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -20,16 +28,12 @@ const JobAction: React.FC = () => {
   ) => {
     try {
       if (isCancelled) {
-        await axiosClient.delete('/api/keywords/check');
-        toast({
-          title: 'Cancelled',
-          description: 'Keyword checking process was cancelled',
-        });
         return;
       }
 
       const response = await axiosClient.post(
-        `/api/keywords/check?startIndex=${startIndex}`
+        `/api/keywords/check?startIndex=${startIndex}`,
+        { items: selectedItems }
       );
       const {
         hasMore,
@@ -55,12 +59,23 @@ const JobAction: React.FC = () => {
       // Continue processing if there are more keywords
       if (hasMore && nextIndex !== null && !cancelled) {
         await processNextChunk(nextIndex, totalKeywords);
+        if (selectedItems?.length) {
+          clearSelected?.();
+        }
+      } else if (cancelled) {
+        toast({
+          title: 'Checking was stopped',
+          description: `Completed processing  ${processedKeywords} keywords`,
+        });
       } else {
         toast({
           title: 'Success',
           description: `Completed processing all ${totalKeywords} keywords`,
         });
         setProgress(0);
+        if (selectedItems?.length) {
+          clearSelected?.();
+        }
       }
     } catch (error) {
       throw error;
@@ -75,7 +90,8 @@ const JobAction: React.FC = () => {
 
       // Get initial response to get total keywords count
       const initialResponse = await axiosClient.post(
-        '/api/keywords/check?startIndex=0'
+        '/api/keywords/check?startIndex=0',
+        { items: selectedItems }
       );
       const { totalKeywords } = initialResponse.data;
 
@@ -92,22 +108,31 @@ const JobAction: React.FC = () => {
       setIsCancelled(false);
       setProgress(0);
     }
-  }, [processNextChunk, toast]);
+  }, [processNextChunk, toast, selectedItems]);
 
-  const handleStopChecking = useCallback(() => {
+  const handleStopChecking = useCallback(async () => {
     setIsCancelled(true);
+    await axiosClient.delete('/api/keywords/check');
     toast({
       title: 'Stopping',
       description: 'Stopping keyword check process...',
     });
   }, [toast]);
 
+  const onCheckBtnBtnClick = useCallback(async () => {
+    if (selectedItems?.length) {
+      setShowConfirmModal(true);
+    } else {
+      await handleCheckKeywords();
+    }
+  }, [handleCheckKeywords, selectedItems?.length]);
+
   return (
     <Card className="py-3 my-3 flex items-center gap-4 border-0 shadow-none">
       <Button
         variant="secondary"
         className="bg-blue-300 text-blue-17 min-w-[200px] relative"
-        onClick={handleCheckKeywords}
+        onClick={onCheckBtnBtnClick}
         disabled={isChecking}
       >
         {isChecking ? (
@@ -135,7 +160,17 @@ const JobAction: React.FC = () => {
           Stop
         </Button>
       )}
-      <MoreHistoricalButton />
+      <MoreHistoricalButton
+        selectedItems={selectedItems}
+        clearSelected={clearSelected}
+      />
+      <ConfirmDialog
+        onActionHandle={handleCheckKeywords}
+        type={'Check'}
+        setIsOpen={setShowConfirmModal}
+        isOpen={showConfirmModal}
+        selectedCount={selectedItems?.length}
+      />
     </Card>
   );
 };

@@ -1,6 +1,5 @@
-import { IHistoricalMapEntry, IKeyword, ISortConfig, ISortObj } from '@/types';
+import { ISortConfig, ISortObj } from '@/types';
 import { DateRange } from 'react-day-picker';
-import { format } from 'date-fns';
 
 export const paginateEntities = async (
   page: number,
@@ -28,7 +27,7 @@ export const paginateEntities = async (
   }
 };
 
-export const paginateEntitiesByFilterEx = async (
+export const paginateEntitiesByFilterExOne = async (
   page: number,
   pageSize: number,
   schema: any,
@@ -66,7 +65,7 @@ export const paginateEntitiesByFilterEx = async (
   }
 };
 
-export const paginateEntitiesByFilter = async (
+export const paginateEntitiesByFilterExTwo = async (
   page: number,
   pageSize: number,
   schema: any,
@@ -78,20 +77,260 @@ export const paginateEntitiesByFilter = async (
 
   try {
     const regex = new RegExp(term, 'i');
-    let query = term
+    const fromDate = dateRange?.from ? new Date(dateRange.from) : null;
+    const toDate = dateRange?.to ? new Date(dateRange.to) : null;
+
+    const query: any = {};
+
+    if (term) {
+      query.$or = [
+        { term: { $regex: regex } },
+        { location: { $regex: regex } },
+        { device: { $regex: regex } },
+        { kgmid: { $regex: regex } },
+        { kgmTitle: { $regex: regex } },
+      ];
+
+      if (term.includes(',')) {
+        const tags = term.split(',').map((tag) => tag.trim());
+        query.$or.push({ tags: { $in: tags } });
+      } else {
+        query.$or.push({ tags: { $in: [term] } });
+      }
+    }
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) query.createdAt.$gte = fromDate;
+      if (toDate) query.createdAt.$lte = toDate;
+    }
+
+    const sort: ISortObj = {};
+    if (sortBy?.sortKey?.length) {
+      sort[sortBy.sortKey] = sortBy.sortDirection === 'asc' ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    const pipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'keywordHistoricalData',
+          let: { keywordId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$id', '$$keywordId'] },
+                    ...(fromDate
+                      ? [
+                          {
+                            $gte: [
+                              '$date',
+                              fromDate.toISOString().split('T')[0],
+                            ],
+                          },
+                        ]
+                      : []),
+                    ...(toDate
+                      ? [
+                          {
+                            $lte: ['$date', toDate.toISOString().split('T')[0]],
+                          },
+                        ]
+                      : []),
+                  ],
+                },
+              },
+            },
+            { $sort: { date: -1 } },
+          ],
+          as: 'historicalData',
+        },
+      },
+
+      { $sort: sort },
+      { $skip: skip },
+      { $limit: pageSize },
+    ];
+
+    const [entitiesData, totalCount] = await Promise.all([
+      schema.aggregate(pipeline),
+      schema.countDocuments(query),
+    ]);
+
+    return {
+      entitiesData,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize),
+      currentPage: page,
+    };
+  } catch (err: any) {
+    throw new Error('Error fetching paginated data: ' + (err?.message || ''));
+  }
+};
+
+export const paginateEntitiesByFilter = async (
+  page: any,
+  pageSize: any,
+  schema: any,
+  term: string,
+  sortBy?: ISortConfig,
+  dateRange?: any
+) => {
+  const skip = (page - 1) * pageSize;
+
+  try {
+    const regex = new RegExp(term, 'i');
+
+    const fromDateStr = dateRange?.from
+      ? new Date(dateRange.from).toISOString().split('T')[0]
+      : null;
+    const toDateStr = dateRange?.to
+      ? new Date(dateRange.to).toISOString().split('T')[0]
+      : null;
+
+    const query: any = {};
+
+    // Search fields
+    if (term) {
+      query.$or = [
+        { term: { $regex: regex } },
+        { location: { $regex: regex } },
+        { device: { $regex: regex } },
+        { kgmid: { $regex: regex } },
+        { kgmTitle: { $regex: regex } },
+      ];
+
+      if (term.includes(',')) {
+        const tags = term.split(',').map((tag) => tag.trim());
+        query.$or.push({ tags: { $in: tags } });
+      } else {
+        query.$or.push({ tags: { $in: [term] } });
+      }
+    }
+
+    const sort: ISortObj = {};
+    if (sortBy?.sortKey) {
+      sort[sortBy.sortKey] = sortBy.sortDirection === 'asc' ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    const pipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'keywordHistoricalData',
+          let: { keywordId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$id', '$$keywordId'] },
+                    ...(fromDateStr ? [{ $gte: ['$date', fromDateStr] }] : []),
+                    ...(toDateStr ? [{ $lte: ['$date', toDateStr] }] : []),
+                  ],
+                },
+              },
+            },
+            { $sort: { date: -1 } },
+          ],
+          as: 'historicalData',
+        },
+      },
+      ...(fromDateStr || toDateStr
+        ? [
+            // Only include keywords with at least one historical data item in the range
+            {
+              $match: {
+                'historicalData.0': { $exists: true },
+              },
+            },
+          ]
+        : []),
+      { $sort: sort },
+      ...(page && pageSize
+        ? [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }]
+        : []),
+    ];
+
+    const countPipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: 'keywordHistoricalData',
+          let: { keywordId: '$_id' },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ['$id', '$$keywordId'] },
+                    ...(fromDateStr ? [{ $gte: ['$date', fromDateStr] }] : []),
+                    ...(toDateStr ? [{ $lte: ['$date', toDateStr] }] : []),
+                  ],
+                },
+              },
+            },
+            { $sort: { date: -1 } },
+          ],
+          as: 'historicalData',
+        },
+      },
+      ...(fromDateStr || toDateStr
+        ? [
+            // Only include keywords with at least one historical data item in the range
+            {
+              $match: {
+                'historicalData.0': { $exists: true },
+              },
+            },
+          ]
+        : []),
+    ];
+
+    // const [entitiesData, totalCount] = await Promise.all([
+    //   schema.aggregate(pipeline),
+    //   schema.countDocuments(query),
+    // ]);
+    const totalCountResult = await schema.aggregate([
+      ...countPipeline,
+      { $count: 'totalCount' },
+    ]);
+    const totalCount = totalCountResult?.[0]?.totalCount || 0;
+
+    const entitiesData = await schema.aggregate(pipeline);
+    return {
+      entitiesData,
+      totalCount,
+      totalPages: Math.ceil(totalCount / (pageSize ?? 1)),
+      currentPage: page ?? 1,
+    };
+  } catch (err: any) {
+    throw new Error('Error fetching paginated data: ' + (err?.message || ''));
+  }
+};
+
+export const paginateLocationsByFilter = async (
+  page: number,
+  pageSize: number,
+  schema: any,
+  location: string,
+  sortBy?: ISortConfig
+) => {
+  const skip = (page - 1) * pageSize;
+
+  try {
+    const regex = new RegExp(location, 'i');
+    let query = location
       ? {
           $or: [
-            { term: { $regex: regex } },
-            { tags: { $in: [regex] } },
             { location: { $regex: regex } },
-            { device: { $regex: regex } },
-            { kgmid: { $regex: regex } },
-            {
-              kgmTitle: { $regex: regex },
-            },
-            {
-              kgmTitle: { $regex: regex },
-            },
+            { countryCode: { $in: [regex] } },
           ],
         }
       : {};
@@ -101,46 +340,6 @@ export const paginateEntitiesByFilter = async (
       sort[`${sortBy.sortKey}`] = sortBy.sortDirection === 'asc' ? 1 : -1;
     } else {
       sort.createdAt = -1;
-    }
-
-    if (dateRange?.from && dateRange?.to) {
-      const fromDate = format(dateRange.from, 'yyyy-MM-dd');
-      const toDate = format(dateRange.to, 'yyyy-MM-dd');
-
-      const allEntities = await schema.find(query).sort(sort);
-      const filteredKeywords: IKeyword[] = [];
-      allEntities.forEach((keyword: IKeyword) => {
-        if (keyword.historicalData) {
-          const historicalKeys: string[] = [];
-          for (let k of keyword.historicalData.keys()) {
-            historicalKeys.push(k);
-          }
-          let historicalMap: Record<string, IHistoricalMapEntry> = {};
-          historicalKeys.forEach((key: string) => {
-            if (key >= fromDate && key <= toDate) {
-              const timestampKeyword = keyword.historicalData.get(`${key}`);
-              historicalMap = { ...historicalMap, [key]: timestampKeyword };
-            }
-          });
-
-          if (Object.keys(historicalMap)?.length) {
-            filteredKeywords.push({
-              ...keyword[`_doc`],
-              historicalData: historicalMap,
-            });
-          }
-        }
-      });
-
-      const startIndex = skip;
-      const endIndex = startIndex + pageSize;
-      const paginatedEntities = filteredKeywords.slice(startIndex, endIndex);
-      return {
-        entitiesData: paginatedEntities,
-        totalCount: filteredKeywords.length,
-        totalPages: Math.ceil(filteredKeywords.length / pageSize),
-        currentPage: page,
-      };
     }
 
     const entitiesData = await schema

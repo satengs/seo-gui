@@ -36,11 +36,13 @@ export default function KeywordsPage() {
     useState<boolean>(false);
   const [device, setDevice] = useState<string>('mobile');
   const [loading, setLoading] = useState<boolean>(false);
+  const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [location, setLocation] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [sortBy, setSortBy] = useState<ISortConfig>();
   const [fetchLoading, setFetchLoading] = useState<boolean>(true);
+  const [needClearSelected, setNeedClearSelected] = useState<boolean>(false);
   type ExtendedDataType = DataType | 'All';
   const [dataType, setDataType] = useState<ExtendedDataType>('All');
   const { toast } = useToast();
@@ -63,10 +65,10 @@ export default function KeywordsPage() {
           queryString += `&searchTerm=${searchTerm}`;
         }
         if (sortBy?.sortKey?.length) {
-          queryString += `&sortKey=${sortBy?.sortKey}&sortDirection=${sortBy?.sortDirection}`;
+          queryString += `&sortKey=${sortBy.sortKey}&sortDirection=${sortBy.sortDirection}`;
         }
         if (dateRange?.from && dateRange?.to) {
-          queryString += `&dateFrom=${dateRange?.from}&dateTo=${dateRange?.to}`;
+          queryString += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
         }
 
         const response = await axiosClient.get(queryString);
@@ -146,6 +148,10 @@ export default function KeywordsPage() {
     }
   }
 
+  const onClearSelected = useCallback(() => {
+    setNeedClearSelected(true);
+    setSelectedItems([]);
+  }, []);
   const onDateRangeChange = useCallback(
     (start: Date | undefined, end: Date | undefined) =>
       setDateRange({ from: start, to: end }),
@@ -216,6 +222,11 @@ export default function KeywordsPage() {
     setIsGroupSearch(value);
   }, []);
 
+  const onItemsSelect = useCallback((selected: string[]) => {
+    const items = Array.from(selected);
+    setSelectedItems(items);
+  }, []);
+
   useEffect(() => {
     setCurrentPage(1);
     if (isGroupSearch) {
@@ -234,7 +245,10 @@ export default function KeywordsPage() {
   return (
     <div className="p-1.5 space-y-6">
       <Card className="px-6">
-        <JobAction />
+        <JobAction
+          selectedItems={selectedItems}
+          clearSelected={onClearSelected}
+        />
         <div className="flex items-center bg-fuchsia-50 rounded-md shadow-lg px-3 py-2 mb-6">
           <Info className="text-primary bg-blue-95 dark:text-blue-17 opacity-60" />
           <span className="ml-2 text-blue-95 text-center px-3 dark:text-blue-17 opacity-60">
@@ -311,6 +325,9 @@ export default function KeywordsPage() {
           totalPages={totalPages}
           onKeywordsPaginate={onKeywordsPaginate}
           fetchLoading={fetchLoading}
+          dateRange={dateRange}
+          onItemsSelect={onItemsSelect}
+          needClearSelected={needClearSelected}
         />
         <Pagination
           totalCount={totalCount}

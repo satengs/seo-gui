@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useState, useMemo, useCallback, ChangeEvent } from 'react';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  ChangeEvent,
+} from 'react';
 import {
   Table,
   TableBody,
@@ -19,9 +25,8 @@ import {
   ChevronDown,
   History,
   ExternalLink,
-  Phone,
-  Computer,
   Tag,
+  Loader2,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -36,8 +41,11 @@ import { generateCsvFile } from '@/utils';
 import axiosClient from '@/lib/axiosClient';
 import featureIcons from '@/components/pages/Keywords/KeywordsTable/feature-icons';
 import { IKeyword, IKeywordPaginateParams } from '@/types';
-import RemoveAlerting from './ActionsComponent/RemoveAlerting/index';
+import RemoveAlerting from '@/components/pages/Keywords/KeywordsTable/ActionsComponent/RemoveAlerting';
 import { DeviceType } from '@/components/ui/device-type';
+import { DateRange } from 'react-day-picker';
+import TagsInput from "@/components/pages/Keywords/TagsInput";
+import {Dialog, DialogContent, DialogHeader, DialogTitle} from "@/components/ui/dialog";
 
 interface KeywordsTableProps {
   keywords: IKeyword[] | null;
@@ -45,8 +53,11 @@ interface KeywordsTableProps {
   totalCount: number;
   totalPages: number;
   fetchLoading: boolean;
+  needClearSelected: boolean;
+  dateRange: DateRange | undefined;
   onActionKeywordsChange: (data: any, obj?: any) => void;
   onSingleKeywordChange: (data: any) => void;
+  onItemsSelect: (data: string[]) => void;
   onKeywordFilterChange: (data: any) => void;
   onKeywordsPaginate: (data: IKeywordPaginateParams) => void;
 }
@@ -56,11 +67,17 @@ export default function KeywordsTable({
   currentPage,
   totalCount,
   fetchLoading,
+  needClearSelected,
+  dateRange,
+  onItemsSelect,
   onKeywordFilterChange,
   onSingleKeywordChange,
   onActionKeywordsChange,
 }: KeywordsTableProps) {
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [downloadAllCsv, setDownloadAllCsv] = useState<boolean>(false);
+  const [downloadSelectedCsv, setDownloadSelectedCsv] =
+    useState<boolean>(false);
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [sortConfig, setSortConfig] = useState({
@@ -71,6 +88,7 @@ export default function KeywordsTable({
   const [showTagsDialog, setShowTagsDialog] = useState<boolean>(false);
   const { toast } = useToast();
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [showModalTags, setShowModalTags] = useState<boolean>(false);
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleRowExpansion = useCallback((id: string) => {
@@ -90,18 +108,20 @@ export default function KeywordsTable({
 
     return keywords.map((keyword) => ({
       ...keyword,
-      historicalData:
-        keyword.historicalData instanceof Map
-          ? keyword.historicalData
-          : new Map(Object.entries(keyword.historicalData || {})),
+      historicalData: Array.isArray(keyword.historicalData)
+        ? keyword.historicalData
+        : Object.entries(keyword.historicalData || {}).map(([key, value]) => ({
+            key,
+            value,
+          })),
     }));
   }, [keywords]);
 
   const getHistoricalDates = useCallback((keyword: IKeyword) => {
     const data = [];
-    for (const [key, value] of keyword.historicalData) {
+    for (const value of keyword.historicalData) {
       data.push({
-        date: key,
+        date: value.date,
         kgmid: value.kgmid,
         kgmTitle: value.kgmTitle,
         kgmWebsite: value.kgmWebsite,
@@ -158,30 +178,70 @@ export default function KeywordsTable({
     });
   }, []);
 
+  useEffect(() => {
+    const items = Array.from(selectedRows);
+    onItemsSelect(items);
+  }, [selectedRows, onItemsSelect]);
+
   const selectedKeywords = useMemo(() => {
     return filteredAndSortedData.filter((keyword) =>
       selectedRows.has(keyword._id)
     );
   }, [selectedRows, filteredAndSortedData]);
 
-  const downloadAsCSV = useCallback((data: IKeyword[]) => {
-    generateCsvFile(data);
-  }, []);
+  const downloadAsCSV = useCallback(
+    async (data: IKeyword[]) => {
+      try {
+        setDownloadSelectedCsv(true);
+        generateCsvFile(data);
+      } catch (err) {
+        toast({
+          title: 'Failed to export selected csv',
+          description: 'Something went wrong',
+        });
+      } finally {
+        setDownloadSelectedCsv(false);
+      }
+    },
+    [toast]
+  );
 
   const downloadAsCSVAll = useCallback(async () => {
     try {
-      const resp = await axiosClient.get(`/api/keywords?fullList=${true}`);
-      generateCsvFile(resp?.data || []);
+      setDownloadAllCsv(true);
+      let queryString = `/api/keywords?`;
+      if (searchTerm) {
+        queryString += `&searchTerm=${searchTerm}`;
+      }
+      if (sortConfig?.key?.length) {
+        queryString += `&sortKey=${sortConfig.key}&sortDirection=${sortConfig.key}`;
+      }
+      if (dateRange?.from && dateRange?.to) {
+        queryString += `&dateFrom=${dateRange.from}&dateTo=${dateRange.to}`;
+      }
+      if (totalCount > 100) {
+        for (let i = 0; i < totalCount; i += 100) {
+          const paginateQueryString = `${queryString}&page=${Math.floor(i / 100) + 1}&size=100`;
+          const resp = await axiosClient.get(paginateQueryString);
+          generateCsvFile(resp?.data?.entitiesData || []);
+        }
+      } else {
+        const paginateQueryString = `${queryString}&page=1&size=100`;
+        const resp = await axiosClient.get(paginateQueryString);
+        generateCsvFile(resp?.data?.entitiesData || []);
+      }
     } catch (err) {
+      console.log('err: ', err);
       toast({
         title: 'Failed to export csv',
         description: 'Something went wrong',
       });
+    } finally {
+      setDownloadAllCsv(false);
     }
-  }, [toast]);
+  }, [toast, searchTerm, sortConfig, dateRange, totalCount]);
 
   const handleKeywordsDelete = async () => {
-
     try {
       const keywordIds = Array.from(selectedRows);
 
@@ -220,6 +280,12 @@ export default function KeywordsTable({
   }, [searchTerm, onKeywordFilterChange]);
 
   const onModalOpen = useCallback(() => setShowModal(true), []);
+// --- New state for Assign Tags functionality ---
+  const [isAssignTagsModalOpen, setIsAssignTagsModalOpen] = useState(false);
+  const [tagsInAssignModal, setTagsInAssignModal] = useState<string[]>([]);
+  // Stores the _ids of keywords that will be affected by tag changes in the modal
+  const [keywordIdsToAssignTags, setKeywordIdsToAssignTags] = useState<Set<string>>(new Set());
+  // --- End new state ---
   const onModalClose = useCallback(() => setShowModal(false), []);
   const fieldsArr = [
     'search_metadata',
@@ -228,6 +294,109 @@ export default function KeywordsTable({
     'pagination',
     'serpapi_pagination',
   ];
+
+  const renderDataFeatures = useCallback(
+    (keyword: any) => {
+      //TODO fix this and remove the any type
+      const data =
+        keyword.kgmData?.data && Object.keys(keyword.kgmData?.data).length
+          ? keyword.kgmData.data
+          : keyword.kgmData || {};
+
+      const features = Object.keys(data).filter(
+        (field) => !fieldsArr.includes(field)
+      );
+      return features.map((field) => {
+        const feature = featureIcons[field];
+        if (!feature) return null;
+
+        const IconComponent = feature.icon;
+        return (
+          <div
+            key={field}
+            className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
+            title={feature.label}
+          >
+            <IconComponent className="h-3.5 w-3.5" />
+          </div>
+        );
+      });
+    },
+    [fieldsArr]
+  );
+
+  useEffect(() => {
+    if (needClearSelected) {
+      setSelectedRows(new Set());
+    }
+  }, [needClearSelected]);
+
+  // --- New functions for Assign Tags Modal ---
+  const openAssignTagsModal = useCallback((keywordIds: string[], initialTags: string[]) => {
+    setKeywordIdsToAssignTags(new Set(keywordIds));
+    setTagsInAssignModal(initialTags);
+    setIsAssignTagsModalOpen(true);
+  }, []);
+
+  const closeAssignTagsModal = useCallback(() => {
+    setIsAssignTagsModalOpen(false);
+    setTagsInAssignModal([]); // Clear tags in modal on close
+    setKeywordIdsToAssignTags(new Set()); // Clear target keywords
+    setSelectedRows(new Set()); // Clear selected rows after assigning tags
+  }, []);
+
+  const handleSaveAssignedTags = useCallback(async (newTags: string[]) => {
+    try {
+      // Find the keywords that were targeted by the modal
+      const keywordsToUpdate = filteredAndSortedData.filter(k => keywordIdsToAssignTags.has(k._id));
+
+      if (keywordsToUpdate.length === 0) {
+        toast({
+          title: 'No keywords selected',
+          description: 'Please select keywords to assign tags.',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Perform API call to update tags for each targeted keyword
+      // Assuming your backend has an endpoint to update keyword by ID and tags
+      await Promise.all(
+          keywordsToUpdate.map(async (keyword) => {
+            // If you have a single endpoint for multiple keywords, use it.
+            // Otherwise, map over and make individual PUT calls.
+            await axiosClient.patch(`/api/keywords/${keyword._id}`, { tags: newTags });
+          })
+      );
+
+      // After successful update, update the local state to reflect changes
+      // This will ensure the UI shows the new tags immediately
+      const updatedKeywords = keywords?.map(kw => {
+        if (keywordIdsToAssignTags.has(kw._id)) {
+          return { ...kw, tags: newTags }; // Replace tags with the new set
+        }
+        return kw;
+      });
+      // Assuming onActionKeywordsChange updates the parent's keywords state
+      onActionKeywordsChange({ entitiesData: updatedKeywords, totalCount });
+
+      toast({
+        title: 'Success',
+        description: `Tags assigned to ${keywordsToUpdate.length} keyword(s).`,
+      });
+    } catch (error) {
+      console.error('Failed to assign tags:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to assign tags to keywords.',
+        variant: 'destructive',
+      });
+    } finally {
+      closeAssignTagsModal();
+    }
+  }, [keywordIdsToAssignTags, filteredAndSortedData, keywords, onActionKeywordsChange, totalCount, toast, closeAssignTagsModal]);
+
+  // --- End new functions ---
 
   return (
     <div className="mx-1 py-3 md:w-[820px] xl:w-[1400px] 3xl:w-full">
@@ -240,8 +409,17 @@ export default function KeywordsTable({
             </div>
             <div className="flex items-center space-x-2">
               <Button variant="outline" size="sm" onClick={downloadAsCSVAll}>
-                <Download className="h-4 w-4 mr-2" />
-                Export All
+                {downloadAllCsv ? (
+                  <div className="flex items-center">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
+                ) : (
+                  <>
+                    {' '}
+                    <Download className="h-4 w-4 mr-2" />
+                    Export All
+                  </>
+                )}
               </Button>
               {selectedRows.size > 0 && (
                 <Button
@@ -249,8 +427,15 @@ export default function KeywordsTable({
                   size="sm"
                   onClick={() => downloadAsCSV(selectedKeywords)}
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Selected ({selectedRows.size})
+                  {downloadSelectedCsv ? (
+                    <Loader2 className=" h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      {' '}
+                      <Download className="h-4 w-4 mr-2" />
+                      Export Selected ({selectedRows.size})
+                    </>
+                  )}
                 </Button>
               )}
             </div>
@@ -356,260 +541,246 @@ export default function KeywordsTable({
               </TableHeader>
               <TableBody className="text-md">
                 {!fetchLoading ? (
-                  filteredAndSortedData.map((keyword) => {
-                    const dates = getHistoricalDates(keyword);
-
-                    return (
-                      <React.Fragment key={keyword._id}>
-                        <TableRow className="hover:bg-muted/50 cursor-pointer">
-                          <TableCell>
-                            <Checkbox
-                              checked={selectedRows.has(keyword._id)}
-                              onCheckedChange={() =>
-                                toggleRowSelection(keyword._id)
-                              }
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={() => toggleRowExpansion(keyword._id)}
-                            >
-                              {expandedRows.has(keyword._id) ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            <div
-                              className={`${keyword.isDefaultKeywords ? 'bg-blue-100 dark:bg-blue-950' : ''} px-2 py-1 rounded-md`}
-                              title={
-                                keyword.isDefaultKeywords
-                                  ? 'Default keyword'
-                                  : ''
-                              }
-                            >
-                              {keyword.term}
-                            </div>
-                          </TableCell>
-                          <TableCell className="justify-items-center text-xs">
-                            <span title={keyword.location}>
-                              {shortenLocation(keyword.location)}
-                            </span>
-                          </TableCell>
-                          <TableCell className="justify-items-center">
-                            <DeviceType type={keyword.device} />
-                          </TableCell>
-                          <TableCell className="justify-items-center text-xs">
-                            {keyword.kgmid || '-'}
-                          </TableCell>
-                          <TableCell className="justify-items-center text-xs">
-                            {keyword.kgmTitle || '-'}
-                          </TableCell>
-                          <TableCell className="justify-items-center ">
-                            {keyword.kgmWebsite && (
-                              <Link
-                                href={keyword.kgmWebsite}
-                                target="_blank"
-                                className="flex items-center hover:underline"
-                              >
-                                <span className="text-xs overflow-hidden text-ellipsis w-20">
-                                  {new URL(keyword.kgmWebsite).hostname}
-                                </span>
-                                <ExternalLink className="ml-1 h-3 w-3" />
-                              </Link>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              {keyword?.tags && keyword?.tags?.length > 0 ? (
-                                <div className="flex flex-wrap gap-1">
-                                  {keyword?.tags.map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
-                                    >
-                                      {tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-muted-foreground text-sm">
-                                  No tags
-                                </span>
-                              )}
+                  filteredAndSortedData?.length ? (
+                    filteredAndSortedData.map((keyword) => {
+                      const dates = getHistoricalDates(keyword);
+                      return (
+                        <React.Fragment key={keyword._id}>
+                          <TableRow className="hover:bg-muted/50 cursor-pointer">
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedRows.has(keyword._id)}
+                                onCheckedChange={() =>
+                                  toggleRowSelection(keyword._id)
+                                }
+                              />
+                            </TableCell>
+                            <TableCell>
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                className="h-6 w-6 p-0"
-                                onClick={() => {
-                                  setSelectedKeyword(keyword);
-                                  setShowTagsDialog(true);
-                                }}
+                                className="h-8 w-8 p-0"
+                                onClick={() => toggleRowExpansion(keyword._id)}
                               >
-                                <Tag className="h-3 w-3" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {keyword.organicResultsCount?.toLocaleString() ||
-                              '-'}
-                          </TableCell>
-                          <TableCell>
-                            {keyword.updatedAt
-                              ? new Date(keyword.updatedAt).toLocaleDateString()
-                              : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-0.5">
-                              {keyword.keywordData &&
-                                keyword.keywordData.data &&
-                                Object.keys(keyword.keywordData.data).map(
-                                  (field) => {
-                                    if (fieldsArr.includes(field)) return null;
-
-                                    const feature = featureIcons[field];
-                                    if (!feature) return field;
-
-                                    const IconComponent = feature.icon;
-
-                                    return (
-                                      <div
-                                        key={field}
-                                        className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
-                                        title={feature.label}
-                                      >
-                                        <IconComponent className="h-3.5 w-3.5" />
-                                      </div>
-                                    );
-                                  }
+                                {expandedRows.has(keyword._id) ? (
+                                  <ChevronDown className="h-4 w-4" />
+                                ) : (
+                                  <ChevronRight className="h-4 w-4" />
                                 )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center space-x-2">
-                              <ActionsComponent
-                                keyword={keyword}
-                                onActionKeywordsChange={onActionKeywordsChange}
-                                currentPage={currentPage}
-                              />
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {expandedRows.has(keyword._id) && dates?.length ? (
-                          <TableRow>
-                            <TableCell colSpan={13} className="p-0">
-                              <div className="bg-muted/50 border-y">
-                                <div className="p-2 border-b bg-muted/70">
-                                  <span className="flex items-center text-sm font-medium text-muted-foreground">
-                                    <History className="h-4 w-4 mr-2" />
-                                    Historical Data
+                              </Button>
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              <div
+                                className={`${keyword.isDefaultKeywords ? 'bg-blue-100 dark:bg-blue-950' : ''} px-2 py-1 rounded-md`}
+                                title={
+                                  keyword.isDefaultKeywords
+                                    ? 'Default keyword'
+                                    : ''
+                                }
+                              >
+                                {keyword.term}
+                              </div>
+                            </TableCell>
+                            <TableCell className="justify-items-center text-xs">
+                              <span title={keyword.location}>
+                                {shortenLocation(keyword.location)}
+                              </span>
+                            </TableCell>
+                            <TableCell className="justify-items-center">
+                              <DeviceType type={keyword.device} />
+                            </TableCell>
+                            <TableCell className="justify-items-center text-xs">
+                              {keyword.kgmid || '-'}
+                            </TableCell>
+                            <TableCell className="justify-items-center text-xs">
+                              {keyword.kgmTitle || '-'}
+                            </TableCell>
+                            <TableCell className="justify-items-center ">
+                              {keyword.kgmWebsite && (
+                                <Link
+                                  href={keyword.kgmWebsite}
+                                  target="_blank"
+                                  className="flex items-center hover:underline"
+                                >
+                                  <span className="text-xs overflow-hidden text-ellipsis w-20">
+                                    {new URL(keyword.kgmWebsite).hostname}
                                   </span>
-                                </div>
-                                <div className="px-4">
-                                  <Table>
-                                    <TableHeader>
-                                      <TableRow className="hover:bg-transparent">
-                                        <TableHead className="w-[540px]">
-                                          Date
-                                        </TableHead>
-                                        <TableHead>KGM ID</TableHead>
-                                        <TableHead>KGM Title</TableHead>
-                                        <TableHead>KGM Website</TableHead>
-                                        <TableHead>Data Features</TableHead>
-                                        <TableHead className="text-right">
-                                          Total Results
-                                        </TableHead>
-                                      </TableRow>
-                                    </TableHeader>
-                                    <TableBody className="text-xs">
-                                      {dates.map((entry) => {
-                                        return (
-                                          <TableRow
-                                            key={entry.date}
-                                            className="hover:bg-muted/30"
-                                          >
-                                            <TableCell className="py-2 font-medium">
-                                              {new Date(
-                                                entry.date
-                                              ).toLocaleDateString()}{' '}
-                                            </TableCell>
-                                            <TableCell>
-                                              {entry.kgmid || '-'}
-                                            </TableCell>
-                                            <TableCell>
-                                              {entry.kgmTitle || '-'}
-                                            </TableCell>
-                                            <TableCell>
-                                              {entry.kgmWebsite && (
-                                                <Link
-                                                  href={entry.kgmWebsite}
-                                                  target="_blank"
-                                                  className="flex items-center hover:underline"
-                                                >
-                                                  {
-                                                    new URL(entry.kgmWebsite)
-                                                      .hostname
-                                                  }
-                                                  <ExternalLink className="ml-1 h-3 w-3" />
-                                                </Link>
-                                              )}
-                                            </TableCell>
-                                            <TableCell>
-                                              <div className="flex items-center gap-0.5">
-                                                {entry.kgmData &&
-                                                  entry.kgmData.data &&
-                                                  Object.keys(
-                                                    entry.kgmData.data
-                                                  ).map((field) => {
-                                                    if (
-                                                      fieldsArr.includes(field)
-                                                    )
-                                                      return null;
+                                  <ExternalLink className="ml-1 h-3 w-3" />
+                                </Link>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                {keyword?.tags && keyword?.tags?.length > 0 ? (
+                                  <div className="flex flex-wrap gap-1">
+                                    {keyword?.tags.map((tag) => (
+                                      <span
+                                        key={tag}
+                                        className="px-2 py-0.5 text-xs rounded-full bg-primary/10"
+                                      >
+                                        {tag}
+                                      </span>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-muted-foreground text-sm">
+                                    No tags
+                                  </span>
+                                )}
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() => {
+                                    setSelectedKeyword(keyword);
+                                    setShowTagsDialog(true);
+                                  }}
+                                >
+                                  <Tag className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right font-mono">
+                              {keyword.organicResultsCount?.toLocaleString() ||
+                                '-'}
+                            </TableCell>
+                            <TableCell>
+                              {keyword.updatedAt
+                                ? new Date(
+                                    keyword.updatedAt
+                                  ).toLocaleDateString()
+                                : '-'}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-0.5">
+                                {keyword.keywordData &&
+                                  keyword.keywordData.data &&
+                                  Object.keys(keyword.keywordData.data).map(
+                                    (field) => {
+                                      if (fieldsArr.includes(field))
+                                        return null;
 
-                                                    const feature =
-                                                      featureIcons[field];
-                                                    if (!feature) return field;
+                                      const feature = featureIcons[field];
+                                      if (!feature) return field;
 
-                                                    const IconComponent =
-                                                      feature.icon;
+                                      const IconComponent = feature.icon;
 
-                                                    return (
-                                                      <div
-                                                        key={field}
-                                                        className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
-                                                        title={feature.label}
-                                                      >
-                                                        <IconComponent className="h-3.5 w-3.5" />
-                                                      </div>
-                                                    );
-                                                  })}
-                                              </div>
-                                            </TableCell>
-                                            <TableCell
-                                              className="text-right font-mono"
-                                              title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
-                                            >
-                                              {entry.organicResultsCount?.toLocaleString() ||
-                                                '-'}
-                                            </TableCell>
-                                          </TableRow>
-                                        );
-                                      })}
-                                    </TableBody>
-                                  </Table>
-                                </div>
+                                      return (
+                                        <div
+                                          key={field}
+                                          className={`p-1 rounded-full ${feature.bgClass} ${feature.textClass}`}
+                                          title={feature.label}
+                                        >
+                                          <IconComponent className="h-3.5 w-3.5" />
+                                        </div>
+                                      );
+                                    }
+                                  )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <ActionsComponent
+                                  keyword={keyword}
+                                  onActionKeywordsChange={
+                                    onActionKeywordsChange
+                                  }
+                                  currentPage={currentPage}
+                                />
                               </div>
                             </TableCell>
                           </TableRow>
-                        ) : null}
-                      </React.Fragment>
-                    );
-                  })
+                          {expandedRows.has(keyword._id) && dates?.length ? (
+                            <TableRow>
+                              <TableCell colSpan={13} className="p-0">
+                                <div className="bg-muted/50 border-y">
+                                  <div className="p-2 border-b bg-muted/70">
+                                    <span className="flex items-center text-sm font-medium text-muted-foreground">
+                                      <History className="h-4 w-4 mr-2" />
+                                      Historical Data
+                                    </span>
+                                  </div>
+                                  <div className="px-4">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow className="hover:bg-transparent">
+                                          <TableHead className="w-[540px]">
+                                            Date
+                                          </TableHead>
+                                          <TableHead>KGM ID</TableHead>
+                                          <TableHead>KGM Title</TableHead>
+                                          <TableHead>KGM Website</TableHead>
+                                          <TableHead>Data Features</TableHead>
+                                          <TableHead className="text-right">
+                                            Total Results
+                                          </TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody className="text-xs">
+                                        {dates.map((entry, i) => {
+                                          return (
+                                            <TableRow
+                                              key={entry.date + i}
+                                              className="hover:bg-muted/30"
+                                            >
+                                              <TableCell className="py-2 font-medium">
+                                                {new Date(
+                                                  entry.date
+                                                ).toLocaleDateString()}{' '}
+                                              </TableCell>
+                                              <TableCell>
+                                                {entry.kgmid || '-'}
+                                              </TableCell>
+                                              <TableCell>
+                                                {entry.kgmTitle || '-'}
+                                              </TableCell>
+                                              <TableCell>
+                                                {entry.kgmWebsite && (
+                                                  <Link
+                                                    href={entry.kgmWebsite}
+                                                    target="_blank"
+                                                    className="flex items-center hover:underline"
+                                                  >
+                                                    {
+                                                      new URL(entry.kgmWebsite)
+                                                        .hostname
+                                                    }
+                                                    <ExternalLink className="ml-1 h-3 w-3" />
+                                                  </Link>
+                                                )}
+                                              </TableCell>
+                                              <TableCell>
+                                                <div className="flex items-center gap-0.5">
+                                                  {renderDataFeatures(entry)}
+                                                </div>
+                                              </TableCell>
+                                              <TableCell
+                                                className="text-right font-mono"
+                                                title={`${entry.organicResultsCount === 0 ? 'No result found' : ''} `}
+                                              >
+                                                {entry.organicResultsCount?.toLocaleString() ||
+                                                  '-'}
+                                              </TableCell>
+                                            </TableRow>
+                                          );
+                                        })}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ) : null}
+                        </React.Fragment>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={11}>
+                        <p className={'py-3 font-medium'}>No keywords</p>
+                      </TableCell>
+                    </TableRow>
+                  )
                 ) : (
                   <TableRow>
                     <TableCell colSpan={11}>
@@ -626,10 +797,26 @@ export default function KeywordsTable({
             <div className="fixed right-0 top-1/2 flex flex-col gap-2 transform -translate-y-1/2">
               <Button
                 variant="secondary"
-                className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-red-800 h-auto py-3 px-4"
+                className="text-white bg-sky-400 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-sky-800 h-auto py-3 px-4"
                 onClick={onModalOpen}
               >
                 View Data
+              </Button>
+              <Button
+                  variant="secondary"
+                  className="text-white bg-green-900 border-[1px] rounded-l-3xl rounded-r-none hover:bg-gray-500 border-gray-600 h-auto py-3 px-4"
+                  onClick={() => {
+                    // Populate modal with combined tags from all selected keywords
+                    let combinedTags: string[] = [];
+                    selectedRows.forEach(id => {
+                      const keyword = filteredAndSortedData.find(k => k._id === id);
+                      if (keyword) {
+                        combinedTags = [...new Set([...combinedTags, ...(keyword.tags || [])])];
+                      }
+                    });
+                    openAssignTagsModal(Array.from(selectedRows), combinedTags);
+                  }}              >
+                Assign Tags
               </Button>
               <Button
                 variant="secondary"
@@ -665,6 +852,33 @@ export default function KeywordsTable({
             multipleKeyword
             isOpen={isOpen}
           />
+          {/* New Assign Tags Modal */}
+
+          {/*//TODO: combine this with KeywordDialog*/}
+          <Dialog
+              open={isAssignTagsModalOpen}
+              onOpenChange={closeAssignTagsModal}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Edit Tags </DialogTitle>
+              </DialogHeader>
+            <TagsInput
+                tags={tagsInAssignModal}
+                onTagsChange={setTagsInAssignModal} // Update local state for TagsInput
+                placeholder="Add or remove tags..."
+                maxTags={15} // You can adjust this max
+            />
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="outline" onClick={closeAssignTagsModal}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleSaveAssignedTags(tagsInAssignModal)} className="bg-blue-500 hover:bg-blue-600 text-white">
+                Save Tags
+              </Button>
+            </div>
+            </DialogContent>
+          </Dialog>
         </CardContent>
       </Card>
     </div>

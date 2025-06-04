@@ -86,7 +86,7 @@ export default function KeywordDialog({
     <Dialog open={isOpen} onOpenChange={onCloseAction}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Edit Tags for "{keyword.term}"</DialogTitle>
+          <DialogTitle>Edit Tags for &#34;{keyword.term}&#34;</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">

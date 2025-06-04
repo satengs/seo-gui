@@ -2,7 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { IKeyword, IHistoricalEntry } from '@/types';
 import { Parser } from '@json2csv/plainjs';
-import { DataType } from '../consts/dataTypes';
+import { DataType } from '@/consts/dataTypes';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -137,7 +137,7 @@ export const capitalizeFirstLetter = (value: string) => {
 export function shortenLocation(location: string): string {
   if (!location) return '';
 
-  const parts = location.split(', ').map((part) => part.toLowerCase().trim());
+  const parts = location.split(',').map((part) => part.toLowerCase().trim());
 
   let name1 =
     CITY_ABBREVIATIONS[parts[0]] ||
@@ -164,28 +164,29 @@ export function shortenLocation(location: string): string {
 }
 export function filterKeywordsByType(keywords: any[], type: DataType) {
   return keywords?.filter((item) => {
-    if (!item.historicalData) return false;
+    if (!item.historicalData || !Array.isArray(item.historicalData))
+      return false;
 
-    const entries = Object.values(item.historicalData);
+    const entries = item.historicalData;
 
     switch (type) {
       case 'ai_overview':
-        return entries.some(
+        return entries.map(
           (entry: any) => entry?.keywordData?.data?.ai_overview
         );
 
       case 'related_questions':
-        return entries.some(
+        return entries.map(
           (entry: any) =>
             Array.isArray(entry?.keywordData?.data?.related_questions) ||
-            typeof entry?.keywordData?.data?.related_questions === 'object'
+            typeof entry?.keywordData?.related_questions === 'object'
         );
 
       case 'reddit':
-        return entries.some(
+        return entries.map(
           (entry: any) =>
             Array.isArray(entry?.keywordData?.data?.organic_results) &&
-            entry.keywordData.data.organic_results.some(
+            entry?.keywordData?.data?.organic_results.some(
               (r: any) =>
                 typeof r?.source === 'string' &&
                 /\breddit\b/i.test(r.source.toLowerCase())
@@ -193,13 +194,17 @@ export function filterKeywordsByType(keywords: any[], type: DataType) {
         );
 
       case 'inline_videos':
-        return entries.some((entry: any) =>
+        return entries.map((entry: any) =>
           Array.isArray(entry?.keywordData?.data?.inline_videos)
         );
 
       case 'knowledge_graph':
-        return entries.some(
+        return entries.map(
           (entry: any) => entry?.keywordData?.data?.knowledge_graph
+        );
+      case 'discussions_and_forums':
+        return entries.map(
+          (entry: any) => entry?.keywordData?.data?.discussions_and_forums
         );
 
       default:

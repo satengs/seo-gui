@@ -39,7 +39,7 @@ export default function DataTypeFilter({
         type="single"
         value={value}
         onValueChange={handleValueChange}
-        className="inline-flex border rounded-lg divide-x shadow-[0_1px_3px_0_rgb(0,0,0,0.1)] bg-white"
+        className="inline-flex border rounded-lg divide-x shadow-[0_1px_3px_0_rgb(0,0,0,0.1)]"
       >
         {dataTypes.map((type) => {
           const Icon = type.icon;

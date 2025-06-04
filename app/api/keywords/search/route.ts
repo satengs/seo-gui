@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
+import Location from '@/lib/db/models/Location';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData';
 import { searchKeyword } from '@/lib/serpApi';
 import { findAndUpdateDailyKeyword } from '@/lib/db/models/Keyword/InitialKeywords';
 import { paginateEntities } from '@/lib/db/helpers';
 import { SearchKeywordResponse } from '@/types';
-import { locationList } from '@/consts/locations';
 
 export async function POST(request: Request) {
   try {
@@ -18,8 +19,9 @@ export async function POST(request: Request) {
     console.log('kk: ', keywordsArr);
     for (let i = 0; i < keywordsArr?.length; i++) {
       if (data?.includeDefaultLocation && !data?.location) {
-        for (let l = 0; l < locationList.length; l++) {
-          const currentLocation = locationList[l];
+        const defaultLocations = await Location.find();
+        for (let l = 0; l < defaultLocations.length; l++) {
+          const currentLocation = defaultLocations[l].location;
           await findAndUpdateDailyKeyword({
             keyword: keywordsArr[i],
             location: currentLocation,
@@ -73,29 +75,27 @@ export async function GET(request: Request) {
 
     const todayKey = new Date().toISOString().split('T')[0];
 
-    const keywordData = {
+    const keyword = await Keyword.create({
       term,
       location,
       device,
       isDefaultKeywords,
-      historicalData: new Map([
-        [
-          todayKey,
-          {
-            organicResultsCount:
-              searchResponse.search_information?.total_results || 0,
-            kgmTitle: searchResponse.knowledge_graph?.title || '',
-            kgmWebsite: searchResponse.knowledge_graph?.website || '',
-            difficulty: null,
-            volume: null,
-            backlinksNeeded: null,
-            timestamp: new Date().toISOString(),
-          },
-        ],
-      ]),
-    };
+    });
 
-    const keyword = await Keyword.create(keywordData);
+    await KeywordHistoricalData.create({
+      id: keyword._id,
+      date: todayKey,
+      organicResultsCount:
+        searchResponse.search_information?.total_results || 0,
+      kgmid: searchResponse.knowledge_graph?.kgmid || '',
+      kgmTitle: searchResponse.knowledge_graph?.title || '',
+      kgmWebsite: searchResponse.knowledge_graph?.website || '',
+      difficulty: searchResponse.search_information?.difficulty || null,
+      volume: searchResponse.search_information?.volume || null,
+      backlinksNeeded: null,
+      timestamp: new Date(),
+      keywordData: searchResponse,
+    });
 
     return NextResponse.json({
       entitiesData: [keyword],

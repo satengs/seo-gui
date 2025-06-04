@@ -1,48 +1,5 @@
 import mongoose from 'mongoose';
-import { IKeyword } from '@/types';
-
-// Schema for daily metrics and data
-const DynamicData = new mongoose.Schema({
-  id: {
-    type: Number,
-    autoIncrement: true,
-  },
-  data: {
-    type: Object,
-  },
-});
-
-const DailyDataSchema = new mongoose.Schema(
-  {
-    organicResultsCount: {
-      type: Number,
-    },
-    kgmid: {
-      type: String,
-    },
-    kgmTitle: {
-      type: String,
-    },
-    kgmWebsite: {
-      type: String,
-    },
-    difficulty: {
-      type: Number,
-    },
-    volume: {
-      type: Number,
-    },
-    backlinksNeeded: {
-      type: Number,
-    },
-    timestamp: {
-      type: Date,
-      default: Date.now,
-    },
-    keywordData: DynamicData,
-  },
-  { _id: false }
-); // Disable _id for subdocuments
+import { DailyData, DynamicData } from './DailyData';
 
 const KeywordSchema = new mongoose.Schema(
   {
@@ -87,12 +44,6 @@ const KeywordSchema = new mongoose.Schema(
         trim: true,
       },
     ],
-    // Historical data stored by date
-    historicalData: {
-      type: Map,
-      of: DailyDataSchema,
-      default: new Map(),
-    },
     createdAt: {
       type: Date,
       default: Date.now,

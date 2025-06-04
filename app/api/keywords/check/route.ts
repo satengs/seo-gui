@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Keyword from '@/lib/db/models/Keyword/Keyword';
+import Keyword from '@/lib/db/models/schemas/Keyword';
+import KeywordHistoricalData from '@/lib/db/models/schemas/KeywordHistoricalData';
 import { searchKeyword } from '@/lib/serpApi';
 import { SearchKeywordResponse } from '@/types';
 
@@ -8,10 +9,7 @@ const CHUNK_SIZE = 10;
 const PROCESSING_STATUS = new Map();
 
 const extractTotalResults = (searchResults: SearchKeywordResponse): number => {
-  if (searchResults.organic_results?.length) {
-    return searchResults.organic_results.length;
-  }
-  return 0;
+  return searchResults.organic_results?.length || 0;
 };
 
 async function processKeywordChunk(keywords: any[], startIndex: number) {
@@ -42,34 +40,34 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         continue;
       }
 
-      // Create daily metrics data
-      const dailyData = {
-        organicResultsCount:
-          searchResults.search_information?.total_results || 0,
-        kgmid: searchResults?.knowledge_graph?.kgmid || '',
-        kgmTitle: searchResults.knowledge_graph?.title || '',
-        kgmWebsite: searchResults.knowledge_graph?.website || '',
-        difficulty: null,
-        volume: null,
-        term: keyword.term,
-        device: keyword.device,
-        location: keyword.location,
-        backlinksNeeded: null,
-        timestamp: new Date().toISOString(),
-        'keywordData.data': { ...searchResults },
-      };
+      // Check if historical data for today already exists
+      const existingEntry = await KeywordHistoricalData.findOne({
+        id: keyword._id,
+        date: todayKey,
+      });
 
-      if (!keyword.historicalData || typeof keyword.historicalData !== 'object') {
-        await Keyword.findByIdAndUpdate(keyword._id, {
-          $set: { historicalData: {} }
+      if (!existingEntry) {
+        await KeywordHistoricalData.create({
+          id: keyword._id,
+          date: todayKey,
+          organicResultsCount:
+            searchResults.search_information?.total_results || 0,
+          kgmid: searchResults.knowledge_graph?.kgmid || '',
+          kgmTitle: searchResults.knowledge_graph?.title || '',
+          kgmWebsite: searchResults.knowledge_graph?.website || '',
+          volume: searchResults.search_information?.volume || null,
+          difficulty: searchResults.search_information?.difficulty || null,
+          backlinksNeeded: null,
+          timestamp: new Date().toISOString(),
+          keywordData: searchResults,
         });
       }
-      // Update keyword with latest results while preserving historical data
+
+      // Update latest values in Keyword document
       await Keyword.findByIdAndUpdate(
         keyword._id,
         {
           $set: {
-            [`historicalData.${todayKey}`]: dailyData,
             kgmid: searchResults.knowledge_graph?.kgmid || '',
             kgmTitle: searchResults.knowledge_graph?.title || '',
             kgmWebsite: searchResults.knowledge_graph?.website || '',
@@ -81,11 +79,7 @@ async function processKeywordChunk(keywords: any[], startIndex: number) {
         { new: true }
       );
 
-      results.push({
-        keyword: keyword.term,
-        success: true,
-        dailyData,
-      });
+      results.push({ keyword: keyword.term, success: true });
     } catch (error) {
       console.error(`Failed to check keyword ${keyword.term}:`, error);
       results.push({
@@ -107,10 +101,34 @@ export async function DELETE() {
 export async function POST(request: Request) {
   try {
     await dbConnect();
-    PROCESSING_STATUS.set('cancelled', false);
+    const isCancelled = PROCESSING_STATUS.get('cancelled');
+    if (!isCancelled) {
+      PROCESSING_STATUS.set('cancelled', false);
+    }
+    if (isCancelled) {
+      return NextResponse.json({
+        cancelled: true,
+        results: [],
+        // totalKeywords: keywords.length,
+        // processedKeywords: Math.min(nextIndex, keywords.length),
+        // hasMore: hasMore && !cancelled,
+        // nextIndex: hasMore ? nextIndex : null,
+        // results,
+        // cancelled,
+      });
+    }
+
+    const { items } = await request.json();
+    let query: Record<string, any> = {};
 
     console.log('Fetching default keywords...');
-    const keywords = await Keyword.find({ isDefaultKeywords: true });
+    if (items.length > 0) {
+      query._id = { $in: items };
+    } else {
+      query.isDefaultKeywords = true;
+    }
+
+    const keywords = await Keyword.find(query);
 
     if (!keywords.length) {
       return NextResponse.json({
@@ -125,6 +143,7 @@ export async function POST(request: Request) {
       keywords,
       startIndex
     );
+
     const nextIndex = startIndex + CHUNK_SIZE;
     const hasMore = nextIndex < keywords.length;
 
