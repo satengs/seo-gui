@@ -88,7 +88,9 @@ export default function GoogleGraphPage() {
           params.searchTerm = activeSearchTerm;
         }
 
-        const { data: json } = await axiosClient.get('/api/google-graph', { params });
+        const { data: json } = await axiosClient.get('/api/google-graph', {
+          params,
+        });
 
         if (json.error) {
           setError(json.error);
@@ -245,7 +247,8 @@ export default function GoogleGraphPage() {
         setShowConfirmModal(true);
         toast({
           title: 'Data Found',
-          description: 'Existing data found for today. Please confirm to update.',
+          description:
+            'Existing data found for today. Please confirm to update.',
         });
       } else {
         setIsChecking(false);

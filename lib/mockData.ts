@@ -6,14 +6,6 @@ export const mockKeywords: IKeyword[] = [
     createdAt: new Date().toISOString(),
     device: 'mobile',
     organicResultsCount: 10,
-    kgmData: {
-        _id: 'kgm-1',
-        data: {
-            search_information: {
-            total_results: 245000000,
-            },
-        },
-    },
     keywordData: {
       _id: 'kd-1',
       data: { search_information: {} },
@@ -45,14 +37,6 @@ export const mockKeywords: IKeyword[] = [
     keywordTerm: 'seo-services-desktop-us',
     isDefaultKeywords: true,
     organicResultsCount: 10,
-    kgmData: {
-      _id: 'kgm-1',
-      data: {
-        search_information: {
-          total_results: 245000000,
-        },
-      },
-    },
     keywordData: {
       data: {},
       _id: 'mock_123',
@@ -81,14 +65,6 @@ export const mockKeywords: IKeyword[] = [
     keywordTerm: 'content-strategy-mobile-us',
     isDefaultKeywords: false,
     organicResultsCount: 10,
-    kgmData: {
-      _id: 'kgm-1',
-      data: {
-        search_information: {
-          total_results: 245000000,
-        },
-      },
-    },
     keywordData: {
       data: {},
       _id: 'mock_1234',

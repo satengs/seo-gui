@@ -74,12 +74,15 @@ const GoogleGraphTable: React.FC<GoogleGraphTableProps> = ({
         await Promise.all(
           data.map(async (row) => {
             try {
-              const { data: json } = await axiosClient.get('/api/google-graph', {
-                params: {
-                  keywordId: row.keywordId,
-                  limit: 1,
-                },
-              });
+              const { data: json } = await axiosClient.get(
+                '/api/google-graph',
+                {
+                  params: {
+                    keywordId: row.keywordId,
+                    limit: 1,
+                  },
+                }
+              );
               if (json.data?.[0]?.data) {
                 newRowData[row._id] = json.data[0].data;
               }

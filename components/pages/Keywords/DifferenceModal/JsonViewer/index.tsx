@@ -227,19 +227,23 @@ const JsonViewer: React.FC<JsonViewerProps> = ({
       if (!Array.isArray(processedData)) {
         // Try to convert object to array if it's an object with dates as keys
         if (typeof processedData === 'object' && processedData !== null) {
-          const arrayData = Object.entries(processedData as Record<string, any>).map(([date, data]) => ({
+          const arrayData = Object.entries(
+            processedData as Record<string, any>
+          ).map(([date, data]) => ({
             date,
-            data
+            data,
           }));
           return arrayData
-            .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+            .sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            )
             .map((item) => renderHistoricalData(item.date, item));
         }
         return <span>Invalid historical data format</span>;
       }
 
       // Filter out items without valid dates before sorting
-      const validData = processedData.filter(item => item && item.date);
+      const validData = processedData.filter((item) => item && item.date);
 
       if (validData.length === 0) {
         return <span>No valid historical data found</span>;
