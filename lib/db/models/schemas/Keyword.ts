@@ -1,5 +1,8 @@
 import mongoose from 'mongoose';
 import { DailyData, DynamicData } from './DailyData';
+import GroupedByDevice from '@/lib/db/models/schemas/GroupedByDevice';
+import GroupedByLocation from '@/lib/db/models/schemas/GroupedByLocation';
+import GroupedByKeywordTerm from '@/lib/db/models/schemas/GroupedByKeywordTerm';
 
 const KeywordSchema = new mongoose.Schema(
   {

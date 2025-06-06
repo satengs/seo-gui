@@ -1,6 +1,10 @@
 import Keyword from '../schemas/Keyword';
 import { searchKeyword } from '@/lib/serpApi';
 import { checkDateDifference } from '@/lib/utils';
+import GroupedByLocation from '@/lib/db/models/schemas/GroupedByLocation';
+import GroupedByDevice from '@/lib/db/models/schemas/GroupedByDevice';
+import GroupedByKeywordTerm from '@/lib/db/models/schemas/GroupedByKeywordTerm';
+import { IKeyword } from '@/types';
 
 export const initialKeywords = [
   {
@@ -700,6 +704,42 @@ export async function findAndUpdateDailyKeyword({
       true,
       isDefaultKeywords
     );
-    await Keyword.create(newKeywordData);
+    const createdKeyword = await Keyword.create(newKeywordData);
+    await syncGroupedCollections(createdKeyword);
   }
 }
+
+function normalize(value: string) {
+  return value
+    .split(',')
+    .map((v) => v.trim())
+    .join(',');
+}
+
+export const syncGroupedCollections = async (doc: IKeyword) => {
+  const normalizedLocation = normalize(doc.location);
+  await Promise.all([
+    GroupedByLocation.create({
+      keywordId: doc._id,
+      keywordTerm: doc.term,
+      device: doc.device,
+      locationGroup: normalizedLocation,
+      createdAt: doc.createdAt,
+    }),
+    GroupedByDevice.create({
+      keywordId: doc._id,
+      keywordTerm: doc.term,
+      deviceGroup: doc.device,
+      location: doc.location,
+      createdAt: doc.createdAt,
+    }),
+    GroupedByKeywordTerm.create({
+      keywordId: doc._id,
+      keywordTerm: doc.term,
+      termGroup: doc.term,
+      device: doc.device,
+      location: doc.location,
+      createdAt: doc.createdAt,
+    }),
+  ]);
+};

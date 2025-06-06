@@ -44,22 +44,12 @@ const KeywordGroupingActions = () => {
   const getKeywordsGroup = useCallback(async (id: string) => {
     try {
       const response = await axiosClient.get(
-        `/api/keywords/groups?groupBy=${id}`
+        `/api/keywords/group?groupBy=${id}`
       );
       console.log('response: ', response.data);
     } catch (err) {
       console.log('error: ', err);
     }
-  }, []);
-
-  const onKeywordGroupByTerm = useCallback(() => {
-    alert('keyword');
-  }, []);
-  const onKeywordGroupByLocation = useCallback(() => {
-    alert('location');
-  }, []);
-  const onKeywordGroupByDevice = useCallback(() => {
-    alert('device');
   }, []);
 
   const onKeywordGroupHandle = useCallback(
