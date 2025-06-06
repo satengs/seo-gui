@@ -430,19 +430,22 @@ export default function KeywordsTable({
               Total: {totalCount} keywords
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={downloadAsCSVAll}>
-                {downloadAllCsv ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadAsCSVAll}
+                disabled={downloadAllCsv}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Export All
+              </Button>
+              {downloadAllCsv ? (
+                <div className="flex items-center space-x-2">
                   <div className="flex items-center">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
-                ) : (
-                  <>
-                    {' '}
-                    <Download className="h-4 w-4 mr-2" />
-                    Export All
-                  </>
-                )}
-              </Button>
+                </div>
+              ) : null}
               {selectedRows.size > 0 && (
                 <Button
                   variant="outline"

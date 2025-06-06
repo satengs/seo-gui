@@ -521,12 +521,11 @@ export default function DataTypeFilterPanel({
       setLoading(true);
       const resp = await axiosClient.get(`/api/keywords?showCount=true`);
       const totalCount = resp?.data?.totalCount;
+      let queryString = `/api/keywords?`;
       for (let i = 0; i < totalCount; i += 100) {
-        const keywordsResp = await axiosClient.get(
-          `/api/keywords?fullList=true&page=${i + 1}&size=100`
-        );
-        console.log('kkk: ', keywordsResp.data);
-        if (!keywordsResp?.data?.length) {
+        const paginateQueryString = `${queryString}&page=${Math.floor(i / 100) + 1}&size=100`;
+        const keywordsResp = await axiosClient.get(paginateQueryString);
+        if (!keywordsResp?.data?.entitiesData?.length) {
           toast({
             title: 'No data to export',
             description: 'There is no data available',
@@ -535,8 +534,10 @@ export default function DataTypeFilterPanel({
         }
 
         // Filter the data by type
-        //TODO change keywordData?.{type}=>keywordData?.data?.{type}
-        const filteredData = filterKeywordsByType(keywordsResp.data, type);
+        const filteredData = filterKeywordsByType(
+          keywordsResp.data.entitiesData,
+          type
+        );
         if (!filteredData?.length) {
           toast({
             title: 'No data to export',
@@ -585,24 +586,25 @@ export default function DataTypeFilterPanel({
                 {typeInfo?.label || type}
               </SheetTitle>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={downloadAsCSV}
-              className="flex items-center gap-2"
-              disabled={loading}
-            >
-              {loading ? (
-                <div className="flex items-center">
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                </div>
-              ) : (
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={downloadAsCSV}
+                className="flex items-center gap-2"
+                disabled={loading}
+              >
                 <>
                   <Download className="h-4 w-4" />
                   Export CSV
                 </>
-              )}
-            </Button>
+              </Button>
+              {loading ? (
+                <div className="flex items-center">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              ) : null}
+            </div>
           </div>
         </SheetHeader>
 
